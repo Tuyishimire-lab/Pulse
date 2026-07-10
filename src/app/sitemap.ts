@@ -2,8 +2,7 @@ import { MetadataRoute } from 'next';
 import { SITES } from './data/sites';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Production URL for the hosted web traffic platform
-  const baseUrl = 'https://tuyishimire-lab.github.io';
+  const baseUrl = 'https://pulstraffic.com';
 
   const siteUrls = SITES.map((site) => ({
     url: `${baseUrl}/sites/${site.id}`,
