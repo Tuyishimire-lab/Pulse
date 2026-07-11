@@ -482,13 +482,14 @@ body {
 
 .search-input {
   width: 100%;
-  padding: 0.8rem 1rem 0.8rem 2.8rem;
+  height: 42px;
+  padding: 0.5rem 1.2rem 0.5rem 2.8rem;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 14px;
+  border-radius: 12px;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   outline: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(10px);
@@ -544,9 +545,9 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  padding: 0.25rem;
+  padding: 3px;
   gap: 0.25rem;
-  align-self: flex-start;
+  align-self: center;
 }
 
 @media (max-width: 768px) {
@@ -560,7 +561,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.2rem;
+  height: 36px;
+  padding: 0 1.2rem;
   border-radius: 9px;
   background: transparent;
   border: none;
@@ -1624,20 +1626,29 @@ body {
   z-index: 10;
 }
 
-.console-top-row {
+/* Unified Dashboard Control Console Navigation Rows */
+.console-nav-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   width: 100%;
-  flex-wrap: nowrap;
 }
 
-.console-actions {
+.console-view-controls {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: nowrap;
+}
+
+.console-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 1.25rem;
+  flex-wrap: wrap;
 }
 
 /* Segmented Tabs Layout */
@@ -1655,7 +1666,8 @@ body {
   color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
-  padding: 0.5rem 1.2rem;
+  height: 36px;
+  padding: 0 1.2rem;
   border-radius: 9px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1681,12 +1693,14 @@ body {
   color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
-  padding: 0.5rem 1.2rem;
+  height: 42px;
+  padding: 0 1.25rem;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
 }
 
@@ -1725,27 +1739,33 @@ body {
 
 /* Responsive console adjustments */
 @media (max-width: 1024px) {
-  .console-top-row {
+  .console-nav-row {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
-    flex-wrap: wrap;
   }
   
-  .console-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+  .console-view-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .console-toolbar-row {
     gap: 0.75rem;
   }
 }
 
 @media (max-width: 640px) {
-  .console-actions {
+  .console-view-controls {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
     gap: 0.75rem;
+  }
+
+  .console-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
   }
   
   .segmented-tabs {

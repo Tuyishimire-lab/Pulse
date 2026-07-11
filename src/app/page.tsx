@@ -543,8 +543,8 @@ export default function Home() {
       <main className="main-content relative z-10 flex-grow w-full max-w-[1200px] px-6 pb-16 flex flex-col items-center">
         {/* Unified Dashboard Control Console */}
         <div className="dashboard-console animate-fadeIn">
-          {/* Top Row: Search, Segmented Filter Tabs & Actions */}
-          <div className="console-top-row">
+          {/* Top Row: Search & View Layout Toggling */}
+          <div className="console-nav-row">
             <div className="search-wrapper">
               <input
                 type="text"
@@ -581,7 +581,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="console-actions">
+            <div className="console-view-controls">
               <div className="segmented-tabs">
                 <button 
                   className={`tab-item ${!watchlistFilter ? 'active' : ''}`}
@@ -596,30 +596,6 @@ export default function Home() {
                   ⭐ Watchlist ({watchlistIds.length})
                 </button>
               </div>
-
-              <button 
-                className={`action-btn ${compareModeActive ? 'active' : ''}`}
-                onClick={() => {
-                  setCompareModeActive(!compareModeActive);
-                  setSelectedCompareIds([]);
-                }}
-              >
-                📊 Compare {compareModeActive ? 'ON' : 'OFF'}
-              </button>
-
-              <button 
-                className={`action-btn ${showAnalyticsPanel ? 'active' : ''}`}
-                onClick={() => setShowAnalyticsPanel(!showAnalyticsPanel)}
-              >
-                📈 Analytics {showAnalyticsPanel ? 'ON' : 'OFF'}
-              </button>
-              
-              <button 
-                className="action-btn action-btn-secondary"
-                onClick={() => setShowAddCustomModal(true)}
-              >
-                ➕ Track Domain
-              </button>
 
               <div className="toggle-group">
                 <button
@@ -642,6 +618,33 @@ export default function Home() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Bottom Row: Tool Action Center */}
+          <div className="console-toolbar-row">
+            <button 
+              className={`action-btn ${compareModeActive ? 'active' : ''}`}
+              onClick={() => {
+                setCompareModeActive(!compareModeActive);
+                setSelectedCompareIds([]);
+              }}
+            >
+              📊 Battle Compare {compareModeActive ? 'ON' : 'OFF'}
+            </button>
+
+            <button 
+              className={`action-btn ${showAnalyticsPanel ? 'active' : ''}`}
+              onClick={() => setShowAnalyticsPanel(!showAnalyticsPanel)}
+            >
+              📈 Analytics Panel {showAnalyticsPanel ? 'ON' : 'OFF'}
+            </button>
+            
+            <button 
+              className="action-btn action-btn-secondary"
+              onClick={() => setShowAddCustomModal(true)}
+            >
+              ➕ Track Custom Domain
+            </button>
           </div>
 
           {/* Bottom Row: Category Selection Pills */}
