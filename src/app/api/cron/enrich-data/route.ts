@@ -1,6 +1,49 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase';
 
+// Helper to query Keywords Everywhere domain traffic API
+async function fetchKeywordsEverywhereTraffic(url: string): Promise<number | null> {
+  const apiKey = process.env.KEYWORDSEVERYWHERE_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const formData = new URLSearchParams();
+    formData.append('domain', domain);
+    formData.append('country', 'us');
+
+    const res = await fetch('https://api.keywordseverywhere.com/v1/get_domain_traffic', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData,
+      signal: AbortSignal.timeout(6000)
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    
+    // Parse common traffic fields returned in the JSON response
+    if (json) {
+      const trafficVal = json.traffic || 
+                         (json.data && json.data.traffic) || 
+                         (Array.isArray(json.data) && json.data[0] && json.data[0].traffic) ||
+                         (json.data && typeof json.data === 'object' && Object.values(json.data)[0] && (Object.values(json.data)[0] as any).traffic);
+      
+      if (trafficVal !== undefined && trafficVal !== null) {
+        return Number(trafficVal);
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn(`Keywords Everywhere API failed for ${url}:`, err);
+    return null;
+  }
+}
+
 // Helper to scrape StatShow for traffic estimates
 async function scrapeStatShow(url: string): Promise<number | null> {
   try {
@@ -14,7 +57,6 @@ async function scrapeStatShow(url: string): Promise<number | null> {
     if (!res.ok) return null;
     const text = await res.text();
     
-    // Look for traffic values (e.g. daily visitors)
     const match = text.match(/([\d,]+)\s+daily\s+visitors/i) || 
                   text.match(/daily\s+visitors.*?<b>([\d,]+)<\/b>/i) ||
                   text.match(/<div[^>]*class="[^"]*stat_value[^"]*"[^>]*>([\d,]+)<\/div>/i);
@@ -70,8 +112,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const apiKey = process.env.OPENPAGERANK_API_KEY;
-  if (!apiKey) {
+  const oprApiKey = process.env.OPENPAGERANK_API_KEY;
+  if (!oprApiKey) {
     return NextResponse.json(
       { success: false, message: 'Open PageRank API Key missing in environment' },
       { status: 500 }
@@ -100,7 +142,7 @@ export async function GET(request: Request) {
 
     const oprRes = await fetch(`https://openpagerank.com/api/v1.0/getPageRank?${domainsQuery}`, {
       headers: {
-        'API-OPR': apiKey
+        'API-OPR': oprApiKey
       },
       signal: AbortSignal.timeout(10000)
     });
@@ -121,23 +163,32 @@ export async function GET(request: Request) {
       });
     }
 
-    // 4. Select a subset of 10 random sites to scrape on this run to bypass rate limits and timeouts
+    // 4. Select a rotating batch of 10 random sites to scrape and fetch organic traffic metrics on this run
     const shuffledSites = [...sites].sort(() => 0.5 - Math.random());
-    const sitesToScrape = shuffledSites.slice(0, 10);
+    const sitesToEnrich = shuffledSites.slice(0, 10);
+    
     const scrapedVisitsMap: Record<string, number | null> = {};
+    const keTrafficMap: Record<string, number | null> = {};
 
     await Promise.all(
-      sitesToScrape.map(async (site: any) => {
-        let visits = await scrapeStatShow(site.url);
+      sitesToEnrich.map(async (site: any) => {
+        // Run Keywords Everywhere traffic API in parallel with web scrapers
+        const [keTraffic, statShowVisits] = await Promise.all([
+          fetchKeywordsEverywhereTraffic(site.url),
+          scrapeStatShow(site.url)
+        ]);
+
+        let visits = statShowVisits;
         if (visits === null) {
           visits = await scrapeHypStat(site.url);
         }
+
         scrapedVisitsMap[site.id] = visits;
+        keTrafficMap[site.id] = keTraffic;
       })
     );
 
     // 5. Blending & calibration updates
-    // Let's identify the maximum rate in the system (e.g. Google) to recalculate relative progress scales
     let maxRate = 32382; // fallback Google rate
 
     const updates = sites.map((site: any) => {
@@ -147,16 +198,26 @@ export async function GET(request: Request) {
       // Calculate logarithmic PageRank baseline traffic
       const prEst = Math.round(Math.pow(10, oprStats.pageRank * 0.8 + 1.4));
 
-      // Check if we scraped this site's traffic on this run
+      // Get metrics from our rotating batch
+      const keTraffic = keTrafficMap[site.id];
       const scraperVisits = scrapedVisitsMap[site.id];
+      
       let finalDailyVisits = prEst;
 
-      if (scraperVisits !== undefined && scraperVisits !== null) {
-        // Blend scraper data (80% weight) with PageRank formula (20% weight)
+      if (keTraffic !== undefined && keTraffic !== null && keTraffic > 0) {
+        const keDailyVisits = Math.round(keTraffic / 30);
+        if (scraperVisits !== undefined && scraperVisits !== null && scraperVisits > 0) {
+          // Priority 1: Blend Keywords Everywhere (70%), Scraper (20%), and PageRank (10%)
+          finalDailyVisits = Math.round(keDailyVisits * 0.7 + scraperVisits * 0.2 + prEst * 0.1);
+        } else {
+          // Priority 2: Blend Keywords Everywhere (85%) and PageRank (15%)
+          finalDailyVisits = Math.round(keDailyVisits * 0.85 + prEst * 0.15);
+        }
+      } else if (scraperVisits !== undefined && scraperVisits !== null && scraperVisits > 0) {
+        // Priority 3: Blend Scraper (80%) and PageRank (20%)
         finalDailyVisits = Math.round(scraperVisits * 0.8 + prEst * 0.2);
       } else {
-        // If not scraped on this run, keep previous database value as scraper baseline if it's there
-        // otherwise default to PR formula
+        // Fallback: If not enriched on this run, decay/blend previous database value slightly with PageRank
         const previousDailyVisits = site.rate * 86400;
         if (previousDailyVisits > 0) {
           finalDailyVisits = Math.round(previousDailyVisits * 0.85 + prEst * 0.15);
@@ -184,8 +245,8 @@ export async function GET(request: Request) {
         id: site.id,
         rate: calculatedRate,
         baseline: prettyBaseline,
-        progress: 0, // calculated later relative to maxRate
-        rank: oprStats.globalRank !== 9999999 ? site.rank : site.rank // preserve rankings order or sync with pageRank
+        progress: 0,
+        rank: oprStats.globalRank !== 9999999 ? site.rank : site.rank
       };
     });
 
@@ -215,9 +276,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Website statistics enriched successfully using hybrid PageRank & Scraper algorithm',
+      message: 'Website statistics enriched successfully using multi-source blending algorithm (Keywords Everywhere + PageRank + Scraper)',
       sitesEnrichedCount: sites.length,
-      scrapedThisRun: Object.keys(scrapedVisitsMap)
+      enrichedThisRun: sitesToEnrich.map((s: any) => s.id)
     });
 
   } catch (error: any) {
