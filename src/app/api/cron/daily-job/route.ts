@@ -99,6 +99,35 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
     if (Array.isArray(data) && Array.isArray(data[1])) {
       const suggestions = data[1]
         .filter((item: string) => !item.startsWith('http://') && !item.startsWith('https://') && item.trim().length > 0)
+        .map((item: string) => {
+          // 1. Strip out the brand name case-insensitively
+          let cleaned = item.toLowerCase().replace(brand.toLowerCase(), '').trim();
+          
+          // 2. Handle empty queries
+          if (cleaned.length === 0) {
+            return 'Search';
+          }
+          
+          // 3. Remove common verbs and generic words
+          const stopwords = ['login', 'sign up', 'signup', 'download', 'app', 'website', 'free', 'online', 'web', 'com', 'org', 'net'];
+          let words = cleaned.split(' ').filter(w => !stopwords.includes(w) && w.trim().length > 0);
+          
+          if (words.length === 0) {
+            words = cleaned.split(' ');
+          }
+          
+          // 4. Capitalize and format acronyms
+          const capitalized = words.map(w => {
+            if (['api', 'gpt', 'tv', 'aws', 'pdf', 'csv', 'rss', 'url', 'seo'].includes(w.toLowerCase())) {
+              return w.toUpperCase();
+            }
+            return w.charAt(0).toUpperCase() + w.slice(1);
+          }).join(' ');
+          
+          return capitalized;
+        })
+        .filter((item: string) => item.length > 0)
+        .filter((item: string, index: number, self: string[]) => self.indexOf(item) === index)
         .slice(0, 5);
       return suggestions;
     }

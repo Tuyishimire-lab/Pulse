@@ -36,32 +36,31 @@ function FaviconImage({ url, logo, color }: { url: string; logo: string; color: 
   );
 }
 
-// Helper to generate dynamic fallback search keywords based on domain name & category
-export function getSiteKeywords(site: { name: string; category: string }) {
-  const name = site.name.toLowerCase();
+// Helper to generate dynamic fallback search topics based on domain name & category
+export function getMostSearchedTopics(site: { name: string; category: string }) {
   switch (site.category) {
     case 'search':
-      return [`${name} search`, `${name} translate`, `${name} maps`, `${name} login`, `${name} mail`].slice(0, 5);
+      return ["Translate", "Maps", "Images", "Scholar", "Drive"];
     case 'social':
-      return [`${name} login`, `${name} sign up`, `${name} app`, `${name} status`, `${name} web`].slice(0, 5);
+      return ["Stories", "Feed", "Groups", "Photos", "Messenger"];
     case 'ai':
-      return [`${name} login`, `${name} api`, `${name} prompt`, `${name} cost`, `${name} tutorial`].slice(0, 5);
+      return ["API", "Prompts", "GPT-4", "Custom GPTs", "Pricing"];
     case 'ecommerce':
     case 'shopping':
-      return [`${name} deals`, `${name} track order`, `${name} customer service`, `${name} login`, `${name} gift cards`].slice(0, 5);
+      return ["Prime", "Deals", "Tracking", "Support", "Shipping"];
     case 'dev':
-      return [`${name} docs`, `${name} api`, `${name} tutorial`, `${name} login`, `${name} github`].slice(0, 5);
+      return ["Docs", "API", "Tutorials", "Libraries", "GitHub"];
     case 'finance':
-      return [`${name} pricing`, `${name} stock price`, `${name} login`, `${name} services`, `${name} calculator`].slice(0, 5);
+      return ["Pricing", "Stock Price", "Payments", "Calculator", "Security"];
     case 'news':
     case 'media':
-      return [`${name} live feed`, `${name} breaking news`, `${name} today`, `${name} opinion`, `${name} subscription`].slice(0, 5);
+      return ["Live Feed", "Today", "Opinion", "Videos", "Podcasts"];
     case 'reference':
-      return [`${name} definition`, `${name} history`, `${name} facts`, `${name} wiki`, `${name} meaning`].slice(0, 5);
+      return ["Definitions", "History", "Wiki", "Facts", "Citations"];
     case 'entertainment':
-      return [`${name} stream`, `${name} watch free`, `${name} trailer`, `${name} release date`, `${name} cast`].slice(0, 5);
+      return ["Stream", "Trailer", "Music", "TV", "Releases"];
     default:
-      return [`${name} login`, `${name} review`, `${name} website`, `${name} support`, `${name} api`].slice(0, 5);
+      return ["Website", "Review", "Support", "API", "Pricing"];
   }
 }
 
@@ -1291,7 +1290,7 @@ export default function Home() {
                 const raw = selectedDetails.keywords && selectedDetails.keywords.length > 0
                   ? selectedDetails.keywords
                   : [];
-                const displayed = raw.length > 0 ? raw : getSiteKeywords({ name: selectedSite.name, category: selectedSite.category });
+                const displayed = raw.length > 0 ? raw : getMostSearchedTopics({ name: selectedSite.name, category: selectedSite.category });
                 return (
                   <div className="geo-section text-left mt-6 animate-fadeIn">
                     <h4 className="geo-title">Most Searched Topics</h4>

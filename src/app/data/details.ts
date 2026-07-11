@@ -513,18 +513,18 @@ export function getSiteDetails(site: SiteConfig): SiteDetails {
 
   // Static fallback keywords based on site category
   const fallbackKeywordsMap: Record<string, string[]> = {
-    search: ['search engine', 'lookup online', 'find info', 'query search', 'web browser'],
-    social: ['social networks', 'connect friends', 'sharing status', 'online community', 'chat tools'],
-    ai: ['conversational ai', 'smart chatbot', 'intelligent assistant', 'ask questions', 'deep learning'],
-    reference: ['online wiki', 'definitions lookup', 'general facts', 'open guide', 'information repository'],
-    ecommerce: ['online store', 'shopping deals', 'buy retail', 'product reviews', 'order shipment'],
-    entertainment: ['stream video', 'gaming online', 'music streams', 'fun play', 'watching clips'],
-    news: ['latest headlines', 'world reports', 'current affairs', 'breaking updates', 'media articles'],
-    finance: ['crypto trading', 'stock quotes', 'investment insights', 'money exchange', 'market values'],
-    dev: ['git repository', 'code collaboration', 'developer api', 'software project', 'compiler tools']
+    search: ["Translate", "Maps", "Images", "Scholar", "Drive"],
+    social: ["Stories", "Feed", "Groups", "Photos", "Messenger"],
+    ai: ["API", "Prompts", "GPT-4", "Custom GPTs", "Pricing"],
+    reference: ["Definitions", "History", "Wiki", "Facts", "Citations"],
+    ecommerce: ["Prime", "Deals", "Tracking", "Support", "Shipping"],
+    entertainment: ["Stream", "Trailer", "Music", "TV", "Releases"],
+    news: ["Live Feed", "Today", "Opinion", "Videos", "Podcasts"],
+    finance: ["Pricing", "Stock Price", "Payments", "Calculator", "Security"],
+    dev: ["Docs", "API", "Tutorials", "Libraries", "GitHub"]
   };
 
-  const keywords = fallbackKeywordsMap[site.category] || ['website portal', 'web lookup', 'homepage link'];
+  const keywords = fallbackKeywordsMap[site.category] || ["Website", "Review", "Support", "API", "Pricing"];
 
   return {
     description,
