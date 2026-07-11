@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/update-data",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/enrich-data",
+      "schedule": "0 2 * * *"
     }
   ]
 }
