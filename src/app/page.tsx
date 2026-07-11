@@ -132,6 +132,12 @@ export default function Home() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
+  // Advanced Filtering and Analytics States
+  const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(false);
+  const [trafficTierFilter, setTrafficTierFilter] = useState<'all' | 'enterprise' | 'midmarket' | 'growth'>('all');
+  const [sortBy, setSortBy] = useState<'rank' | 'rate' | 'name'>('rank');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Capture landing timestamp so counters never reset during state changes
@@ -266,7 +272,7 @@ export default function Home() {
     return [...baseSites, ...customSites];
   }, [dbSites, customSites]);
 
-  // Filter sites based on category, search, and watchlist
+  // Filter and sort sites based on category, search, watchlist, traffic tier, and sorting preferences
   const filteredSites = useMemo(() => {
     return allSites.filter((site) => {
       const matchesCategory = activeCategory === 'all' || site.category === activeCategory;
@@ -274,9 +280,54 @@ export default function Home() {
         site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         site.url.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesWatchlist = !watchlistFilter || watchlistIds.includes(site.id);
-      return matchesCategory && matchesSearch && matchesWatchlist;
+      
+      // Calculate monthly volume (rate is visits/sec)
+      const monthlyVisits = site.rate * 86400 * 30.4;
+      let matchesTraffic = true;
+      if (trafficTierFilter === 'enterprise') {
+        matchesTraffic = monthlyVisits >= 500000000;
+      } else if (trafficTierFilter === 'midmarket') {
+        matchesTraffic = monthlyVisits >= 50000000 && monthlyVisits < 500000000;
+      } else if (trafficTierFilter === 'growth') {
+        matchesTraffic = monthlyVisits < 50000000;
+      }
+
+      return matchesCategory && matchesSearch && matchesWatchlist && matchesTraffic;
+    }).sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'rank') {
+        comparison = a.rank - b.rank;
+      } else if (sortBy === 'rate') {
+        comparison = b.rate - a.rate;
+      } else if (sortBy === 'name') {
+        comparison = a.name.localeCompare(b.name);
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [allSites, activeCategory, searchQuery, watchlistFilter, watchlistIds]);
+  }, [allSites, activeCategory, searchQuery, watchlistFilter, watchlistIds, trafficTierFilter, sortBy, sortOrder]);
+
+  // Compute aggregated real-time analytics for the currently filtered domains catalog
+  const analyticsStats = useMemo(() => {
+    const count = filteredSites.length;
+    if (count === 0) {
+      return { totalRate: 0, avgRank: 0, categoryCounts: {} as Record<string, number> };
+    }
+    let totalRate = 0;
+    let rankSum = 0;
+    const categoryCounts: Record<string, number> = {};
+
+    filteredSites.forEach(s => {
+      totalRate += s.rate;
+      rankSum += s.rank;
+      categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
+    });
+
+    return {
+      totalRate,
+      avgRank: Math.round(rankSum / count),
+      categoryCounts
+    };
+  }, [filteredSites]);
 
   // Paginated/Sliced sites to display
   const displayedSites = useMemo(() => {
@@ -555,6 +606,13 @@ export default function Home() {
               >
                 📊 Compare {compareModeActive ? 'ON' : 'OFF'}
               </button>
+
+              <button 
+                className={`action-btn ${showAnalyticsPanel ? 'active' : ''}`}
+                onClick={() => setShowAnalyticsPanel(!showAnalyticsPanel)}
+              >
+                📈 Analytics {showAnalyticsPanel ? 'ON' : 'OFF'}
+              </button>
               
               <button 
                 className="action-btn action-btn-secondary"
@@ -604,6 +662,137 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* Expandable Advanced Analytics & Controls Deck */}
+        {showAnalyticsPanel && (
+          <div className="w-full mt-4 p-6 rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-md animate-fadeIn flex flex-col gap-6 text-left">
+            <div className="flex justify-between items-center border-b border-white/5 pb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <span>📈 Dashboard Analytics & Controls</span>
+              </h3>
+              <span className="text-xs text-[#82c8e5] bg-[#82c8e5]/10 px-2.5 py-1 rounded-full font-bold">
+                {filteredSites.length} Channels Filtered
+              </span>
+            </div>
+
+            {/* Calculated summary stats card grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Combined Rate Velocity</span>
+                <div className="text-2xl font-extrabold text-[#82c8e5] mt-1">
+                  ~{analyticsStats.totalRate.toLocaleString('en-US')} <span className="text-sm font-normal text-white/50">/ sec</span>
+                </div>
+                <p className="text-[10px] text-white/40 mt-1">Sum of live dispatch counters across all selected domains.</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Avg Global Rank</span>
+                <div className="text-2xl font-extrabold text-[#a78bfa] mt-1">
+                  #{analyticsStats.avgRank.toLocaleString('en-US')}
+                </div>
+                <p className="text-[10px] text-white/40 mt-1">Average PageRank placement index in our active catalog.</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Est. Monthly Volume</span>
+                <div className="text-2xl font-extrabold text-[#34d399] mt-1">
+                  {((analyticsStats.totalRate * 86400 * 30.4) / 1000000000).toFixed(2)}B <span className="text-sm font-normal text-white/50">/ mo</span>
+                </div>
+                <p className="text-[10px] text-white/40 mt-1">Total estimated global monthly organic user visits.</p>
+              </div>
+            </div>
+
+            {/* Category Mix Breakdown bar */}
+            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+              <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Category Distribution Mix</span>
+              <div className="flex gap-1.5 h-3 rounded-full overflow-hidden mt-3 bg-white/5">
+                {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
+                  const pct = Math.max(5, Math.round((count / filteredSites.length) * 100));
+                  let color = '#3b82f6';
+                  if (cat === 'dev') color = '#6366f1';
+                  else if (cat === 'finance') color = '#10b981';
+                  else if (cat === 'social') color = '#ec4899';
+                  else if (cat === 'media') color = '#f59e0b';
+                  else if (cat === 'shopping') color = '#a855f7';
+                  
+                  return (
+                    <div 
+                      key={cat} 
+                      style={{ width: `${pct}%`, backgroundColor: color }} 
+                      title={`${cat.toUpperCase()}: ${count} (${pct}%)`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-[10px] font-bold text-white/70">
+                {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
+                  let color = '#3b82f6';
+                  if (cat === 'dev') color = '#6366f1';
+                  else if (cat === 'finance') color = '#10b981';
+                  else if (cat === 'social') color = '#ec4899';
+                  else if (cat === 'media') color = '#f59e0b';
+                  else if (cat === 'shopping') color = '#a855f7';
+
+                  return (
+                    <div key={cat} className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="uppercase">{cat}:</span>
+                      <span className="text-white">{count} ({Math.round((count / filteredSites.length) * 100)}%)</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Filtering parameters input selects */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/5 pt-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Traffic Tier Filter</label>
+                <select 
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
+                  value={trafficTierFilter}
+                  onChange={(e) => setTrafficTierFilter(e.target.value as any)}
+                >
+                  <option value="all">🌐 All Tiers</option>
+                  <option value="enterprise">🏢 Enterprise (&gt; 500M / mo)</option>
+                  <option value="midmarket">💼 Mid-Market (50M - 500M / mo)</option>
+                  <option value="growth">🚀 Growth (&lt; 50M / mo)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Metric By</label>
+                <select 
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  <option value="rank">⭐ Global Rank</option>
+                  <option value="rate">⚡ Live Dispatch Rate</option>
+                  <option value="name">🔤 Brand Name</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Order Direction</label>
+                <div className="segmented-tabs mt-0.5">
+                  <button 
+                    className={`tab-item text-xs py-1.5 ${sortOrder === 'asc' ? 'active' : ''}`}
+                    onClick={() => setSortOrder('asc')}
+                  >
+                    Ascending ↑
+                  </button>
+                  <button 
+                    className={`tab-item text-xs py-1.5 ${sortOrder === 'desc' ? 'active' : ''}`}
+                    onClick={() => setSortOrder('desc')}
+                  >
+                    Descending ↓
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Live Counters Presentation */}
         {viewLayout === 'grid' ? (

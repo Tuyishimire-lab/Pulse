@@ -42,23 +42,27 @@ export default function SitePageClient({ id }: { id: string }) {
   const timerRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
   const pageLoadTimeRef = useRef<number>(Date.now());
-  const [dbHistory, setDbHistory] = useState<number[]>([]);
+  const [dbHistory, setDbHistory] = useState<{ visits_percentage: number; timestamp: string }[]>([]);
   const [dbKeywords, setDbKeywords] = useState<string[] | null>(null);
+  const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
 
   useEffect(() => {
     if (!site || !isSupabaseConfigured) return;
 
-    // Fetch traffic history
+    // Fetch up to 168 hours (7 days) of traffic history
     supabase
       .from('traffic_history')
-      .select('visits_percentage')
+      .select('visits_percentage, timestamp')
       .eq('site_id', site.id)
       .order('timestamp', { ascending: true })
-      .limit(24)
+      .limit(168)
       .then((res: any) => {
         const data = res.data;
         if (data && data.length > 0) {
-          setDbHistory(data.map((item: any) => Number(item.visits_percentage)));
+          setDbHistory(data.map((item: any) => ({
+            visits_percentage: Number(item.visits_percentage),
+            timestamp: item.timestamp
+          })));
         }
       });
 
@@ -117,18 +121,100 @@ export default function SitePageClient({ id }: { id: string }) {
     };
   }, [site]);
 
-  // SVG Chart calculation helper arrays
+  // Compute active history based on selected timeline range
+  const activeHistory = useMemo(() => {
+    if (dbHistory.length > 0) {
+      if (timeRange === '24h') {
+        return dbHistory.slice(-24);
+      }
+      return dbHistory;
+    }
+    // Fallback static history (always 24 hourly nodes)
+    return details?.trafficHistory.map((val, idx) => {
+      const ts = new Date(Date.now() - (23 - idx) * 60 * 60 * 1000).toISOString();
+      return { visits_percentage: val, timestamp: ts };
+    }) || [];
+  }, [dbHistory, timeRange, details]);
+
+  // Calculate high-performance SVG plotting coordinates
   const chartPoints = useMemo(() => {
-    if (!details) return [];
-    const width = 580; // responsive scale
+    const width = 580; 
     const height = 110;
-    const history = dbHistory.length > 0 ? dbHistory : details.trafficHistory;
-    return history.map((val, idx) => {
-      const x = (idx / (history.length - 1)) * width;
-      const y = height - (val / 100) * 80 - 15; // Inverted y-axis maps 0-100 score to 15-95px heights
-      return { x, y, value: val, hour: idx };
+    return activeHistory.map((node, idx) => {
+      const x = (idx / (activeHistory.length - 1)) * width;
+      const y = height - (node.visits_percentage / 100) * 80 - 15;
+      
+      const date = new Date(node.timestamp);
+      const hourStr = date.getHours().toString().padStart(2, '0') + ':00';
+      return { x, y, value: node.visits_percentage, label: hourStr };
     });
-  }, [details, dbHistory]);
+  }, [activeHistory]);
+
+  const axisLabels = useMemo(() => {
+    if (timeRange === '24h') {
+      return ['24h Ago', '12h Ago', 'Now'];
+    }
+    return ['7 Days Ago', '3.5 Days Ago', 'Now'];
+  }, [timeRange]);
+
+  // Calculate detailed average, lowest, and peak stats across the timeline
+  const analyticsSummary = useMemo(() => {
+    if (activeHistory.length === 0) return null;
+    let sum = 0;
+    let peakVal = -1;
+    let peakHourStr = '';
+    let minVal = 101;
+    let minHourStr = '';
+
+    activeHistory.forEach(node => {
+      sum += node.visits_percentage;
+      
+      const date = new Date(node.timestamp);
+      const dateLabel = timeRange === '24h' 
+        ? date.getHours().toString().padStart(2, '0') + ':00'
+        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + date.getHours().toString().padStart(2, '0') + ':00';
+
+      if (node.visits_percentage > peakVal) {
+        peakVal = node.visits_percentage;
+        peakHourStr = dateLabel;
+      }
+      if (node.visits_percentage < minVal) {
+        minVal = node.visits_percentage;
+        minHourStr = dateLabel;
+      }
+    });
+
+    const average = Math.round(sum / activeHistory.length);
+
+    return {
+      average,
+      peakVal,
+      peakHourStr,
+      minVal,
+      minHourStr
+    };
+  }, [activeHistory, timeRange]);
+
+  // Handle local CSV generation and download trigger
+  const handleExportCSV = () => {
+    if (activeHistory.length === 0 || !site) return;
+    
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'Timestamp,Capacity Percentage (%)\n';
+    
+    activeHistory.forEach(node => {
+      const dateStr = new Date(node.timestamp).toLocaleString();
+      csvContent += `"${dateStr}",${node.visits_percentage}\n`;
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${site.id}_traffic_history_${timeRange}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Construct chart stroke line path
   const linePath = useMemo(() => {
@@ -282,7 +368,32 @@ export default function SitePageClient({ id }: { id: string }) {
 
             {/* SVG Hour-by-Hour Traffic History Chart */}
             <div className="chart-container">
-              <h4 className="chart-title">Estimated Traffic Waves (Last 24 Hours)</h4>
+              <div className="flex justify-between items-center flex-wrap gap-y-2 border-b border-white/5 pb-3.5 mb-4">
+                <h4 className="chart-title m-0">Estimated Traffic Capacity Waves</h4>
+                <div className="flex items-center gap-2.5 scale-90 origin-right">
+                  <div className="segmented-tabs mt-0">
+                    <button 
+                      className={`tab-item text-[10px] py-1 px-3 ${timeRange === '24h' ? 'active' : ''}`}
+                      onClick={() => setTimeRange('24h')}
+                    >
+                      24 Hours
+                    </button>
+                    <button 
+                      className={`tab-item text-[10px] py-1 px-3 ${timeRange === '7d' ? 'active' : ''}`}
+                      onClick={() => setTimeRange('7d')}
+                    >
+                      7 Days
+                    </button>
+                  </div>
+                  <button 
+                    onClick={handleExportCSV}
+                    className="px-3 py-1 text-[10px] font-bold text-white/80 bg-white/5 border border-white/10 hover:border-white/20 rounded-lg hover:bg-white/10 transition"
+                  >
+                    📥 Export CSV
+                  </button>
+                </div>
+              </div>
+
               <div className="chart-wrapper-svg">
                 <svg 
                   viewBox="0 0 580 110" 
@@ -319,23 +430,47 @@ export default function SitePageClient({ id }: { id: string }) {
 
                   {/* Data Node Circles */}
                   {chartPoints.map((pt, i) => (
-                    <circle
-                      key={i}
-                      cx={pt.x}
-                      cy={pt.y}
-                      className="chart-dot"
-                      style={{ ['--brand-color' as any]: site.color }}
-                    >
-                      <title>{`Hour ${pt.hour}:00 — Traffic Capacity: ${pt.value}%`}</title>
-                    </circle>
+                    (timeRange === '24h' || i % 6 === 0) && (
+                      <circle
+                        key={i}
+                        cx={pt.x}
+                        cy={pt.y}
+                        className="chart-dot"
+                        style={{ ['--brand-color' as any]: site.color }}
+                      >
+                        <title>{`${pt.label} — Capacity: ${pt.value}%`}</title>
+                      </circle>
+                    )
                   ))}
                 </svg>
               </div>
               <div className="chart-axis-labels">
-                <span>24h Ago</span>
-                <span>12h Ago</span>
-                <span>Now</span>
+                <span>{axisLabels[0]}</span>
+                <span>{axisLabels[1]}</span>
+                <span>{axisLabels[2]}</span>
               </div>
+
+              {/* Advanced SVG Analytics Breakdown numbers */}
+              {analyticsSummary && (
+                <div className="grid grid-cols-3 gap-2.5 mt-5 border-t border-white/5 pt-4 text-center">
+                  <div className="p-2 rounded-xl bg-white/[0.01] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider">Avg Capacity</span>
+                    <div className="text-base font-extrabold text-white mt-0.5">{analyticsSummary.average}%</div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/[0.01] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider">Peak Hour</span>
+                    <div className="text-base font-extrabold text-[#10b981] mt-0.5" title={`Max: ${analyticsSummary.peakVal}%`}>
+                      {analyticsSummary.peakHourStr.split(' ').slice(-1)[0]}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/[0.01] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider">Lowest Hour</span>
+                    <div className="text-base font-extrabold text-[#ef4444] mt-0.5" title={`Min: ${analyticsSummary.minVal}%`}>
+                      {analyticsSummary.minHourStr.split(' ').slice(-1)[0]}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Geographic Traffic Sources */}
