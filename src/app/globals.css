@@ -110,24 +110,30 @@ body {
 /* Filter controls */
 .filter-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  justify-content: center;
-  margin-top: 0.5rem;
-  margin-bottom: 3.5rem !important;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  justify-content: flex-start;
+  margin-top: 0.4rem;
+  margin-bottom: 1.5rem !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-btn {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0.6rem 1.4rem;
-  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.9rem;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
+  flex-shrink: 0;
 }
 
 .filter-btn:hover {
@@ -482,14 +488,14 @@ body {
 
 .search-input {
   width: 100%;
-  height: 42px;
-  padding: 0.5rem 1.2rem 0.5rem 2.8rem;
+  height: 36px;
+  padding: 0.4rem 1rem 0.4rem 2.5rem;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   outline: none;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(10px);
@@ -503,13 +509,13 @@ body {
 
 .search-icon-svg {
   position: absolute;
-  left: 1rem;
+  left: 0.8rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   transition: color 0.3s ease;
 }
 
@@ -544,7 +550,7 @@ body {
   display: flex;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 3px;
   gap: 0.25rem;
   align-self: center;
@@ -561,13 +567,13 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  height: 36px;
-  padding: 0 1.2rem;
-  border-radius: 9px;
+  height: 30px;
+  padding: 0 1rem;
+  border-radius: 7px;
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1612,16 +1618,16 @@ body {
 .dashboard-console {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
+  padding: 0.8rem 1.25rem;
   width: 100%;
   max-width: 1200px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
   position: relative;
   z-index: 10;
 }
@@ -1644,10 +1650,10 @@ body {
 .console-toolbar-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
   width: 100%;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 1.25rem;
+  padding-top: 0.8rem;
   flex-wrap: wrap;
 }
 
@@ -1656,7 +1662,7 @@ body {
   display: flex;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 3px;
 }
 
@@ -1664,11 +1670,11 @@ body {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  height: 36px;
-  padding: 0 1.2rem;
-  border-radius: 9px;
+  height: 30px;
+  padding: 0 1rem;
+  border-radius: 7px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -1691,11 +1697,11 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  height: 42px;
-  padding: 0 1.25rem;
-  border-radius: 12px;
+  height: 36px;
+  padding: 0 1rem;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -1731,10 +1737,16 @@ body {
 /* Category filter alignment inside console */
 .dashboard-console .filter-bar {
   margin: 0 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.8rem;
   justify-content: flex-start;
   width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dashboard-console .filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Responsive console adjustments */
