@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { SITES } from '../../data/sites';
 import { getSiteDetails, SiteDetails } from '../../data/details';
+import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 
 // Reusable Favicon Component with Letter Fallback
 function FaviconImage({ url, logo, color }: { url: string; logo: string; color: string }) {
@@ -41,6 +42,24 @@ export default function SitePageClient({ id }: { id: string }) {
   const timerRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
   const pageLoadTimeRef = useRef<number>(Date.now());
+  const [dbHistory, setDbHistory] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!site || !isSupabaseConfigured) return;
+
+    supabase
+      .from('traffic_history')
+      .select('visits_percentage')
+      .eq('site_id', site.id)
+      .order('timestamp', { ascending: true })
+      .limit(24)
+      .then((res: any) => {
+        const data = res.data;
+        if (data && data.length > 0) {
+          setDbHistory(data.map((item: any) => Number(item.visits_percentage)));
+        }
+      });
+  }, [site]);
 
   useEffect(() => {
     if (!site) return;
@@ -84,13 +103,13 @@ export default function SitePageClient({ id }: { id: string }) {
     if (!details) return [];
     const width = 580; // responsive scale
     const height = 110;
-    const history = details.trafficHistory;
+    const history = dbHistory.length > 0 ? dbHistory : details.trafficHistory;
     return history.map((val, idx) => {
       const x = (idx / (history.length - 1)) * width;
       const y = height - (val / 100) * 80 - 15; // Inverted y-axis maps 0-100 score to 15-95px heights
       return { x, y, value: val, hour: idx };
     });
-  }, [details]);
+  }, [details, dbHistory]);
 
   // Construct chart stroke line path
   const linePath = useMemo(() => {
