@@ -26,7 +26,6 @@ async function fetchKeywordsEverywhereTraffic(url: string): Promise<number | nul
     if (!res.ok) return null;
     const json = await res.json();
     
-    // Parse common traffic fields returned in the JSON response
     if (json) {
       const trafficVal = json.traffic || 
                          (json.data && json.data.traffic) || 
@@ -40,6 +39,43 @@ async function fetchKeywordsEverywhereTraffic(url: string): Promise<number | nul
     return null;
   } catch (err) {
     console.warn(`Keywords Everywhere API failed for ${url}:`, err);
+    return null;
+  }
+}
+
+// Helper to query Keywords Everywhere domain ranking keywords
+async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | null> {
+  const apiKey = process.env.KEYWORDSEVERYWHERE_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const formData = new URLSearchParams();
+    formData.append('domain', domain);
+    formData.append('country', 'us');
+    formData.append('currency', 'usd');
+
+    const res = await fetch('https://api.keywordseverywhere.com/v1/get_domain_keywords', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: formData,
+      signal: AbortSignal.timeout(6000)
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+
+    if (json && Array.isArray(json.data)) {
+      // Get the top 5 ranking keywords from the data response
+      return json.data.slice(0, 5).map((item: any) => item.keyword);
+    }
+    return null;
+  } catch (err) {
+    console.warn(`Keywords Everywhere keywords query failed for ${url}:`, err);
     return null;
   }
 }
@@ -169,12 +205,14 @@ export async function GET(request: Request) {
     
     const scrapedVisitsMap: Record<string, number | null> = {};
     const keTrafficMap: Record<string, number | null> = {};
+    const keKeywordsMap: Record<string, string[] | null> = {};
 
     await Promise.all(
       sitesToEnrich.map(async (site: any) => {
-        // Run Keywords Everywhere traffic API in parallel with web scrapers
-        const [keTraffic, statShowVisits] = await Promise.all([
+        // Run Keywords Everywhere traffic/keywords API in parallel with web scrapers
+        const [keTraffic, keKeywords, statShowVisits] = await Promise.all([
           fetchKeywordsEverywhereTraffic(site.url),
+          fetchKeywordsEverywhereKeywords(site.url),
           scrapeStatShow(site.url)
         ]);
 
@@ -185,6 +223,7 @@ export async function GET(request: Request) {
 
         scrapedVisitsMap[site.id] = visits;
         keTrafficMap[site.id] = keTraffic;
+        keKeywordsMap[site.id] = keKeywords;
       })
     );
 
@@ -200,6 +239,7 @@ export async function GET(request: Request) {
 
       // Get metrics from our rotating batch
       const keTraffic = keTrafficMap[site.id];
+      const keKeywords = keKeywordsMap[site.id];
       const scraperVisits = scrapedVisitsMap[site.id];
       
       let finalDailyVisits = prEst;
@@ -246,7 +286,8 @@ export async function GET(request: Request) {
         rate: calculatedRate,
         baseline: prettyBaseline,
         progress: 0,
-        rank: oprStats.globalRank !== 9999999 ? site.rank : site.rank
+        rank: oprStats.globalRank !== 9999999 ? site.rank : site.rank,
+        keywords: keKeywords || null
       };
     });
 
@@ -258,13 +299,17 @@ export async function GET(request: Request) {
 
     // Write updates to Supabase (in parallel batches)
     const dbUpdates = finalUpdates.map((upd: any) => {
+      const updatePayload: any = {
+        rate: upd.rate,
+        baseline: upd.baseline,
+        progress: upd.progress
+      };
+      if (upd.keywords !== null) {
+        updatePayload.keywords = upd.keywords;
+      }
       return supabase
         .from('sites')
-        .update({
-          rate: upd.rate,
-          baseline: upd.baseline,
-          progress: upd.progress
-        })
+        .update(updatePayload)
         .eq('id', upd.id);
     });
 

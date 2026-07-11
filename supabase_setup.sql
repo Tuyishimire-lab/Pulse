@@ -12333,3 +12333,7 @@ INSERT INTO public.traffic_history (site_id, timestamp, visits_percentage) VALUE
       1
     );
 
+-- Add keywords column to sites table if it doesn't exist
+ALTER TABLE public.sites 
+ADD COLUMN IF NOT EXISTS keywords JSONB DEFAULT '[]'::jsonb;
+

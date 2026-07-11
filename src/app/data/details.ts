@@ -9,6 +9,7 @@ export interface SiteDetails {
   geographies: { country: string; percentage: number }[];
   trafficHistory: number[];
   funFact: string;
+  keywords: string[];
 }
 
 // Seeded random matching sites.ts
@@ -510,6 +511,21 @@ export function getSiteDetails(site: SiteConfig): SiteDetails {
     trafficHistory.push(hourlyIndex);
   }
 
+  // Static fallback keywords based on site category
+  const fallbackKeywordsMap: Record<string, string[]> = {
+    search: ['search engine', 'lookup online', 'find info', 'query search', 'web browser'],
+    social: ['social networks', 'connect friends', 'sharing status', 'online community', 'chat tools'],
+    ai: ['conversational ai', 'smart chatbot', 'intelligent assistant', 'ask questions', 'deep learning'],
+    reference: ['online wiki', 'definitions lookup', 'general facts', 'open guide', 'information repository'],
+    ecommerce: ['online store', 'shopping deals', 'buy retail', 'product reviews', 'order shipment'],
+    entertainment: ['stream video', 'gaming online', 'music streams', 'fun play', 'watching clips'],
+    news: ['latest headlines', 'world reports', 'current affairs', 'breaking updates', 'media articles'],
+    finance: ['crypto trading', 'stock quotes', 'investment insights', 'money exchange', 'market values'],
+    dev: ['git repository', 'code collaboration', 'developer api', 'software project', 'compiler tools']
+  };
+
+  const keywords = fallbackKeywordsMap[site.category] || ['website portal', 'web lookup', 'homepage link'];
+
   return {
     description,
     bounceRate,
@@ -518,6 +534,7 @@ export function getSiteDetails(site: SiteConfig): SiteDetails {
     mobileShare,
     geographies,
     trafficHistory,
-    funFact
+    funFact,
+    keywords
   };
 }

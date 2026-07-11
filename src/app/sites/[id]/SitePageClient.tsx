@@ -43,10 +43,12 @@ export default function SitePageClient({ id }: { id: string }) {
   const counterRef = useRef<HTMLDivElement>(null);
   const pageLoadTimeRef = useRef<number>(Date.now());
   const [dbHistory, setDbHistory] = useState<number[]>([]);
+  const [dbKeywords, setDbKeywords] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!site || !isSupabaseConfigured) return;
 
+    // Fetch traffic history
     supabase
       .from('traffic_history')
       .select('visits_percentage')
@@ -59,7 +61,24 @@ export default function SitePageClient({ id }: { id: string }) {
           setDbHistory(data.map((item: any) => Number(item.visits_percentage)));
         }
       });
+
+    // Fetch dynamic keywords from database
+    supabase
+      .from('sites')
+      .select('keywords')
+      .eq('id', site.id)
+      .single()
+      .then((res: any) => {
+        if (res && res.data && Array.isArray(res.data.keywords) && res.data.keywords.length > 0) {
+          setDbKeywords(res.data.keywords);
+        }
+      });
   }, [site]);
+
+  const displayedKeywords = useMemo(() => {
+    if (dbKeywords && dbKeywords.length > 0) return dbKeywords;
+    return details?.keywords || [];
+  }, [dbKeywords, details]);
 
   useEffect(() => {
     if (!site) return;
@@ -347,6 +366,40 @@ export default function SitePageClient({ id }: { id: string }) {
                 ))}
               </div>
             </div>
+
+            {/* Organic Keywords Badges Card */}
+            {displayedKeywords.length > 0 && (
+              <div className="geo-section mt-6">
+                <h4 className="geo-title">Top Organic Keywords</h4>
+                <div className="flex flex-wrap gap-2.5 mt-4">
+                  {displayedKeywords.map((kw, index) => (
+                    <div 
+                      key={index}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-300 select-none cursor-default"
+                      style={{
+                        backgroundColor: 'color-mix(in srgb, var(--brand-color) 4%, rgba(255,255,255,0.02))',
+                        borderColor: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = site.color;
+                        e.currentTarget.style.color = '#ffffff';
+                        e.currentTarget.style.boxShadow = `0 0 16px ${site.glow}`;
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      🔍 {kw}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Trivia Fact */}
             <div className="modal-trivia">
