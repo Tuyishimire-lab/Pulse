@@ -70,12 +70,42 @@ async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | 
     const json = await res.json();
 
     if (json && Array.isArray(json.data)) {
-      // Get the top 5 ranking keywords from the data response
       return json.data.slice(0, 5).map((item: any) => item.keyword);
     }
     return null;
   } catch (err) {
     console.warn(`Keywords Everywhere keywords query failed for ${url}:`, err);
+    return null;
+  }
+}
+
+// Helper to query Google Suggest queries for free brand keywords (100% Free Fallback)
+async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null> {
+  try {
+    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const brand = domain.split('.')[0];
+    const suggestUrl = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(brand)}`;
+    
+    const res = await fetch(suggestUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (Array.isArray(data) && Array.isArray(data[1])) {
+      // Filter out navigation urls (e.g. starting with http/https) and grab top 5 keywords
+      const suggestions = data[1]
+        .filter((item: string) => !item.startsWith('http://') && !item.startsWith('https://') && item.trim().length > 0)
+        .slice(0, 5);
+      return suggestions;
+    }
+    return null;
+  } catch (err) {
+    console.warn(`Google Suggest keywords query failed for ${url}:`, err);
     return null;
   }
 }
@@ -210,11 +240,16 @@ export async function GET(request: Request) {
     await Promise.all(
       sitesToEnrich.map(async (site: any) => {
         // Run Keywords Everywhere traffic/keywords API in parallel with web scrapers
-        const [keTraffic, keKeywords, statShowVisits] = await Promise.all([
+        let [keTraffic, keKeywords, statShowVisits] = await Promise.all([
           fetchKeywordsEverywhereTraffic(site.url),
           fetchKeywordsEverywhereKeywords(site.url),
           scrapeStatShow(site.url)
         ]);
+
+        // Fallback Tier 1: If Keywords Everywhere keywords failed/no credits, try Google Suggest API (100% free)
+        if (keKeywords === null || keKeywords.length === 0) {
+          keKeywords = await fetchGoogleSuggestKeywords(site.url);
+        }
 
         let visits = statShowVisits;
         if (visits === null) {
@@ -321,7 +356,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Website statistics enriched successfully using multi-source blending algorithm (Keywords Everywhere + PageRank + Scraper)',
+      message: 'Website statistics enriched successfully using multi-source blending algorithm (Keywords Everywhere + PageRank + Scraper + Google Suggest)',
       sitesEnrichedCount: sites.length,
       enrichedThisRun: sitesToEnrich.map((s: any) => s.id)
     });
