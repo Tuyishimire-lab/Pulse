@@ -1257,10 +1257,10 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Organic Keywords Badges Card */}
+              {/* Most Searched Topics Badges Card */}
               {selectedDetails.keywords && selectedDetails.keywords.length > 0 && (
                 <div className="geo-section text-left mt-6 animate-fadeIn">
-                  <h4 className="geo-title">Top Organic Keywords</h4>
+                  <h4 className="geo-title">Most Searched Topics</h4>
                   <div className="flex flex-wrap gap-2 mt-3">
                     {selectedDetails.keywords.map((kw, index) => (
                       <div 

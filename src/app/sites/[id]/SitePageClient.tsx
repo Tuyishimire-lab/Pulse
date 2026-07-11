@@ -502,10 +502,10 @@ export default function SitePageClient({ id }: { id: string }) {
               </div>
             </div>
 
-            {/* Organic Keywords Badges Card */}
+            {/* Most Searched Topics Badges Card */}
             {displayedKeywords.length > 0 && (
               <div className="geo-section mt-6">
-                <h4 className="geo-title">Top Organic Keywords</h4>
+                <h4 className="geo-title">Most Searched Topics</h4>
                 <div className="flex flex-wrap gap-2.5 mt-4">
                   {displayedKeywords.map((kw, index) => (
                     <div 
