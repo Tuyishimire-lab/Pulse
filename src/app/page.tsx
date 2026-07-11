@@ -36,6 +36,35 @@ function FaviconImage({ url, logo, color }: { url: string; logo: string; color: 
   );
 }
 
+// Helper to generate dynamic fallback search keywords based on domain name & category
+export function getSiteKeywords(site: { name: string; category: string }) {
+  const name = site.name.toLowerCase();
+  switch (site.category) {
+    case 'search':
+      return [`${name} search`, `${name} translate`, `${name} maps`, `${name} login`, `${name} mail`].slice(0, 5);
+    case 'social':
+      return [`${name} login`, `${name} sign up`, `${name} app`, `${name} status`, `${name} web`].slice(0, 5);
+    case 'ai':
+      return [`${name} login`, `${name} api`, `${name} prompt`, `${name} cost`, `${name} tutorial`].slice(0, 5);
+    case 'ecommerce':
+    case 'shopping':
+      return [`${name} deals`, `${name} track order`, `${name} customer service`, `${name} login`, `${name} gift cards`].slice(0, 5);
+    case 'dev':
+      return [`${name} docs`, `${name} api`, `${name} tutorial`, `${name} login`, `${name} github`].slice(0, 5);
+    case 'finance':
+      return [`${name} pricing`, `${name} stock price`, `${name} login`, `${name} services`, `${name} calculator`].slice(0, 5);
+    case 'news':
+    case 'media':
+      return [`${name} live feed`, `${name} breaking news`, `${name} today`, `${name} opinion`, `${name} subscription`].slice(0, 5);
+    case 'reference':
+      return [`${name} definition`, `${name} history`, `${name} facts`, `${name} wiki`, `${name} meaning`].slice(0, 5);
+    case 'entertainment':
+      return [`${name} stream`, `${name} watch free`, `${name} trailer`, `${name} release date`, `${name} cast`].slice(0, 5);
+    default:
+      return [`${name} login`, `${name} review`, `${name} website`, `${name} support`, `${name} api`].slice(0, 5);
+  }
+}
+
 // Self-contained VisitsCounter Leaf Component (updates twice a second / 500ms)
 function VisitsCounter({ rate, pageLoadTime }: { rate: number; pageLoadTime: number }) {
   const [count, setCount] = useState(0);
@@ -1258,38 +1287,44 @@ export default function Home() {
               </div>
 
               {/* Most Searched Topics Badges Card */}
-              {selectedDetails.keywords && selectedDetails.keywords.length > 0 && (
-                <div className="geo-section text-left mt-6 animate-fadeIn">
-                  <h4 className="geo-title">Most Searched Topics</h4>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {selectedDetails.keywords.map((kw, index) => (
-                      <div 
-                        key={index}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-300 select-none cursor-default"
-                        style={{
-                          backgroundColor: 'color-mix(in srgb, var(--brand-color) 4%, rgba(255,255,255,0.02))',
-                          borderColor: 'rgba(255, 255, 255, 0.05)',
-                          color: 'rgba(255, 255, 255, 0.85)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = selectedSite.color;
-                          e.currentTarget.style.color = '#ffffff';
-                          e.currentTarget.style.boxShadow = `0 0 16px ${selectedSite.glow}`;
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-                          e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
-                          e.currentTarget.style.boxShadow = 'none';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                      >
-                        🔍 {kw}
-                      </div>
-                    ))}
+              {(() => {
+                const raw = selectedDetails.keywords && selectedDetails.keywords.length > 0
+                  ? selectedDetails.keywords
+                  : [];
+                const displayed = raw.length > 0 ? raw : getSiteKeywords({ name: selectedSite.name, category: selectedSite.category });
+                return (
+                  <div className="geo-section text-left mt-6 animate-fadeIn">
+                    <h4 className="geo-title">Most Searched Topics</h4>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {displayed.map((kw, index) => (
+                        <div 
+                          key={index}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-300 select-none cursor-default"
+                          style={{
+                            backgroundColor: 'color-mix(in srgb, var(--brand-color) 4%, rgba(255,255,255,0.02))',
+                            borderColor: 'rgba(255, 255, 255, 0.05)',
+                            color: 'rgba(255, 255, 255, 0.85)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = selectedSite.color;
+                            e.currentTarget.style.color = '#ffffff';
+                            e.currentTarget.style.boxShadow = `0 0 16px ${selectedSite.glow}`;
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          🔍 {kw}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="modal-trivia text-left">
                 <span className="fact-icon">💡</span>

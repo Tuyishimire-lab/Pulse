@@ -35,6 +35,35 @@ function FaviconImage({ url, logo, color }: { url: string; logo: string; color: 
   );
 }
 
+// Helper to generate dynamic fallback search keywords based on domain name & category
+export function getSiteKeywords(site: { name: string; category: string }) {
+  const name = site.name.toLowerCase();
+  switch (site.category) {
+    case 'search':
+      return [`${name} search`, `${name} translate`, `${name} maps`, `${name} login`, `${name} mail`].slice(0, 5);
+    case 'social':
+      return [`${name} login`, `${name} sign up`, `${name} app`, `${name} status`, `${name} web`].slice(0, 5);
+    case 'ai':
+      return [`${name} login`, `${name} api`, `${name} prompt`, `${name} cost`, `${name} tutorial`].slice(0, 5);
+    case 'ecommerce':
+    case 'shopping':
+      return [`${name} deals`, `${name} track order`, `${name} customer service`, `${name} login`, `${name} gift cards`].slice(0, 5);
+    case 'dev':
+      return [`${name} docs`, `${name} api`, `${name} tutorial`, `${name} login`, `${name} github`].slice(0, 5);
+    case 'finance':
+      return [`${name} pricing`, `${name} stock price`, `${name} login`, `${name} services`, `${name} calculator`].slice(0, 5);
+    case 'news':
+    case 'media':
+      return [`${name} live feed`, `${name} breaking news`, `${name} today`, `${name} opinion`, `${name} subscription`].slice(0, 5);
+    case 'reference':
+      return [`${name} definition`, `${name} history`, `${name} facts`, `${name} wiki`, `${name} meaning`].slice(0, 5);
+    case 'entertainment':
+      return [`${name} stream`, `${name} watch free`, `${name} trailer`, `${name} release date`, `${name} cast`].slice(0, 5);
+    default:
+      return [`${name} login`, `${name} review`, `${name} website`, `${name} support`, `${name} api`].slice(0, 5);
+  }
+}
+
 export default function SitePageClient({ id }: { id: string }) {
   const site = useMemo(() => SITES.find((s) => s.id === id), [id]);
   const details = useMemo(() => (site ? getSiteDetails(site) : null), [site]);
@@ -80,9 +109,13 @@ export default function SitePageClient({ id }: { id: string }) {
   }, [site]);
 
   const displayedKeywords = useMemo(() => {
-    if (dbKeywords && dbKeywords.length > 0) return dbKeywords;
-    return details?.keywords || [];
-  }, [dbKeywords, details]);
+    const raw = dbKeywords && dbKeywords.length > 0 ? dbKeywords : (details?.keywords || []);
+    if (raw && raw.length > 0) return raw;
+    if (site) {
+      return getSiteKeywords({ name: site.name, category: site.category });
+    }
+    return [];
+  }, [dbKeywords, details, site]);
 
   useEffect(() => {
     if (!site) return;
