@@ -315,6 +315,7 @@ export default function Home() {
     setSelectedDetails(defaultDetails);
 
     if (isSupabaseConfigured) {
+      // 1. Fetch traffic history
       supabase
         .from('traffic_history')
         .select('visits_percentage')
@@ -325,9 +326,30 @@ export default function Home() {
           const data = res.data;
           if (data && data.length > 0) {
             const mappedHistory = data.map((item: any) => Number(item.visits_percentage));
-            setSelectedDetails({
-              ...defaultDetails,
-              trafficHistory: mappedHistory
+            setSelectedDetails(prev => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                trafficHistory: mappedHistory
+              };
+            });
+          }
+        });
+
+      // 2. Fetch keywords
+      supabase
+        .from('sites')
+        .select('keywords')
+        .eq('id', site.id)
+        .single()
+        .then((res: any) => {
+          if (res && res.data && Array.isArray(res.data.keywords) && res.data.keywords.length > 0) {
+            setSelectedDetails(prev => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                keywords: res.data.keywords
+              };
             });
           }
         });
@@ -1042,6 +1064,40 @@ export default function Home() {
                   ))}
                 </div>
               </div>
+
+              {/* Organic Keywords Badges Card */}
+              {selectedDetails.keywords && selectedDetails.keywords.length > 0 && (
+                <div className="geo-section text-left mt-6 animate-fadeIn">
+                  <h4 className="geo-title">Top Organic Keywords</h4>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {selectedDetails.keywords.map((kw, index) => (
+                      <div 
+                        key={index}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-300 select-none cursor-default"
+                        style={{
+                          backgroundColor: 'color-mix(in srgb, var(--brand-color) 4%, rgba(255,255,255,0.02))',
+                          borderColor: 'rgba(255, 255, 255, 0.05)',
+                          color: 'rgba(255, 255, 255, 0.85)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = selectedSite.color;
+                          e.currentTarget.style.color = '#ffffff';
+                          e.currentTarget.style.boxShadow = `0 0 16px ${selectedSite.glow}`;
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                          e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
+                          e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        🔍 {kw}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="modal-trivia text-left">
                 <span className="fact-icon">💡</span>
