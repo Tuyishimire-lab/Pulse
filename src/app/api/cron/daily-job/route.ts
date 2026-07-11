@@ -97,7 +97,6 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
     const data = await res.json();
 
     if (Array.isArray(data) && Array.isArray(data[1])) {
-      // Filter out navigation urls (e.g. starting with http/https) and grab top 5 keywords
       const suggestions = data[1]
         .filter((item: string) => !item.startsWith('http://') && !item.startsWith('https://') && item.trim().length > 0)
         .slice(0, 5);
@@ -246,7 +245,7 @@ export async function GET(request: Request) {
           scrapeStatShow(site.url)
         ]);
 
-        // Fallback Tier 1: If Keywords Everywhere keywords failed/no credits, try Google Suggest API (100% free)
+        // Fallback: If Keywords Everywhere keywords failed/no credits, try Google Suggest API (100% free)
         if (keKeywords === null || keKeywords.length === 0) {
           keKeywords = await fetchGoogleSuggestKeywords(site.url);
         }
@@ -262,7 +261,7 @@ export async function GET(request: Request) {
       })
     );
 
-    // 5. Blending & calibration updates
+    // 5. Blending & calibration updates for domain metadata
     let maxRate = 32382; // fallback Google rate
 
     const updates = sites.map((site: any) => {
@@ -282,17 +281,13 @@ export async function GET(request: Request) {
       if (keTraffic !== undefined && keTraffic !== null && keTraffic > 0) {
         const keDailyVisits = Math.round(keTraffic / 30);
         if (scraperVisits !== undefined && scraperVisits !== null && scraperVisits > 0) {
-          // Priority 1: Blend Keywords Everywhere (70%), Scraper (20%), and PageRank (10%)
           finalDailyVisits = Math.round(keDailyVisits * 0.7 + scraperVisits * 0.2 + prEst * 0.1);
         } else {
-          // Priority 2: Blend Keywords Everywhere (85%) and PageRank (15%)
           finalDailyVisits = Math.round(keDailyVisits * 0.85 + prEst * 0.15);
         }
       } else if (scraperVisits !== undefined && scraperVisits !== null && scraperVisits > 0) {
-        // Priority 3: Blend Scraper (80%) and PageRank (20%)
         finalDailyVisits = Math.round(scraperVisits * 0.8 + prEst * 0.2);
       } else {
-        // Fallback: If not enriched on this run, decay/blend previous database value slightly with PageRank
         const previousDailyVisits = site.rate * 86400;
         if (previousDailyVisits > 0) {
           finalDailyVisits = Math.round(previousDailyVisits * 0.85 + prEst * 0.15);
@@ -354,15 +349,67 @@ export async function GET(request: Request) {
       await Promise.all(chunk);
     }
 
+    // 7. Calculate & bulk-insert 24 hourly points for the entire past day
+    // This allows the cron to run only once per day while maintaining complete hourly wave history logs.
+    const historyInsertions: any[] = [];
+    const now = new Date();
+
+    for (let h = 0; h < 24; h++) {
+      const timestamp = new Date(now.getTime() - h * 60 * 60 * 1000);
+      const hourValue = timestamp.getHours();
+      
+      finalUpdates.forEach((upd: any) => {
+        // Calculate site-specific phase-shifted wave
+        const phaseOffset = (upd.rank * 7) % 24;
+        const shiftedHour = (hourValue + phaseOffset) % 24;
+        const baseCircadian = Math.sin((shiftedHour - 9) / 24 * 2 * Math.PI) * 28;
+        const noise = (Math.random() - 0.5) * 14;
+        const visitsPercentage = Math.max(20, Math.min(98, Math.round(62 + baseCircadian + noise)));
+
+        historyInsertions.push({
+          site_id: upd.id,
+          visits_percentage: visitsPercentage,
+          timestamp: timestamp.toISOString()
+        });
+      });
+    }
+
+    // Bulk insert history nodes (in chunks of 400 rows to avoid request limits)
+    const insertChunkSize = 400;
+    for (let i = 0; i < historyInsertions.length; i += insertChunkSize) {
+      const chunk = historyInsertions.slice(i, i + insertChunkSize);
+      const { error: historyError } = await supabase
+        .from('traffic_history')
+        .insert(chunk);
+
+      if (historyError) {
+        console.error('Unified Cron: Failed to insert history chunk:', historyError);
+      }
+    }
+
+    // 8. Database hygiene cleanup: delete records older than 7 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 7);
+
+    const { error: deleteError, count: deletedCount } = await supabase
+      .from('traffic_history')
+      .delete({ count: 'exact' })
+      .lt('timestamp', cutoffDate.toISOString());
+
+    if (deleteError) {
+      console.error('Unified Cron: Failed to clean up database history:', deleteError);
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Website statistics enriched successfully using multi-source blending algorithm (Keywords Everywhere + PageRank + Scraper + Google Suggest)',
-      sitesEnrichedCount: sites.length,
-      enrichedThisRun: sitesToEnrich.map((s: any) => s.id)
+      message: 'Unified Vercel Hobby-compliant daily cron execution completed successfully',
+      enrichedRotatingBatch: sitesToEnrich.map((s: any) => s.id),
+      historyNodesAddedCount: historyInsertions.length,
+      historyNodesDeletedCount: deletedCount || 0
     });
 
   } catch (error: any) {
-    console.error('Enrichment Exception:', error);
+    console.error('Unified Cron Ingestion Exception:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

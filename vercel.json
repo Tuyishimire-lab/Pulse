@@ -1,11 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/update-data",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/enrich-data",
+      "path": "/api/cron/daily-job",
       "schedule": "0 2 * * *"
     }
   ]
