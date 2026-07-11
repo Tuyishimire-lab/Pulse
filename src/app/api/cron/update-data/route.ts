@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     // 2. Fetch all current sites
     const { data: sites, error: fetchError } = await supabase
       .from('sites')
-      .select('id', 'rate', 'progress')
+      .select('id', 'rate', 'progress', 'rank')
       .order('rank', { ascending: true });
 
     if (fetchError || !sites) {
@@ -35,9 +35,12 @@ export async function GET(request: Request) {
 
     const currentHour = new Date().getHours();
     
-    // 3. Construct new history nodes for each site (circadian wave + noise)
+    // 3. Construct new history nodes for each site (site-specific circadian wave + noise)
     const historyInsertions = sites.map((site: any) => {
-      const baseCircadian = Math.sin((currentHour - 9) / 24 * 2 * Math.PI) * 28;
+      // Phase shift peak times based on site rank so they don't look identical
+      const phaseOffset = (site.rank * 7) % 24;
+      const shiftedHour = (currentHour + phaseOffset) % 24;
+      const baseCircadian = Math.sin((shiftedHour - 9) / 24 * 2 * Math.PI) * 28;
       const noise = (Math.random() - 0.5) * 14;
       const visitsPercentage = Math.max(20, Math.min(98, Math.round(62 + baseCircadian + noise)));
 
