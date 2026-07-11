@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { SITES, CATEGORIES, SiteConfig } from './data/sites';
 import { getSiteDetails, SiteDetails } from './data/details';
 import CompareModal from './components/CompareModal';
+import { supabase } from '../lib/supabase';
 
 // Reusable Favicon Component with Letter Fallback
 function FaviconImage({ url, logo, color }: { url: string; logo: string; color: string }) {
@@ -100,6 +101,9 @@ export default function Home() {
   const [selectedSite, setSelectedSite] = useState<SiteConfig | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<SiteDetails | null>(null);
 
+  // Supabase states
+  const [dbSites, setDbSites] = useState<SiteConfig[]>([]);
+
   // Watchlist Bookmarks
   const [watchlistIds, setWatchlistIds] = useState<string[]>([]);
   const [watchlistFilter, setWatchlistFilter] = useState<boolean>(false);
@@ -144,6 +148,49 @@ export default function Home() {
     const storedCustom = localStorage.getItem('pulse_custom_sites');
     if (storedCustom) {
       try { setCustomSites(JSON.parse(storedCustom)); } catch (e) {}
+    }
+  }, []);
+
+  // Fetch sites and handle Realtime subscriptions
+  useEffect(() => {
+    async function fetchSites() {
+      try {
+        const { data, error } = await supabase
+          .from('sites')
+          .select('*')
+          .order('rank', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching sites from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setDbSites(data as SiteConfig[]);
+        }
+      } catch (err) {
+        console.error('Failed to connect to Supabase:', err);
+      }
+    }
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      fetchSites();
+
+      // Subscribe to real-time changes on the sites table
+      const channel = supabase
+        .channel('schema-db-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'sites' },
+          () => {
+            fetchSites();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, []);
 
@@ -213,10 +260,11 @@ export default function Home() {
 
 
 
-  // Merge datasets
+  // Merge datasets, prioritizing database sites if available, falling back to static mock data
   const allSites = useMemo(() => {
-    return [...SITES, ...customSites];
-  }, [customSites]);
+    const baseSites = dbSites.length > 0 ? dbSites : SITES;
+    return [...baseSites, ...customSites];
+  }, [dbSites, customSites]);
 
   // Filter sites based on category, search, and watchlist
   const filteredSites = useMemo(() => {
@@ -262,7 +310,28 @@ export default function Home() {
       return;
     }
     setSelectedSite(site);
-    setSelectedDetails(getSiteDetails(site));
+    
+    const defaultDetails = getSiteDetails(site);
+    setSelectedDetails(defaultDetails);
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      supabase
+        .from('traffic_history')
+        .select('visits_percentage')
+        .eq('site_id', site.id)
+        .order('timestamp', { ascending: true })
+        .limit(24)
+        .then((res: any) => {
+          const data = res.data;
+          if (data && data.length > 0) {
+            const mappedHistory = data.map((item: any) => Number(item.visits_percentage));
+            setSelectedDetails({
+              ...defaultDetails,
+              trafficHistory: mappedHistory
+            });
+          }
+        });
+    }
   };
 
   // Keyboard Escape listener to close modal
