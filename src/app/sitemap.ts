@@ -1,13 +1,13 @@
 import { MetadataRoute } from 'next';
 import { SITES } from './data/sites';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://pulstraffic.com';
 
   let activeSites = SITES;
 
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (isSupabaseConfigured) {
     try {
       const { data } = await supabase
         .from('sites')

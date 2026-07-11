@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { SITES, CATEGORIES, SiteConfig } from './data/sites';
 import { getSiteDetails, SiteDetails } from './data/details';
 import CompareModal from './components/CompareModal';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Reusable Favicon Component with Letter Fallback
 function FaviconImage({ url, logo, color }: { url: string; logo: string; color: string }) {
@@ -173,7 +173,7 @@ export default function Home() {
       }
     }
 
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (isSupabaseConfigured) {
       fetchSites();
 
       // Subscribe to real-time changes on the sites table
@@ -314,7 +314,7 @@ export default function Home() {
     const defaultDetails = getSiteDetails(site);
     setSelectedDetails(defaultDetails);
 
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (isSupabaseConfigured) {
       supabase
         .from('traffic_history')
         .select('visits_percentage')

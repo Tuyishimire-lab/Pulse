@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
 // Validate if it is a valid http/https URL
 const isValidUrl = (url: string) => {
@@ -32,13 +32,16 @@ const createMockClient = () => {
   } as any;
 };
 
-if (!isValidUrl(supabaseUrl) || !supabaseAnonKey) {
+export const isSupabaseConfigured = !!(isValidUrl(supabaseUrl) && supabaseAnonKey);
+
+if (!isSupabaseConfigured) {
   console.warn(
     'Warning: Supabase credentials are missing or invalid. Falling back to mock client (will use local static data).'
   );
 }
 
-export const supabase = isValidUrl(supabaseUrl) && supabaseAnonKey
+export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : createMockClient();
+
 
