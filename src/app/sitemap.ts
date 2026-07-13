@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 import { SITES } from './data/sites';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
+export const revalidate = 86400; // Revalidate sitemap at most once a day
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://pulstraffic.com';
 
