@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SITES, CATEGORIES, SiteConfig } from './data/sites';
 import { getSiteDetails, SiteDetails } from './data/details';
 import CompareModal from './components/CompareModal';
@@ -27,11 +28,14 @@ function FaviconImage({ url, logo, color }: { url: string; logo: string; color: 
   }
 
   return (
-    <img
+    <Image
       src={faviconUrl}
       alt={`${logo} logo`}
+      width={64}
+      height={64}
       onError={() => setError(true)}
       className="w-full h-full object-contain p-1 rounded-full bg-white/10"
+      unoptimized
     />
   );
 }

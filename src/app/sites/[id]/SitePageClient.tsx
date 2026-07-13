@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SITES } from '../../data/sites';
 import { getSiteDetails, SiteDetails } from '../../data/details';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
@@ -26,11 +27,14 @@ function FaviconImage({ url, logo, color }: { url: string; logo: string; color: 
   }
 
   return (
-    <img
+    <Image
       src={faviconUrl}
       alt={`${logo} logo`}
+      width={64}
+      height={64}
       onError={() => setError(true)}
       className="w-full h-full object-contain p-1 rounded-full bg-white/10"
+      unoptimized
     />
   );
 }
@@ -77,22 +81,41 @@ export default function SitePageClient({ id }: { id: string }) {
   useEffect(() => {
     if (!site || !isSupabaseConfigured) return;
 
-    // Fetch up to 168 hours (7 days) of traffic history
-    supabase
-      .from('traffic_history')
-      .select('visits_percentage, timestamp')
-      .eq('site_id', site.id)
-      .order('timestamp', { ascending: true })
-      .limit(168)
-      .then((res: any) => {
-        const data = res.data;
-        if (data && data.length > 0) {
-          setDbHistory(data.map((item: any) => ({
-            visits_percentage: Number(item.visits_percentage),
-            timestamp: item.timestamp
-          })));
-        }
-      });
+    if (timeRange === '24h') {
+      supabase
+        .from('traffic_history')
+        .select('visits_percentage, timestamp')
+        .eq('site_id', site.id)
+        .order('timestamp', { ascending: false })
+        .limit(24)
+        .then((res: any) => {
+          const data = res.data;
+          if (data && data.length > 0) {
+            const sorted = data.map((item: any) => ({
+              visits_percentage: Number(item.visits_percentage),
+              timestamp: item.timestamp
+            })).reverse();
+            setDbHistory(sorted);
+          }
+        });
+    } else {
+      supabase
+        .from('traffic_daily_aggregation')
+        .select('avg_visits_percentage, date')
+        .eq('site_id', site.id)
+        .order('date', { ascending: false })
+        .limit(7)
+        .then((res: any) => {
+          const data = res.data;
+          if (data && data.length > 0) {
+            const sorted = data.map((item: any) => ({
+              visits_percentage: Number(item.avg_visits_percentage),
+              timestamp: new Date(item.date).toISOString()
+            })).reverse();
+            setDbHistory(sorted);
+          }
+        });
+    }
 
     // Fetch dynamic keywords from database
     supabase
@@ -105,7 +128,7 @@ export default function SitePageClient({ id }: { id: string }) {
           setDbKeywords(res.data.keywords);
         }
       });
-  }, [site]);
+  }, [site, timeRange]);
 
   const displayedKeywords = useMemo(() => {
     const raw = dbKeywords && dbKeywords.length > 0 ? dbKeywords : (details?.keywords || []);

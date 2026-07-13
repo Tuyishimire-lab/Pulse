@@ -19,13 +19,66 @@ CREATE TABLE IF NOT EXISTS public.traffic_history (
   visits_percentage NUMERIC NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS public.traffic_daily_aggregation (
+  site_id TEXT REFERENCES public.sites(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  avg_visits_percentage NUMERIC NOT NULL,
+  max_visits_percentage NUMERIC NOT NULL,
+  min_visits_percentage NUMERIC NOT NULL,
+  record_count INTEGER DEFAULT 1,
+  PRIMARY KEY (site_id, date)
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.traffic_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.traffic_daily_aggregation ENABLE ROW LEVEL SECURITY;
 
 -- Allow Public Read Access (Essential so frontend clients can fetch data)
 CREATE POLICY "Allow public read access to sites" ON public.sites FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to traffic_history" ON public.traffic_history FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to traffic_daily_aggregation" ON public.traffic_daily_aggregation FOR SELECT USING (true);
+
+-- Sync trigger function to update dynamic daily metrics
+CREATE OR REPLACE FUNCTION public.sync_traffic_daily_aggregation()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.traffic_daily_aggregation (site_id, date, avg_visits_percentage, max_visits_percentage, min_visits_percentage, record_count)
+  VALUES (
+    NEW.site_id,
+    NEW.timestamp::DATE,
+    NEW.visits_percentage,
+    NEW.visits_percentage,
+    NEW.visits_percentage,
+    1
+  )
+  ON CONFLICT (site_id, date) DO UPDATE SET
+    avg_visits_percentage = ROUND((traffic_daily_aggregation.avg_visits_percentage * traffic_daily_aggregation.record_count + EXCLUDED.avg_visits_percentage) / (traffic_daily_aggregation.record_count + 1), 2),
+    max_visits_percentage = GREATEST(traffic_daily_aggregation.max_visits_percentage, EXCLUDED.max_visits_percentage),
+    min_visits_percentage = LEAST(traffic_daily_aggregation.min_visits_percentage, EXCLUDED.min_visits_percentage),
+    record_count = traffic_daily_aggregation.record_count + 1;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger definition
+CREATE OR REPLACE TRIGGER trigger_sync_traffic_daily_aggregation
+AFTER INSERT ON public.traffic_history
+FOR EACH ROW
+EXECUTE FUNCTION public.sync_traffic_daily_aggregation();
+
+-- Seed aggregations from existing traffic_history data if any
+INSERT INTO public.traffic_daily_aggregation (site_id, date, avg_visits_percentage, max_visits_percentage, min_visits_percentage, record_count)
+SELECT 
+  site_id, 
+  timestamp::DATE as date, 
+  ROUND(AVG(visits_percentage), 2) as avg_visits_percentage,
+  MAX(visits_percentage) as max_visits_percentage,
+  MIN(visits_percentage) as min_visits_percentage,
+  COUNT(*) as record_count
+FROM public.traffic_history
+GROUP BY site_id, timestamp::DATE
+ON CONFLICT (site_id, date) DO NOTHING;
 
 -- Clear existing data
 TRUNCATE TABLE public.sites CASCADE;
