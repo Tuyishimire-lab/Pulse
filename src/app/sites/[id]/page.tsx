@@ -70,6 +70,12 @@ export default async function Page({ params }: PageProps) {
       'description': `Estimated baseline traffic statistics for ${siteUrl}.`,
       'identifier': siteUrl,
       'temporalCoverage': 'Ongoing real-time data stream',
+      'license': 'https://creativecommons.org/licenses/by/4.0/',
+      'creator': {
+        '@type': 'Organization',
+        'name': 'Pulse',
+        'url': 'https://pulstraffic.com'
+      },
       'variableMeasured': [
         {
           '@type': 'PropertyValue',
