@@ -63,6 +63,14 @@ export default function RootLayout({
     },
   };
 
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    'name': 'Pulse',
+    'url': 'https://pulstraffic.com',
+    'logo': 'https://pulstraffic.com/favicon.png'
+  };
+
   return (
     <html
       lang="en"
@@ -73,6 +81,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-PL277Z4KW6"
