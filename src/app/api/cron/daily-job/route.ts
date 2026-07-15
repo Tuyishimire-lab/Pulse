@@ -228,6 +228,66 @@ export async function GET(request: Request) {
       );
     }
 
+    // [New Segment] Sync rankings with Cloudflare Radar (Once daily inside cron)
+    const cfRadarToken = process.env.CLOUDFLARE_API_TOKEN;
+    if (cfRadarToken) {
+      try {
+        const cfRes = await fetch('https://api.cloudflare.com/client/v4/radar/ranking/top?limit=100&format=json', {
+          headers: {
+            'Authorization': `Bearer ${cfRadarToken}`,
+            'Accept': 'application/json'
+          },
+          signal: AbortSignal.timeout(6000)
+        });
+        if (cfRes.ok) {
+          const cfData = await cfRes.json();
+          if (cfData.success && cfData.result && cfData.result.top_0) {
+            const radarRanks = cfData.result.top_0;
+            const rankMap = new Map<string, number>();
+            radarRanks.forEach((item: any) => {
+              rankMap.set(item.domain.toLowerCase(), item.rank);
+            });
+
+            // Match and prepare updates
+            const rankUpdates: { id: string; rank: number }[] = [];
+            sites.forEach((site: any) => {
+              const domain = site.url
+                .replace('https://', '')
+                .replace('http://', '')
+                .replace('www.', '')
+                .split('/')[0]
+                .toLowerCase();
+              
+              const newRank = rankMap.get(domain);
+              if (newRank !== undefined && newRank !== site.rank) {
+                rankUpdates.push({ id: site.id, rank: newRank });
+                // Mutate the local array so subsequent OPR steps also have the updated rank!
+                site.rank = newRank;
+              }
+            });
+
+            // Write updates to Supabase
+            if (rankUpdates.length > 0) {
+              const dbUpdates = rankUpdates.map((upd) => 
+                supabase
+                  .from('sites')
+                  .update({ rank: upd.rank })
+                  .eq('id', upd.id)
+              );
+              // Perform updates
+              const chunkSize = 10;
+              for (let i = 0; i < dbUpdates.length; i += chunkSize) {
+                await Promise.all(dbUpdates.slice(i, i + chunkSize));
+              }
+              console.log(`Unified Cron: Synced ${rankUpdates.length} rankings with Cloudflare Radar.`);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Unified Cron: Failed to sync rankings with Cloudflare Radar:', err);
+      }
+    }
+
     // 3. Query Open PageRank API for all domains in one single request
     const domainsList = sites.map((s: any) => {
       return s.url.replace('https://', '').replace('http://', '').replace('www.', '');

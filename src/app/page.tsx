@@ -313,17 +313,18 @@ export default function Home() {
         setLoadingRadar(false);
       });
 
-    fetch(`/api/sync-rankings?t=${Date.now()}${countryParam}`, { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.success && data.ranks) {
-          setLocalRanks(data.ranks);
-          if (!data.inMemory && data.syncedCount > 0) {
-            console.log(`Synchronized ${data.syncedCount} global domain rankings with Cloudflare Radar.`);
+    if (selectedCountry !== 'global') {
+      fetch(`/api/sync-rankings?t=${Date.now()}${countryParam}`, { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success && data.ranks) {
+            setLocalRanks(data.ranks);
           }
-        }
-      })
-      .catch((err) => console.warn('Rank synchronization check failed:', err));
+        })
+        .catch((err) => console.warn('Rank synchronization check failed:', err));
+    } else {
+      setLocalRanks({});
+    }
   }, [selectedCountry]);
 
   const toggleStar = (siteId: string, e: React.MouseEvent) => {
