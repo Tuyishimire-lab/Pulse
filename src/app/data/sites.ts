@@ -10,6 +10,7 @@ export interface SiteConfig {
   color: string;
   glow: string;
   progress: number;
+  asn?: number[];
 }
 
 export const CATEGORIES = [
@@ -26,26 +27,26 @@ export const CATEGORIES = [
 ];
 
 export const SITES: SiteConfig[] = [
-  { id: 'google', name: 'Google', url: 'https://google.com', rank: 1, category: 'search', baseline: '85.2B / mo', rate: 32382, logo: 'G', color: '#4285F4', glow: 'rgba(66, 133, 244, 0.15)', progress: 100 },
-  { id: 'youtube', name: 'YouTube', url: 'https://youtube.com', rank: 2, category: 'entertainment', baseline: '32.7B / mo', rate: 12442, logo: 'Y', color: '#ef4444', glow: 'rgba(239, 68, 68, 0.15)', progress: 38.38 },
-  { id: 'facebook', name: 'Facebook', url: 'https://facebook.com', rank: 3, category: 'social', baseline: '16.3B / mo', rate: 6198, logo: 'F', color: '#1877F2', glow: 'rgba(24, 119, 242, 0.15)', progress: 19.13 },
-  { id: 'wikipedia', name: 'Wikipedia', url: 'https://wikipedia.org', rank: 4, category: 'reference', baseline: '4.3B / mo', rate: 1636, logo: 'W', color: '#72777D', glow: 'rgba(114, 119, 125, 0.15)', progress: 5.05 },
-  { id: 'instagram', name: 'Instagram', url: 'https://instagram.com', rank: 5, category: 'social', baseline: '7.1B / mo', rate: 2701, logo: 'I', color: '#E1306C', glow: 'rgba(225, 48, 108, 0.15)', progress: 8.33 },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com', rank: 6, category: 'ai', baseline: '3.7B / mo', rate: 1407, logo: 'C', color: '#10a37f', glow: 'rgba(16, 163, 127, 0.15)', progress: 4.34 },
-  { id: 'reddit', name: 'Reddit', url: 'https://reddit.com', rank: 7, category: 'social', baseline: '3.4B / mo', rate: 1293, logo: 'R', color: '#FF4500', glow: 'rgba(255, 69, 0, 0.15)', progress: 3.99 },
-  { id: 'x', name: 'X (Twitter)', url: 'https://x.com', rank: 8, category: 'social', baseline: '3.2B / mo', rate: 1217, logo: 'X', color: '#ffffff', glow: 'rgba(255, 255, 255, 0.1)', progress: 3.76 },
-  { id: 'yahoo', name: 'Yahoo', url: 'https://yahoo.com', rank: 9, category: 'search', baseline: '3.1B / mo', rate: 1178, logo: 'Y', color: '#6001d2', glow: 'rgba(96, 1, 210, 0.15)', progress: 3.64 },
-  { id: 'amazon', name: 'Amazon', url: 'https://amazon.com', rank: 10, category: 'ecommerce', baseline: '2.9B / mo', rate: 1102, logo: 'A', color: '#ff9900', glow: 'rgba(255, 153, 0, 0.15)', progress: 3.40 },
-  { id: 'yandex', name: 'Yandex', url: 'https://yandex.ru', rank: 11, category: 'search', baseline: '2.8B / mo', rate: 1064, logo: 'Y', color: '#ffcc00', glow: 'rgba(255, 204, 0, 0.15)', progress: 3.29 },
-  { id: 'baidu', name: 'Baidu', url: 'https://baidu.com', rank: 12, category: 'search', baseline: '2.5B / mo', rate: 950, logo: 'B', color: '#2319dc', glow: 'rgba(35, 25, 220, 0.15)', progress: 2.93 },
-  { id: 'tiktok', name: 'TikTok', url: 'https://tiktok.com', rank: 13, category: 'social', baseline: '2.1B / mo', rate: 798, logo: 'T', color: '#01f1e2', glow: 'rgba(1, 241, 226, 0.15)', progress: 2.46 },
-  { id: 'netflix', name: 'Netflix', url: 'https://netflix.com', rank: 14, category: 'entertainment', baseline: '1.9B / mo', rate: 722, logo: 'N', color: '#e50914', glow: 'rgba(229, 9, 20, 0.15)', progress: 2.23 },
-  { id: 'microsoft', name: 'Microsoft', url: 'https://microsoft.com', rank: 15, category: 'dev', baseline: '1.8B / mo', rate: 684, logo: 'M', color: '#0078d4', glow: 'rgba(0, 120, 212, 0.15)', progress: 2.11 },
-  { id: 'office', name: 'Office', url: 'https://office.com', rank: 16, category: 'dev', baseline: '1.6B / mo', rate: 608, logo: 'O', color: '#eb3c00', glow: 'rgba(235, 60, 0, 0.15)', progress: 1.88 },
-  { id: 'linkedin', name: 'LinkedIn', url: 'https://linkedin.com', rank: 17, category: 'social', baseline: '1.5B / mo', rate: 570, logo: 'L', color: '#0a66c2', glow: 'rgba(10, 102, 194, 0.15)', progress: 1.76 },
-  { id: 'weather', name: 'Weather', url: 'https://weather.com', rank: 18, category: 'reference', baseline: '1.2B / mo', rate: 456, logo: 'W', color: '#002f6c', glow: 'rgba(0, 47, 108, 0.15)', progress: 1.41 },
-  { id: 'twitch', name: 'Twitch', url: 'https://twitch.tv', rank: 19, category: 'entertainment', baseline: '1.1B / mo', rate: 418, logo: 'T', color: '#9146ff', glow: 'rgba(145, 70, 255, 0.15)', progress: 1.29 },
-  { id: 'github', name: 'GitHub', url: 'https://github.com', rank: 20, category: 'dev', baseline: '1.0B / mo', rate: 380, logo: 'G', color: '#24292f', glow: 'rgba(36, 41, 47, 0.15)', progress: 1.17 },
+  { id: 'google', name: 'Google', url: 'https://google.com', rank: 1, category: 'search', baseline: '85.2B / mo', rate: 32382, logo: 'G', color: '#4285F4', glow: 'rgba(66, 133, 244, 0.15)', progress: 100, asn: [15169] },
+  { id: 'youtube', name: 'YouTube', url: 'https://youtube.com', rank: 2, category: 'entertainment', baseline: '32.7B / mo', rate: 12442, logo: 'Y', color: '#ef4444', glow: 'rgba(239, 68, 68, 0.15)', progress: 38.38, asn: [15169] },
+  { id: 'facebook', name: 'Facebook', url: 'https://facebook.com', rank: 3, category: 'social', baseline: '16.3B / mo', rate: 6198, logo: 'F', color: '#1877F2', glow: 'rgba(24, 119, 242, 0.15)', progress: 19.13, asn: [32934] },
+  { id: 'wikipedia', name: 'Wikipedia', url: 'https://wikipedia.org', rank: 4, category: 'reference', baseline: '4.3B / mo', rate: 1636, logo: 'W', color: '#72777D', glow: 'rgba(114, 119, 125, 0.15)', progress: 5.05, asn: [14907] },
+  { id: 'instagram', name: 'Instagram', url: 'https://instagram.com', rank: 5, category: 'social', baseline: '7.1B / mo', rate: 2701, logo: 'I', color: '#E1306C', glow: 'rgba(225, 48, 108, 0.15)', progress: 8.33, asn: [32934] },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com', rank: 6, category: 'ai', baseline: '3.7B / mo', rate: 1407, logo: 'C', color: '#10a37f', glow: 'rgba(16, 163, 127, 0.15)', progress: 4.34, asn: [20473] },
+  { id: 'reddit', name: 'Reddit', url: 'https://reddit.com', rank: 7, category: 'social', baseline: '3.4B / mo', rate: 1293, logo: 'R', color: '#FF4500', glow: 'rgba(255, 69, 0, 0.15)', progress: 3.99, asn: [30064] },
+  { id: 'x', name: 'X (Twitter)', url: 'https://x.com', rank: 8, category: 'social', baseline: '3.2B / mo', rate: 1217, logo: 'X', color: '#ffffff', glow: 'rgba(255, 255, 255, 0.1)', progress: 3.76, asn: [13414] },
+  { id: 'yahoo', name: 'Yahoo', url: 'https://yahoo.com', rank: 9, category: 'search', baseline: '3.1B / mo', rate: 1178, logo: 'Y', color: '#6001d2', glow: 'rgba(96, 1, 210, 0.15)', progress: 3.64, asn: [10310] },
+  { id: 'amazon', name: 'Amazon', url: 'https://amazon.com', rank: 10, category: 'ecommerce', baseline: '2.9B / mo', rate: 1102, logo: 'A', color: '#ff9900', glow: 'rgba(255, 153, 0, 0.15)', progress: 3.40, asn: [16509] },
+  { id: 'yandex', name: 'Yandex', url: 'https://yandex.ru', rank: 11, category: 'search', baseline: '2.8B / mo', rate: 1064, logo: 'Y', color: '#ffcc00', glow: 'rgba(255, 204, 0, 0.15)', progress: 3.29, asn: [13238] },
+  { id: 'baidu', name: 'Baidu', url: 'https://baidu.com', rank: 12, category: 'search', baseline: '2.5B / mo', rate: 950, logo: 'B', color: '#2319dc', glow: 'rgba(35, 25, 220, 0.15)', progress: 2.93, asn: [55967] },
+  { id: 'tiktok', name: 'TikTok', url: 'https://tiktok.com', rank: 13, category: 'social', baseline: '2.1B / mo', rate: 798, logo: 'T', color: '#01f1e2', glow: 'rgba(1, 241, 226, 0.15)', progress: 2.46, asn: [396986] },
+  { id: 'netflix', name: 'Netflix', url: 'https://netflix.com', rank: 14, category: 'entertainment', baseline: '1.9B / mo', rate: 722, logo: 'N', color: '#e50914', glow: 'rgba(229, 9, 20, 0.15)', progress: 2.23, asn: [2906] },
+  { id: 'microsoft', name: 'Microsoft', url: 'https://microsoft.com', rank: 15, category: 'dev', baseline: '1.8B / mo', rate: 684, logo: 'M', color: '#0078d4', glow: 'rgba(0, 120, 212, 0.15)', progress: 2.11, asn: [8075] },
+  { id: 'office', name: 'Office', url: 'https://office.com', rank: 16, category: 'dev', baseline: '1.6B / mo', rate: 608, logo: 'O', color: '#eb3c00', glow: 'rgba(235, 60, 0, 0.15)', progress: 1.88, asn: [8075] },
+  { id: 'linkedin', name: 'LinkedIn', url: 'https://linkedin.com', rank: 17, category: 'social', baseline: '1.5B / mo', rate: 570, logo: 'L', color: '#0a66c2', glow: 'rgba(10, 102, 194, 0.15)', progress: 1.76, asn: [8075] },
+  { id: 'weather', name: 'Weather', url: 'https://weather.com', rank: 18, category: 'reference', baseline: '1.2B / mo', rate: 456, logo: 'W', color: '#002f6c', glow: 'rgba(0, 47, 108, 0.15)', progress: 1.41, asn: [21859] },
+  { id: 'twitch', name: 'Twitch', url: 'https://twitch.tv', rank: 19, category: 'entertainment', baseline: '1.1B / mo', rate: 418, logo: 'T', color: '#9146ff', glow: 'rgba(145, 70, 255, 0.15)', progress: 1.29, asn: [46489] },
+  { id: 'github', name: 'GitHub', url: 'https://github.com', rank: 20, category: 'dev', baseline: '1.0B / mo', rate: 380, logo: 'G', color: '#24292f', glow: 'rgba(36, 41, 47, 0.15)', progress: 1.17, asn: [36459] },
   { id: 'zoom', name: 'Zoom', url: 'https://zoom.us', rank: 21, category: 'dev', baseline: '900M / mo', rate: 342, logo: 'Z', color: '#2d8cff', glow: 'rgba(45, 140, 255, 0.15)', progress: 1.06 },
   { id: 'ebay', name: 'eBay', url: 'https://ebay.com', rank: 22, category: 'ecommerce', baseline: '800M / mo', rate: 304, logo: 'E', color: '#e53238', glow: 'rgba(229, 50, 56, 0.15)', progress: 0.94 },
   { id: 'pinterest', name: 'Pinterest', url: 'https://pinterest.com', rank: 23, category: 'social', baseline: '800M / mo', rate: 304, logo: 'P', color: '#bd081c', glow: 'rgba(189, 8, 28, 0.15)', progress: 0.94 },

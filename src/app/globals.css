@@ -1802,5 +1802,18 @@ body {
   }
 }
 
+/* Card active incident warning glow */
+.card-incident {
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.25) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(255, 255, 255, 0.015)) !important;
+}
+
+.list-row.row-incident {
+  border-left: 3px solid #ef4444 !important;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.04), transparent) !important;
+}
+
+
 
 

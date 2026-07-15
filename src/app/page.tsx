@@ -158,17 +158,57 @@ export default function Home() {
 
   // Live News Marquee Current Headline
   const [marqueeIndex, setMarqueeIndex] = useState(0);
-  const [marqueeItems, setMarqueeItems] = useState<{ text: string; type: string }[]>(MARQUEE_NEWS);
+  const [marqueeItems, setMarqueeItems] = useState<{ text: string; type: string; asns?: number[]; locations?: string[] }[]>(MARQUEE_NEWS);
 
   // Legal Modal States
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Advanced Filtering and Analytics States
-  const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(false);
+  const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(true);
   const [trafficTierFilter, setTrafficTierFilter] = useState<'all' | 'enterprise' | 'midmarket' | 'growth'>('all');
   const [sortBy, setSortBy] = useState<'rank' | 'rate' | 'name'>('rank');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Cloudflare Radar Stats State
+  const [radarStats, setRadarStats] = useState<any>(null);
+  const [loadingRadar, setLoadingRadar] = useState<boolean>(true);
+
+  // Helper to calculate rank change against static baseline
+  const getRankChange = (site: SiteConfig) => {
+    const staticSite = SITES.find(s => s.id === site.id);
+    if (!staticSite) return null;
+    return staticSite.rank - site.rank; // positive value means rank improved (closer to #1)
+  };
+
+  // Memoized set of site IDs with active outages matching ASNs or brand names in ticker
+  const sitesWithIncidents = useMemo(() => {
+    const incidentIds = new Set<string>();
+    const baseSites = dbSites.length > 0 ? dbSites : SITES;
+    const allBaseSites = [...baseSites, ...customSites];
+
+    marqueeItems.forEach((item) => {
+      if (item.type !== 'outage') return;
+
+      const itemAsns = item.asns;
+      allBaseSites.forEach((site) => {
+        // 1. Check ASN match
+        const hasAsnMatch = site.asn && Array.isArray(itemAsns) &&
+          site.asn.some((asn) => itemAsns.includes(asn));
+
+        // 2. Check brand name or ID keyword match
+        const nameRegex = new RegExp(`\\b${site.name}\\b`, 'i');
+        const idRegex = new RegExp(`\\b${site.id}\\b`, 'i');
+        const hasKeywordMatch = nameRegex.test(item.text) || idRegex.test(item.text);
+
+        if (hasAsnMatch || hasKeywordMatch) {
+          incidentIds.add(site.id);
+        }
+      });
+    });
+
+    return incidentIds;
+  }, [marqueeItems, dbSites, customSites]);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -250,6 +290,33 @@ export default function Home() {
         }
       })
       .catch((err) => console.error('Error fetching live marquee updates:', err));
+  }, []);
+
+  // Fetch Cloudflare Radar Global Traffic Statistics on mount
+  useEffect(() => {
+    setLoadingRadar(true);
+    fetch('/api/radar-stats?t=' + Date.now(), { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success) {
+          setRadarStats(data);
+        }
+        setLoadingRadar(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching Cloudflare Radar stats:', err);
+        setLoadingRadar(false);
+      });
+
+    // Proactively request a rank synchronization check in the background
+    fetch('/api/sync-rankings?t=' + Date.now(), { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success && data.syncedCount > 0) {
+          console.log(`Synchronized ${data.syncedCount} domain rankings with Cloudflare Radar.`);
+        }
+      })
+      .catch((err) => console.warn('Rank synchronization check failed:', err));
   }, []);
 
   const toggleStar = (siteId: string, e: React.MouseEvent) => {
@@ -710,121 +777,195 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Calculated summary stats card grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
-                <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Combined Rate Velocity</span>
-                <div className="text-2xl font-extrabold text-[#82c8e5] mt-1">
-                  ~{analyticsStats.totalRate.toLocaleString('en-US')} <span className="text-sm font-normal text-white/50">/ sec</span>
-                </div>
-                <p className="text-[10px] text-white/40 mt-1">Sum of live dispatch counters across all selected domains.</p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
-                <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Avg Global Rank</span>
-                <div className="text-2xl font-extrabold text-[#a78bfa] mt-1">
-                  #{analyticsStats.avgRank.toLocaleString('en-US')}
-                </div>
-                <p className="text-[10px] text-white/40 mt-1">Average PageRank placement index in our active catalog.</p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
-                <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Est. Monthly Volume</span>
-                <div className="text-2xl font-extrabold text-[#34d399] mt-1">
-                  {((analyticsStats.totalRate * 86400 * 30.4) / 1000000000).toFixed(2)}B <span className="text-sm font-normal text-white/50">/ mo</span>
-                </div>
-                <p className="text-[10px] text-white/40 mt-1">Total estimated global monthly organic user visits.</p>
-              </div>
-            </div>
-
-            {/* Category Mix Breakdown bar */}
-            <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
-              <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Category Distribution Mix</span>
-              <div className="flex gap-1.5 h-3 rounded-full overflow-hidden mt-3 bg-white/5">
-                {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
-                  const pct = Math.max(5, Math.round((count / filteredSites.length) * 100));
-                  let color = '#3b82f6';
-                  if (cat === 'dev') color = '#6366f1';
-                  else if (cat === 'finance') color = '#10b981';
-                  else if (cat === 'social') color = '#ec4899';
-                  else if (cat === 'media') color = '#f59e0b';
-                  else if (cat === 'shopping') color = '#a855f7';
-                  
-                  return (
-                    <div 
-                      key={cat} 
-                      style={{ width: `${pct}%`, backgroundColor: color }} 
-                      title={`${cat.toUpperCase()}: ${count} (${pct}%)`}
-                    />
-                  );
-                })}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-[10px] font-bold text-white/70">
-                {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
-                  let color = '#3b82f6';
-                  if (cat === 'dev') color = '#6366f1';
-                  else if (cat === 'finance') color = '#10b981';
-                  else if (cat === 'social') color = '#ec4899';
-                  else if (cat === 'media') color = '#f59e0b';
-                  else if (cat === 'shopping') color = '#a855f7';
-
-                  return (
-                    <div key={cat} className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                      <span className="uppercase">{cat}:</span>
-                      <span className="text-white">{count} ({Math.round((count / filteredSites.length) * 100)}%)</span>
+            {/* Split layout: Left is Local Catalog Stats + Filters, Right is Cloudflare Global Radar Widget */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left Column: Local Catalog Stats + Filters */}
+              <div className="lg:col-span-2 flex flex-col gap-6">
+                {/* Calculated summary stats card grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                    <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Combined Rate Velocity</span>
+                    <div className="text-2xl font-extrabold text-[#82c8e5] mt-1">
+                      ~{analyticsStats.totalRate.toLocaleString('en-US')} <span className="text-sm font-normal text-white/50">/ sec</span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                    <p className="text-[10px] text-white/40 mt-1">Sum of live dispatch counters across all selected domains.</p>
+                  </div>
 
-            {/* Filtering parameters input selects */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/5 pt-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Traffic Tier Filter</label>
-                <select 
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
-                  value={trafficTierFilter}
-                  onChange={(e) => setTrafficTierFilter(e.target.value as any)}
-                >
-                  <option value="all">🌐 All Tiers</option>
-                  <option value="enterprise">🏢 Enterprise (&gt; 500M / mo)</option>
-                  <option value="midmarket">💼 Mid-Market (50M - 500M / mo)</option>
-                  <option value="growth">🚀 Growth (&lt; 50M / mo)</option>
-                </select>
-              </div>
+                  <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                    <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Avg Global Rank</span>
+                    <div className="text-2xl font-extrabold text-[#a78bfa] mt-1">
+                      #{analyticsStats.avgRank.toLocaleString('en-US')}
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-1">Average PageRank placement index in our active catalog.</p>
+                  </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Metric By</label>
-                <select 
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                >
-                  <option value="rank">⭐ Global Rank</option>
-                  <option value="rate">⚡ Live Dispatch Rate</option>
-                  <option value="name">🔤 Brand Name</option>
-                </select>
-              </div>
+                  <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                    <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Est. Monthly Volume</span>
+                    <div className="text-2xl font-extrabold text-[#34d399] mt-1">
+                      {((analyticsStats.totalRate * 86400 * 30.4) / 1000000000).toFixed(2)}B <span className="text-sm font-normal text-white/50">/ mo</span>
+                    </div>
+                    <p className="text-[10px] text-white/40 mt-1">Total estimated global monthly organic user visits.</p>
+                  </div>
+                </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Order Direction</label>
-                <div className="segmented-tabs mt-0.5">
-                  <button 
-                    className={`tab-item text-xs py-1.5 ${sortOrder === 'asc' ? 'active' : ''}`}
-                    onClick={() => setSortOrder('asc')}
-                  >
-                    Ascending ↑
-                  </button>
-                  <button 
-                    className={`tab-item text-xs py-1.5 ${sortOrder === 'desc' ? 'active' : ''}`}
-                    onClick={() => setSortOrder('desc')}
-                  >
-                    Descending ↓
-                  </button>
+                {/* Category Mix Breakdown bar */}
+                <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
+                  <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Category Distribution Mix</span>
+                  <div className="flex gap-1.5 h-3 rounded-full overflow-hidden mt-3 bg-white/5">
+                    {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
+                      const pct = Math.max(5, Math.round((count / filteredSites.length) * 100));
+                      let color = '#3b82f6';
+                      if (cat === 'dev') color = '#6366f1';
+                      else if (cat === 'finance') color = '#10b981';
+                      else if (cat === 'social') color = '#ec4899';
+                      else if (cat === 'media') color = '#f59e0b';
+                      else if (cat === 'shopping') color = '#a855f7';
+                      
+                      return (
+                        <div 
+                          key={cat} 
+                          style={{ width: `${pct}%`, backgroundColor: color }} 
+                          title={`${cat.toUpperCase()}: ${count} (${pct}%)`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-[10px] font-bold text-white/70">
+                    {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
+                      let color = '#3b82f6';
+                      if (cat === 'dev') color = '#6366f1';
+                      else if (cat === 'finance') color = '#10b981';
+                      else if (cat === 'social') color = '#ec4899';
+                      else if (cat === 'media') color = '#f59e0b';
+                      else if (cat === 'shopping') color = '#a855f7';
+
+                      return (
+                        <div key={cat} className="flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                          <span className="uppercase">{cat}:</span>
+                          <span className="text-white">{count} ({Math.round((count / filteredSites.length) * 100)}%)</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Filtering parameters input selects */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-white/5 pt-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Traffic Tier Filter</label>
+                    <select 
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
+                      value={trafficTierFilter}
+                      onChange={(e) => setTrafficTierFilter(e.target.value as any)}
+                    >
+                      <option value="all">🌐 All Tiers</option>
+                      <option value="enterprise">🏢 Enterprise (&gt; 500M / mo)</option>
+                      <option value="midmarket">💼 Mid-Market (50M - 500M / mo)</option>
+                      <option value="growth">🚀 Growth (&lt; 50M / mo)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Metric By</label>
+                    <select 
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                    >
+                      <option value="rank">⭐ Global Rank</option>
+                      <option value="rate">⚡ Live Dispatch Rate</option>
+                      <option value="name">🔤 Brand Name</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Order Direction</label>
+                    <div className="segmented-tabs mt-0.5">
+                      <button 
+                        className={`tab-item text-xs py-1.5 ${sortOrder === 'asc' ? 'active' : ''}`}
+                        onClick={() => setSortOrder('asc')}
+                      >
+                        Ascending ↑
+                      </button>
+                      <button 
+                        className={`tab-item text-xs py-1.5 ${sortOrder === 'desc' ? 'active' : ''}`}
+                        onClick={() => setSortOrder('desc')}
+                      >
+                        Descending ↓
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Right Column: Global Radar Pulse Widget */}
+              <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.01] flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold text-[#82c8e5] uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#82c8e5] animate-pulse" />
+                    Global Radar Traffic Pulse
+                  </h4>
+                  <span className="text-[10px] text-white/40 flex items-center gap-1">
+                    {radarStats?.source === 'cloudflare' ? '⚡ Live' : '⚠️ Cached'}
+                  </span>
+                </div>
+
+                {loadingRadar ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3 text-white/50">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/40" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Syncing Cloudflare Radar...</span>
+                  </div>
+                ) : (
+                  <>
+                    {/* Device Share splits */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-[#6d8196] uppercase tracking-wider">Global Device Mix</span>
+                        <span className="text-white">
+                          📱 {radarStats?.deviceType?.mobile}% | 💻 {radarStats?.deviceType?.desktop}%
+                        </span>
+                      </div>
+                      <div className="w-full h-2 rounded-full overflow-hidden bg-white/5 flex">
+                        <div style={{ width: `${radarStats?.deviceType?.mobile}%`, backgroundColor: '#3b82f6' }} title={`Mobile: ${radarStats?.deviceType?.mobile}%`} />
+                        <div style={{ width: `${radarStats?.deviceType?.desktop}%`, backgroundColor: '#a78bfa' }} title={`Desktop: ${radarStats?.deviceType?.desktop}%`} />
+                        <div style={{ width: `${radarStats?.deviceType?.other}%`, backgroundColor: '#72777d' }} title={`Other: ${radarStats?.deviceType?.other}%`} />
+                      </div>
+                    </div>
+
+                    {/* Protocol Split */}
+                    <div className="flex flex-col gap-2 border-t border-white/5 pt-4">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-[#6d8196] uppercase tracking-wider">Protocol Adoption</span>
+                        <span className="text-white">HTTP/3: {radarStats?.httpVersion?.http3}%</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full overflow-hidden bg-white/5 flex">
+                        <div style={{ width: `${radarStats?.httpVersion?.http3}%`, backgroundColor: '#10b981' }} title={`HTTP/3: ${radarStats?.httpVersion?.http3}%`} />
+                        <div style={{ width: `${radarStats?.httpVersion?.http2}%`, backgroundColor: '#f59e0b' }} title={`HTTP/2: ${radarStats?.httpVersion?.http2}%`} />
+                        <div style={{ width: `${radarStats?.httpVersion?.http1}%`, backgroundColor: '#ef4444' }} title={`HTTP/1.x: ${radarStats?.httpVersion?.http1}%`} />
+                      </div>
+                    </div>
+
+                    {/* Top Locations list */}
+                    <div className="flex flex-col gap-2 border-t border-white/5 pt-4">
+                      <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Top Client Locations</span>
+                      <div className="flex flex-col gap-2 mt-1">
+                        {radarStats?.topLocations?.map((loc: any, idx: number) => (
+                          <div key={loc.location} className="flex justify-between items-center text-xs">
+                            <span className="text-white/80 font-medium flex items-center gap-1.5">
+                              <span className="text-[10px] text-white/40">#{idx + 1}</span>
+                              {loc.name}
+                            </span>
+                            <span className="font-semibold text-[#82c8e5]">{loc.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
             </div>
           </div>
         )}
@@ -837,7 +978,7 @@ export default function Home() {
                 key={site.id}
                 data-site-item="true"
                 data-site-id={site.id}
-                className="card card-visible cursor-pointer"
+                className={`card card-visible cursor-pointer ${sitesWithIncidents.has(site.id) ? 'card-incident animate-pulse' : ''}`}
                 onClick={() => handleSiteClick(site)}
                 style={{
                   ['--brand-color' as any]: site.color,
@@ -845,7 +986,23 @@ export default function Home() {
                 }}
               >
                 <div className="card-header">
-                  <span className="rank-badge">RANK #{site.rank}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rank-badge">RANK #{site.rank}</span>
+                    {(() => {
+                      const change = getRankChange(site);
+                      if (change === null || change === 0) return null;
+                      if (change > 0) {
+                        return <span className="text-[10px] font-bold text-emerald-400">▲ +{change}</span>;
+                      } else {
+                        return <span className="text-[10px] font-bold text-rose-500">▼ {change}</span>;
+                      }
+                    })()}
+                    {sitesWithIncidents.has(site.id) && (
+                      <span className="text-[9px] font-extrabold text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse flex items-center gap-0.5 ml-1">
+                        ⚠️ Outage
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <button 
                       className={`star-btn ${watchlistIds.includes(site.id) ? 'active-star' : ''}`}
@@ -954,7 +1111,7 @@ export default function Home() {
                 key={site.id}
                 data-site-item="true"
                 data-site-id={site.id}
-                className="list-row card-visible cursor-pointer"
+                className={`list-row card-visible cursor-pointer ${sitesWithIncidents.has(site.id) ? 'row-incident animate-pulse' : ''}`}
                 onClick={() => handleSiteClick(site)}
                 style={{
                   ['--brand-color' as any]: site.color,
@@ -968,7 +1125,18 @@ export default function Home() {
                   >
                     ★
                   </button>
-                  <div className="list-rank text-left">#{site.rank}</div>
+                  <div className="list-rank text-left flex items-center gap-1.5">
+                    <span>#{site.rank}</span>
+                    {(() => {
+                      const change = getRankChange(site);
+                      if (change === null || change === 0) return null;
+                      if (change > 0) {
+                        return <span className="text-[10px] font-bold text-emerald-400">▲ +{change}</span>;
+                      } else {
+                        return <span className="text-[10px] font-bold text-rose-500">▼ {change}</span>;
+                      }
+                    })()}
+                  </div>
                 </div>
 
                 <div className="list-identity">
@@ -984,6 +1152,11 @@ export default function Home() {
                   <div className="list-names text-left">
                     <div className="flex items-center gap-2">
                       <h2 className="list-name">{site.name}</h2>
+                      {sitesWithIncidents.has(site.id) && (
+                        <span className="text-[8px] font-extrabold text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/20 px-1 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                          Outage
+                        </span>
+                      )}
                       <Link 
                         href={`/sites/${site.id}`} 
                         onClick={(e) => e.stopPropagation()} 
@@ -1206,6 +1379,12 @@ export default function Home() {
                     }}
                   />
                 </div>
+                {radarStats?.deviceType && (
+                  <div className="text-[9px] font-bold text-white/30 uppercase tracking-wider mt-1.5 flex justify-between">
+                    <span>Cloudflare Radar Benchmark</span>
+                    <span>💻 {radarStats.deviceType.desktop}% Desktop | 📱 {radarStats.deviceType.mobile}% Mobile</span>
+                  </div>
+                )}
               </div>
 
               <div className="chart-container text-left">
