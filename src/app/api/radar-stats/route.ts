@@ -31,16 +31,43 @@ const COUNTRY_NAMES: Record<string, string> = {
   PL: 'Poland',
 };
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const rawLocation = searchParams.get('location') || 'global';
+  const location = rawLocation.toLowerCase() === 'global' ? 'global' : rawLocation.toUpperCase();
+  const hasLocation = location !== 'global';
+  
   const token = process.env.CLOUDFLARE_API_TOKEN;
+
+  // Localized mock network metrics
+  let mockQuality = {
+    bandwidth: 52.4,
+    latency: 78.3,
+    dnsResponseTime: 15.2
+  };
+
+  if (location === 'US') {
+    mockQuality = { bandwidth: 142.5, latency: 22.8, dnsResponseTime: 8.5 };
+  } else if (location === 'IN') {
+    mockQuality = { bandwidth: 38.2, latency: 62.5, dnsResponseTime: 14.8 };
+  } else if (location === 'GB') {
+    mockQuality = { bandwidth: 110.1, latency: 28.2, dnsResponseTime: 9.1 };
+  } else if (location === 'DE') {
+    mockQuality = { bandwidth: 125.4, latency: 25.6, dnsResponseTime: 10.2 };
+  } else if (location === 'BR') {
+    mockQuality = { bandwidth: 68.5, latency: 45.1, dnsResponseTime: 12.4 };
+  } else if (location === 'JP') {
+    mockQuality = { bandwidth: 135.2, latency: 18.5, dnsResponseTime: 7.8 };
+  }
 
   // Premium mock metrics for global fallback
   const mockStats = {
     success: true,
     source: 'mock',
+    location: location,
     deviceType: {
-      desktop: 44.8,
-      mobile: 53.6,
+      desktop: location === 'IN' || location === 'BR' ? 32.5 : 44.8,
+      mobile: location === 'IN' || location === 'BR' ? 65.8 : 53.6,
       other: 1.6
     },
     topLocations: [
@@ -54,7 +81,8 @@ export async function GET() {
       http3: 38.5,
       http2: 51.3,
       http1: 10.2
-    }
+    },
+    quality: mockQuality
   };
 
   if (!token) {
@@ -67,10 +95,12 @@ export async function GET() {
       'Accept': 'application/json',
     };
 
+    const locationQuery = hasLocation ? `&location=${location}` : '';
+
     // 1. Fetch Device Type Summary
     let deviceTypeData = { desktop: 44.8, mobile: 53.6, other: 1.6 };
     try {
-      const res = await fetch('https://api.cloudflare.com/client/v4/radar/http/summary/device_type?dateRange=7d&format=json', {
+      const res = await fetch(`https://api.cloudflare.com/client/v4/radar/http/summary/device_type?dateRange=7d&format=json${locationQuery}`, {
         headers,
         next: { revalidate: 300 }
       });
@@ -89,35 +119,39 @@ export async function GET() {
       console.warn('Failed to fetch device_type from Cloudflare:', e);
     }
 
-    // 2. Fetch Top Locations
+    // 2. Fetch Top Locations (Only relevant for global view)
     let topLocationsData = mockStats.topLocations;
-    try {
-      const res = await fetch('https://api.cloudflare.com/client/v4/radar/http/top/locations?dateRange=7d&limit=5&format=json', {
-        headers,
-        next: { revalidate: 300 }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const locations = json?.result?.topLocations || json?.result?.locations;
-        if (Array.isArray(locations)) {
-          topLocationsData = locations.map((loc: CloudflareTopLocation) => {
-            const pct = parseFloat(parseFloat(loc.value || '0').toFixed(1));
-            return {
-              location: loc.location,
-              name: COUNTRY_NAMES[loc.location] || loc.location,
-              percentage: pct
-            };
-          });
+    if (!hasLocation) {
+      try {
+        const res = await fetch('https://api.cloudflare.com/client/v4/radar/http/top/locations?dateRange=7d&limit=5&format=json', {
+          headers,
+          next: { revalidate: 300 }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const locations = json?.result?.topLocations || json?.result?.locations;
+          if (Array.isArray(locations)) {
+            topLocationsData = locations.map((loc: CloudflareTopLocation) => {
+              const pct = parseFloat(parseFloat(loc.value || '0').toFixed(1));
+              return {
+                location: loc.location,
+                name: COUNTRY_NAMES[loc.location] || loc.location,
+                percentage: pct
+              };
+            });
+          }
         }
+      } catch (e) {
+        console.warn('Failed to fetch top locations from Cloudflare:', e);
       }
-    } catch (e) {
-      console.warn('Failed to fetch top locations from Cloudflare:', e);
+    } else {
+      topLocationsData = [];
     }
 
     // 3. Fetch HTTP Versions Summary
     let httpVersionData = { http3: 38.5, http2: 51.3, http1: 10.2 };
     try {
-      const res = await fetch('https://api.cloudflare.com/client/v4/radar/http/summary/http_version?dateRange=7d&format=json', {
+      const res = await fetch(`https://api.cloudflare.com/client/v4/radar/http/summary/http_version?dateRange=7d&format=json${locationQuery}`, {
         headers,
         next: { revalidate: 300 }
       });
@@ -125,7 +159,6 @@ export async function GET() {
         const json = await res.json();
         const summary = json?.result?.summary_0 || json?.result?.summary;
         if (summary) {
-          // Cloudflare returns key names like 'HTTP/3', 'HTTP/2', 'HTTP/1.x' or lowercase
           const http3Val = parseFloat(summary['HTTP/3'] || summary['http3'] || summary['http/3'] || '0');
           const http2Val = parseFloat(summary['HTTP/2'] || summary['http2'] || summary['http/2'] || '0');
           const http1Val = parseFloat(summary['HTTP/1.x'] || summary['HTTP/1.1'] || summary['http1'] || '0');
@@ -142,12 +175,36 @@ export async function GET() {
       console.warn('Failed to fetch http_version from Cloudflare:', e);
     }
 
+    // 4. Fetch IQI Summary (Network Health Quality Metrics)
+    let qualityData = mockQuality;
+    try {
+      const res = await fetch(`https://api.cloudflare.com/client/v4/radar/quality/iqi/summary?dateRange=7d&format=json${locationQuery}`, {
+        headers,
+        next: { revalidate: 300 }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const summary = json?.result?.summary;
+        if (summary) {
+          qualityData = {
+            bandwidth: summary.bandwidth?.value !== undefined ? parseFloat(summary.bandwidth.value.toFixed(1)) : mockQuality.bandwidth,
+            latency: summary.latency?.value !== undefined ? parseFloat(summary.latency.value.toFixed(1)) : mockQuality.latency,
+            dnsResponseTime: summary.dnsResponseTime?.value !== undefined ? parseFloat(summary.dnsResponseTime.value.toFixed(1)) : mockQuality.dnsResponseTime,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch IQI summary from Cloudflare:', e);
+    }
+
     return NextResponse.json({
       success: true,
       source: 'cloudflare',
+      location: location,
       deviceType: deviceTypeData,
       topLocations: topLocationsData,
-      httpVersion: httpVersionData
+      httpVersion: httpVersionData,
+      quality: qualityData
     });
 
   } catch (err) {

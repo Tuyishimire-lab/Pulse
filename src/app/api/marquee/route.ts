@@ -15,7 +15,12 @@ interface StatuspageResponse {
   };
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const rawLocation = searchParams.get('location') || 'global';
+  const location = rawLocation.toLowerCase() === 'global' ? 'global' : rawLocation.toUpperCase();
+  const hasLocation = location !== 'global';
+
   const feedItems: { text: string; type: string; asns?: number[]; locations?: string[] }[] = [];
   const token = process.env.CLOUDFLARE_API_TOKEN;
 
@@ -23,7 +28,8 @@ export async function GET() {
   let cloudflareOutagesFetched = false;
   if (token) {
     try {
-      const radarUrl = 'https://api.cloudflare.com/client/v4/radar/annotations/outages?limit=5&dateRange=7d&format=json';
+      const locationQuery = hasLocation ? `&location=${location}` : '';
+      const radarUrl = `https://api.cloudflare.com/client/v4/radar/annotations/outages?limit=5&dateRange=7d&format=json${locationQuery}`;
       const res = await fetch(radarUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,

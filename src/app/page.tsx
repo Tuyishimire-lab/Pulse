@@ -169,6 +169,8 @@ export default function Home() {
   const [trafficTierFilter, setTrafficTierFilter] = useState<'all' | 'enterprise' | 'midmarket' | 'growth'>('all');
   const [sortBy, setSortBy] = useState<'rank' | 'rate' | 'name'>('rank');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedCountry, setSelectedCountry] = useState<string>('global');
+  const [localRanks, setLocalRanks] = useState<Record<string, number>>({});
 
   // Cloudflare Radar Stats State
   const [radarStats, setRadarStats] = useState<any>(null);
@@ -280,9 +282,10 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [marqueeItems.length]);
 
-  // Fetch live updates marquee on mount
+  // Fetch live updates marquee when country changes
   useEffect(() => {
-    fetch('/api/marquee?t=' + Date.now(), { cache: 'no-store' })
+    const countryParam = selectedCountry !== 'global' ? `&location=${selectedCountry}` : '';
+    fetch(`/api/marquee?t=${Date.now()}${countryParam}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -290,12 +293,14 @@ export default function Home() {
         }
       })
       .catch((err) => console.error('Error fetching live marquee updates:', err));
-  }, []);
+  }, [selectedCountry]);
 
-  // Fetch Cloudflare Radar Global Traffic Statistics on mount
+  // Fetch Cloudflare Radar Statistics & Local Rankings when country changes
   useEffect(() => {
     setLoadingRadar(true);
-    fetch('/api/radar-stats?t=' + Date.now(), { cache: 'no-store' })
+    const countryParam = selectedCountry !== 'global' ? `&location=${selectedCountry}` : '';
+    
+    fetch(`/api/radar-stats?t=${Date.now()}${countryParam}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success) {
@@ -308,16 +313,18 @@ export default function Home() {
         setLoadingRadar(false);
       });
 
-    // Proactively request a rank synchronization check in the background
-    fetch('/api/sync-rankings?t=' + Date.now(), { cache: 'no-store' })
+    fetch(`/api/sync-rankings?t=${Date.now()}${countryParam}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.success && data.syncedCount > 0) {
-          console.log(`Synchronized ${data.syncedCount} domain rankings with Cloudflare Radar.`);
+        if (data && data.success && data.ranks) {
+          setLocalRanks(data.ranks);
+          if (!data.inMemory && data.syncedCount > 0) {
+            console.log(`Synchronized ${data.syncedCount} global domain rankings with Cloudflare Radar.`);
+          }
         }
       })
       .catch((err) => console.warn('Rank synchronization check failed:', err));
-  }, []);
+  }, [selectedCountry]);
 
   const toggleStar = (siteId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -368,8 +375,20 @@ export default function Home() {
   // Merge datasets, prioritizing database sites if available, falling back to static mock data
   const allSites = useMemo(() => {
     const baseSites = dbSites.length > 0 ? dbSites : SITES;
-    return [...baseSites, ...customSites];
-  }, [dbSites, customSites]);
+    const merged = [...baseSites, ...customSites];
+
+    // If country rank overrides are loaded
+    if (selectedCountry !== 'global' && Object.keys(localRanks).length > 0) {
+      return merged.map((site) => {
+        const countryRank = localRanks[site.id];
+        if (countryRank !== undefined) {
+          return { ...site, rank: countryRank };
+        }
+        return site;
+      });
+    }
+    return merged;
+  }, [dbSites, customSites, selectedCountry, localRanks]);
 
   // Filter and sort sites based on category, search, watchlist, traffic tier, and sorting preferences
   const filteredSites = useMemo(() => {
@@ -680,7 +699,24 @@ export default function Home() {
               )}
             </div>
 
-            <div className="console-view-controls">
+            <div className="console-view-controls flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-[#6d8196] font-extrabold">Region:</span>
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="bg-[#0f1b2b] text-[#82c8e5] text-xs font-bold px-3 py-1.5 rounded-lg border border-[#1e324a] focus:outline-none focus:border-[#00e5ff] cursor-pointer hover:bg-[#15263d] transition-all"
+                >
+                  <option value="global">🌐 Worldwide</option>
+                  <option value="US">🇺🇸 United States</option>
+                  <option value="IN">🇮🇳 India</option>
+                  <option value="GB">🇬🇧 United Kingdom</option>
+                  <option value="DE">🇩🇪 Germany</option>
+                  <option value="BR">🇧🇷 Brazil</option>
+                  <option value="JP">🇯🇵 Japan</option>
+                </select>
+              </div>
+
               <div className="segmented-tabs">
                 <button 
                   className={`tab-item ${!watchlistFilter ? 'active' : ''}`}
@@ -947,19 +983,58 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Top Locations list */}
-                    <div className="flex flex-col gap-2 border-t border-white/5 pt-4">
-                      <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Top Client Locations</span>
-                      <div className="flex flex-col gap-2 mt-1">
-                        {radarStats?.topLocations?.map((loc: any, idx: number) => (
-                          <div key={loc.location} className="flex justify-between items-center text-xs">
-                            <span className="text-white/80 font-medium flex items-center gap-1.5">
-                              <span className="text-[10px] text-white/40">#{idx + 1}</span>
-                              {loc.name}
-                            </span>
-                            <span className="font-semibold text-[#82c8e5]">{loc.percentage}%</span>
-                          </div>
-                        ))}
+                    {/* Top Locations list (only for global view) */}
+                    {selectedCountry === 'global' && radarStats?.topLocations && radarStats.topLocations.length > 0 && (
+                      <div className="flex flex-col gap-2 border-t border-white/5 pt-4">
+                        <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Top Client Locations</span>
+                        <div className="flex flex-col gap-2 mt-1">
+                          {radarStats?.topLocations?.map((loc: any, idx: number) => (
+                            <div key={loc.location} className="flex justify-between items-center text-xs">
+                              <span className="text-white/80 font-medium flex items-center gap-1.5">
+                                <span className="text-[10px] text-white/40">#{idx + 1}</span>
+                                {loc.name}
+                              </span>
+                              <span className="font-semibold text-[#82c8e5]">{loc.percentage}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Network Health Indicators (Quality IQI stats) */}
+                    <div className="flex flex-col gap-3 border-t border-white/5 pt-4">
+                      <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider flex items-center justify-between">
+                        <span>Network Health Index</span>
+                        <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-widest bg-emerald-400/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Optimal
+                        </span>
+                      </span>
+
+                      <div className="grid grid-cols-3 gap-2 mt-1">
+                        {/* Latency */}
+                        <div className="p-2.5 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col items-center justify-center text-center">
+                          <span className="text-[9px] font-bold text-[#6d8196] uppercase tracking-wider">Latency</span>
+                          <span className="text-xs font-extrabold text-emerald-400 mt-1 whitespace-nowrap">
+                            {radarStats?.quality?.latency !== undefined ? `${radarStats.quality.latency} ms` : '—'}
+                          </span>
+                        </div>
+
+                        {/* Bandwidth */}
+                        <div className="p-2.5 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col items-center justify-center text-center">
+                          <span className="text-[9px] font-bold text-[#6d8196] uppercase tracking-wider">Bandwidth</span>
+                          <span className="text-xs font-extrabold text-[#82c8e5] mt-1 whitespace-nowrap">
+                            {radarStats?.quality?.bandwidth !== undefined ? `${radarStats.quality.bandwidth} Mb/s` : '—'}
+                          </span>
+                        </div>
+
+                        {/* DNS Response Time */}
+                        <div className="p-2.5 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col items-center justify-center text-center">
+                          <span className="text-[9px] font-bold text-[#6d8196] uppercase tracking-wider">DNS Speed</span>
+                          <span className="text-xs font-extrabold text-purple-400 mt-1 whitespace-nowrap">
+                            {radarStats?.quality?.dnsResponseTime !== undefined ? `${radarStats.quality.dnsResponseTime} ms` : '—'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </>
