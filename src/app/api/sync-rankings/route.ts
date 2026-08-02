@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 import { SITES } from '../../data/sites';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate at most once per hour
 
 interface RadarRankItem {
   rank: number;

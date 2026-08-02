@@ -1,11 +1,14 @@
 import { MetadataRoute } from 'next';
 import { SITES } from './data/sites';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { COUNTRY_SLUGS } from './top-sites/data/countries';
+import { PAIR_SLUGS } from './compare/data/pairs';
+import { getReportSlugs } from './report/data/reportGenerator';
 
-export const revalidate = 86400; // Revalidate sitemap at most once a day
+export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://pulstraffic.com';
+  const baseUrl = 'https://www.pulstraffic.com';
 
   let activeSites = SITES;
 
@@ -30,6 +33,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const countryUrls = COUNTRY_SLUGS.map((slug) => ({
+    url: `${baseUrl}/top-sites/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }));
+
+  const compareUrls = PAIR_SLUGS.map((slug) => ({
+    url: `${baseUrl}/compare/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.80,
+  }));
+
+  const reportUrls = getReportSlugs().map((slug) => ({
+    url: `${baseUrl}/report/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.90,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -37,6 +61,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily' as const,
       priority: 1.0,
     },
+    {
+      url: `${baseUrl}/compare`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.90,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/methodology`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    },
+    ...reportUrls,
+    ...countryUrls,
+    ...compareUrls,
     ...siteUrls,
   ];
 }

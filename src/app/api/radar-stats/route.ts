@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // Revalidate at most once every 5 minutes
 
 interface CloudflareTopLocation {
   location: string;
@@ -29,6 +29,12 @@ const COUNTRY_NAMES: Record<string, string> = {
   NL: 'Netherlands',
   SE: 'Sweden',
   PL: 'Poland',
+  TR: 'Turkey',
+  PH: 'Philippines',
+  VN: 'Vietnam',
+  ID: 'Indonesia',
+  NG: 'Nigeria',
+  AR: 'Argentina',
 };
 
 export async function GET(req: Request) {

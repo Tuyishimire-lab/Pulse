@@ -10,6 +10,8 @@ export interface SiteDetails {
   trafficHistory: number[];
   funFact: string;
   keywords: string[];
+  /** Set to 'cloudflare' when geo/device/history have been upgraded with real Radar data */
+  radarSource?: string;
 }
 
 // Seeded random matching sites.ts
@@ -281,7 +283,7 @@ const TOP_100_DETAILS: Record<string, { description: string; funFact: string }> 
   },
   huggingface: {
     description: "Hugging Face is a developer platform and hub for open-source machine learning models, datasets, and AI demo applications.",
-    funFact: "Hugging Face's name and logo are inspired by the hugging face emoji (🤗)."
+    funFact: "Hugging Face's name and logo are inspired by the Hugging Face mascot."
   },
   midjourney: {
     description: "Midjourney is a generative artificial intelligence program that generates highly detailed, artistic images from natural language text prompts.",

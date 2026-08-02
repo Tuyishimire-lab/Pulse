@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: titleText,
       description: descText,
-      url: `https://pulstraffic.com/sites/${site.id}`,
+      url: `https://www.pulstraffic.com/sites/${site.id}`,
       siteName: 'Pulse',
       locale: 'en_US',
       type: 'article',
@@ -63,7 +63,7 @@ export default async function Page({ params }: PageProps) {
     '@type': 'WebPage',
     'name': `${siteName} Real-Time Traffic & Analytics Tracker - Pulse`,
     'description': `See live visitor counters, average bounce rates, session durations, device splits, and geographic traffic origins for ${siteUrl.replace('https://', '')} in real-time.`,
-    'url': `https://pulstraffic.com/sites/${id}`,
+    'url': `https://www.pulstraffic.com/sites/${id}`,
     'mainEntity': {
       '@type': 'Dataset',
       'name': `${siteName} Traffic Analytics`,
@@ -74,7 +74,7 @@ export default async function Page({ params }: PageProps) {
       'creator': {
         '@type': 'Organization',
         'name': 'Pulse',
-        'url': 'https://pulstraffic.com'
+        'url': 'https://www.pulstraffic.com'
       },
       'variableMeasured': [
         {

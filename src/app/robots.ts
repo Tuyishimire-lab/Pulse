@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/todos'],
     },
-    sitemap: 'https://pulstraffic.com/sitemap.xml',
+    sitemap: 'https://www.pulstraffic.com/sitemap.xml',
   };
 }

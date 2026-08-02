@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { SITES } from '../../data/sites';
 import { getSiteDetails, SiteDetails } from '../../data/details';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
+import { COMPARE_PAIRS } from '../../compare/data/pairs';
+import { COUNTRIES } from '../../top-sites/data/countries';
+import NavHeader from '../../components/NavHeader';
 
 // Reusable Favicon Component with Letter Fallback
 function FaviconImage({ url, logo, color }: { url: string; logo: string; color: string }) {
@@ -312,16 +315,7 @@ export default function SitePageClient({ id }: { id: string }) {
       {/* Background mesh element for aesthetic gradients */}
       <div className="mesh-gradient absolute inset-0 pointer-events-none z-0" />
 
-      {/* Styled top navigation bar */}
-      <nav className="relative z-10 w-full max-w-[1200px] px-6 py-6 flex justify-between items-center border-b border-white/5">
-        <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-[#94a3b8] hover:text-white transition group">
-          <span className="transform group-hover:-translate-x-1 transition-transform">←</span> Back to Dashboard
-        </Link>
-        <div className="flex items-center gap-2">
-          <span className="pulse-dot" />
-          <span className="text-xs font-bold tracking-wider text-[#94a3b8]">LIVE STREAM</span>
-        </div>
-      </nav>
+      <NavHeader />
 
       <main 
         className="relative z-10 w-full max-w-[800px] px-6 mt-10 flex flex-col gap-8"
@@ -444,7 +438,7 @@ export default function SitePageClient({ id }: { id: string }) {
                     onClick={handleExportCSV}
                     className="px-3 py-1 text-[10px] font-bold text-white/80 bg-white/5 border border-white/10 hover:border-white/20 rounded-lg hover:bg-white/10 transition"
                   >
-                    📥 Export CSV
+                    Export CSV
                   </button>
                 </div>
               </div>
@@ -584,7 +578,7 @@ export default function SitePageClient({ id }: { id: string }) {
                         e.currentTarget.style.transform = 'translateY(0)';
                       }}
                     >
-                      🔍 {kw}
+                      {kw}
                     </div>
                   ))}
                 </div>
@@ -593,7 +587,7 @@ export default function SitePageClient({ id }: { id: string }) {
 
             {/* Trivia Fact */}
             <div className="modal-trivia">
-              <span className="fact-icon">💡</span>
+              
               <p>
                 <strong>Fact:</strong> {details.funFact}
               </p>
@@ -602,12 +596,36 @@ export default function SitePageClient({ id }: { id: string }) {
         </div>
       </main>
 
-      <footer className="app-footer mt-16 w-full max-w-[800px] border-t border-white/5 pt-8 text-center text-xs text-[#64748b] leading-relaxed">
-        <p>Data compiled from 2026 industry statistics (Semrush & Similarweb).</p>
-        <p className="mt-2 max-w-[600px] mx-auto">
-          Disclaimer: All company names and logos are trademarks™ or registered® trademarks of their respective holders. Use of them does not imply any affiliation with or endorsement by them.
-        </p>
-      </footer>
+      {/* ── Compare With links ─────────────────────────────────────────── */}
+      {site && (() => {
+        const compareLinks = COMPARE_PAIRS.filter(
+          (p) => p.siteAId === site.id || p.siteBId === site.id
+        ).slice(0, 4);
+        if (compareLinks.length === 0) return null;
+        return (
+          <section className="w-full max-w-[800px] mt-10 mb-2">
+            <h2 className="text-xs font-bold text-[#6d8196] uppercase tracking-wider mb-3">Compare {site.name} with</h2>
+            <div className="flex flex-wrap gap-2">
+              {compareLinks.map((pair) => {
+                const otherId = pair.siteAId === site.id ? pair.siteBId : pair.siteAId;
+                const other = SITES.find((s) => s.id === otherId);
+                if (!other) return null;
+                return (
+                  <Link
+                    key={pair.slug}
+                    href={`/compare/${pair.slug}`}
+                    className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] text-[#94a3b8] hover:text-white hover:border-[#82c8e5]/40 transition-all"
+                  >
+                    {site.name} vs {other.name} →
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
+
     </div>
   );
 }

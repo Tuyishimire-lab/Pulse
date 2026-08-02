@@ -125,7 +125,7 @@ export default async function Image() {
             letterSpacing: '2px',
           }}
         >
-          PULSTRAFFIC.COM
+          WWW.PULSTRAFFIC.COM
         </div>
       </div>
     ),

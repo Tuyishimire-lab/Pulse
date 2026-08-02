@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase';
+import { parseDomain } from '../../../../utils/domain';
 
 // Helper to query Keywords Everywhere domain traffic API
 async function fetchKeywordsEverywhereTraffic(url: string): Promise<number | null> {
@@ -7,7 +8,7 @@ async function fetchKeywordsEverywhereTraffic(url: string): Promise<number | nul
   if (!apiKey) return null;
 
   try {
-    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const domain = parseDomain(url);
     const formData = new URLSearchParams();
     formData.append('domain', domain);
     formData.append('country', 'us');
@@ -49,7 +50,7 @@ async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | 
   if (!apiKey) return null;
 
   try {
-    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const domain = parseDomain(url);
     const formData = new URLSearchParams();
     formData.append('domain', domain);
     formData.append('country', 'us');
@@ -82,7 +83,7 @@ async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | 
 // Helper to query Google Suggest queries for free brand keywords (100% Free Fallback)
 async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null> {
   try {
-    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const domain = parseDomain(url);
     const brand = domain.split('.')[0];
     const suggestUrl = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(brand)}`;
     
@@ -141,7 +142,7 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
 // Helper to scrape StatShow for traffic estimates
 async function scrapeStatShow(url: string): Promise<number | null> {
   try {
-    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const domain = parseDomain(url);
     const res = await fetch(`https://www.statshow.com/www/${domain}`, {
       headers: { 
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
@@ -167,7 +168,7 @@ async function scrapeStatShow(url: string): Promise<number | null> {
 // Fallback helper to scrape HypStat
 async function scrapeHypStat(url: string): Promise<number | null> {
   try {
-    const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
+    const domain = parseDomain(url);
     const res = await fetch(`https://hypstat.com/www/${domain}`, {
       headers: { 
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' 
@@ -289,9 +290,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Query Open PageRank API for all domains in one single request
-    const domainsList = sites.map((s: any) => {
-      return s.url.replace('https://', '').replace('http://', '').replace('www.', '');
-    });
+    const domainsList = sites.map((s: any) => parseDomain(s.url));
     const domainsQuery = domainsList.map((d: string) => `domains[]=${d}`).join('&');
 
     const oprRes = await fetch(`https://openpagerank.com/api/v1.0/getPageRank?${domainsQuery}`, {
@@ -354,7 +353,7 @@ export async function GET(request: Request) {
     let maxRate = 32382; // fallback Google rate
 
     const updates = sites.map((site: any) => {
-      const domainKey = site.url.replace('https://', '').replace('http://', '').replace('www.', '');
+      const domainKey = parseDomain(site.url);
       const oprStats = rankMap[domainKey] || { pageRank: 4.5, globalRank: 1000000 };
 
       // Calculate logarithmic PageRank baseline traffic

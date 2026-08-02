@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
+import Footer from "./components/Footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,21 +18,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pulse - Live Global Web Traffic Visualizer",
   description: "A real-time ticker visualizing estimated visitors across the world's most popular websites.",
-  metadataBase: new URL("https://pulstraffic.com"),
+  metadataBase: new URL("https://www.pulstraffic.com"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "Pulse - Live Global Web Traffic Visualizer",
     description: "A real-time ticker visualizing estimated visitors across the world's most popular websites.",
-    url: "https://pulstraffic.com",
+    url: "https://www.pulstraffic.com",
     siteName: "Pulse",
     images: [
       {
-        url: "/favicon.png",
-        width: 512,
-        height: 512,
-        alt: "Pulse Logo",
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Pulse — Live Global Web Traffic Visualizer",
       },
     ],
     locale: "en_US",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Pulse - Live Global Web Traffic Visualizer",
     description: "A real-time ticker visualizing estimated visitors across the world's most popular websites.",
-    images: ["/favicon.png"],
+    images: ["/opengraph-image"],
   },
 };
 
@@ -55,11 +56,11 @@ export default function RootLayout({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     'name': 'Pulse',
-    'url': 'https://pulstraffic.com',
+    'url': 'https://www.pulstraffic.com',
     'description': 'A real-time ticker visualizing estimated visitors across the world\'s most popular websites.',
     'potentialAction': {
       '@type': 'SearchAction',
-      'target': 'https://pulstraffic.com/?search={search_term_string}',
+      'target': 'https://www.pulstraffic.com/?search={search_term_string}',
       'query-input': 'required name=search_term_string',
     },
   };
@@ -68,8 +69,8 @@ export default function RootLayout({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     'name': 'Pulse',
-    'url': 'https://pulstraffic.com',
-    'logo': 'https://pulstraffic.com/favicon.png'
+    'url': 'https://www.pulstraffic.com',
+    'logo': 'https://www.pulstraffic.com/favicon.png'
   };
 
   return (
@@ -100,6 +101,7 @@ export default function RootLayout({
           `}
         </Script>
         {children}
+        <Footer />
         <Analytics />
       </body>
     </html>
