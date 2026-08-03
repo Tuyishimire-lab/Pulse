@@ -17,6 +17,7 @@ export default function NavHeader() {
     { href: '/', label: 'Live Dashboard' },
     { href: '/top-sites/united-states', label: 'Top Sites' },
     { href: '/compare', label: 'Compare' },
+    { href: '/speed-test', label: 'Speed Test' },
     { href: `/report/${getCurrentWeekSlug()}`, label: 'Weekly Report' },
   ];
 

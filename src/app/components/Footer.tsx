@@ -63,6 +63,7 @@ export default function Footer() {
               <li><Link href="/">Live Dashboard</Link></li>
               <li><Link href={`/report/${getCurrentWeekSlug()}`}>Weekly Report</Link></li>
               <li><Link href="/compare">Compare Sites</Link></li>
+              <li><Link href="/speed-test">Speed Test</Link></li>
               <li><Link href="/top-sites/united-states">Top Sites</Link></li>
             </ul>
           </div>
