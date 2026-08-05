@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚡ Pulse — Live Global Web Traffic Intelligence Platform
 
-## Getting Started
+**Pulse** is a proprietary, real-time web traffic visualizer and intelligence engine. Powered by the **Pulse Traffic Index™ (PTI v1.2)**, Pulse fuses network DNS telemetry, link authority, search intent, and AI sentiment analysis to track visitor velocity across top global domains.
 
-First, run the development server:
+![Pulse Badge Example](https://www.pulstraffic.com/api/badge/google)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ✨ Features & Capabilities
+
+- ⏱️ **Live Visitor Ticker Physics:** Calculates real-time visits-per-second velocity based on global traffic baselines.
+- 🧠 **Pulse Traffic Index (PTI v1.2):** A multi-signal Python ensemble engine combining Cloudflare Radar DNS query mass, Tranco Top-5000 multi-source ranks, Open PageRank link authority, and Groq AI (Llama 3.3 70B) momentum.
+- ⚔️ **Domain Battles & Comparisons (`/compare/[pair]`):** Side-by-side comparative analysis of rival web platforms (e.g. YouTube vs. TikTok, ChatGPT vs. Claude).
+- 🌍 **Geographic Rankings (`/top-sites/[country]`):** Country-specific traffic rankings across 20+ countries.
+- 📊 **AI-Powered Weekly Reports (`/report/[week]`):** Weekly digests synthesizing market shifts and rank volatility using Groq AI.
+- ⚡ **Interactive Speed Tester (`/speed-test`):** Hybrid HTTP + WebSocket download/upload bandwidth and latency tester.
+- 🏷️ **Embeddable Live Badges (`/api/badge/[id]`):** High-DPI SVG badges for startup landing pages and GitHub READMEs.
+- 🤖 **Automated Social Digest Bot (`scripts/social_bot.py`):** Automated weekly X/Twitter traffic shift posts.
+
+---
+
+## 🎨 Embeddable Live Badges
+
+Site owners, founders, and maintainers can embed live Pulse Traffic Index badges on their landing page or GitHub `README.md`:
+
+### 📝 Markdown Embed (GitHub READMEs & Blogs)
+```markdown
+[![Pulse Traffic Index](https://www.pulstraffic.com/api/badge/vercel)](https://www.pulstraffic.com/sites/vercel)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🌐 HTML Embed (Websites & Landing Pages)
+```html
+<a href="https://www.pulstraffic.com/sites/vercel" target="_blank">
+  <img src="https://www.pulstraffic.com/api/badge/vercel" alt="Pulse Traffic Index Badge" />
+</a>
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧠 Pulse Traffic Index (PTI v1.2) Architecture
 
-## Learn More
+The Python engine operates across 4 core data signals:
 
-To learn more about Next.js, take a look at the following resources:
+```
+┌─────────────────────────────────────────────────────────┐
+│                    INPUT SIGNALS                        │
+├─────────────────────────────────────────────────────────┤
+│  Signal 1a: Cloudflare Radar (Top 100 DNS Query Ranks)  │
+│  Signal 1b: Tranco List (Top 5000 Multi-Source Ranks)   │
+│  Signal 2 : Open PageRank (Logarithmic Link Authority)  │
+│  Signal 3 : Category Density Multipliers (Cm)           │
+│  Signal 4 : Groq AI (Llama 3.3 70B Momentum Analysis)  │
+└────────────────────────────┬────────────────────────────┘
+                             │
+                             ▼
+              ┌─────────────────────────────┐
+              │ Python PTI Model (Ensemble) │
+              └──────────────┬──────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                    MODEL OUTPUTS                        │
+├─────────────────────────────────────────────────────────┤
+│  1. Calibrated Monthly & Daily Traffic Estimates        │
+│  2. Normalized PTI Score (0.0 to 100.0)                 │
+│  3. Historical Rate Smoothing (85/15 Exponential Filter) │
+│  4. Self-Auditing Benchmark Validation Suite (25 sites) │
+└─────────────────────────────────────────────────────────┘
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Getting Started
 
-## Deploy on Vercel
+### Prerequisites
+- Node.js 18+ and `npm`
+- Python 3.10+ (for the Python PTI engine)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. Installation
+```bash
+git clone https://github.com/Tuyishimire-lab/Pulse.git
+cd Pulse
+npm install
+pip install httpx supabase python-dotenv
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Environment Setup
+Create `.env.local` in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_key
+OPENPAGERANK_API_KEY=your_openpagerank_key
+KEYWORDSEVERYWHERE_API_KEY=your_keywordseverywhere_key
+CLOUDFLARE_API_TOKEN=your_cloudflare_token
+GROQ_API_KEY=your_groq_api_key
+```
+
+### 3. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## ⚙️ Running the Python PTI Engine
+
+To manually trigger the Python data pipeline and run the 25-domain ground-truth accuracy validation suite:
+
+```bash
+python scripts/pulse_engine/run_engine.py
+```
+
+### Automation via GitHub Actions
+The repository includes an automated workflow (`.github/workflows/pulse_engine.yml`) that executes the PTI engine in the cloud **every 6 hours**.
+
+---
+
+## 📄 License & Legal Disclaimer
+
+- **Data Methodology:** All metrics displayed on Pulse are probabilistic statistical estimations calculated via the Pulse Traffic Index (PTI v1.2). See [/methodology](https://www.pulstraffic.com/methodology) for full disclosures.
+- **Trademarks:** Company names, domain URLs, and brand logos belong to their respective owners and are used strictly for identification and educational visualization.
