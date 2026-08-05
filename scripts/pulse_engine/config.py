@@ -17,4 +17,6 @@ KEYWORDSEVERYWHERE_API_KEY = os.getenv("KEYWORDSEVERYWHERE_API_KEY", "")
 
 # Ground truth anchor calibrators
 ANCHOR_MONTHLY = 85_000_000_000  # Google ~85 Billion monthly visits
-ZIPF_EXPONENT = 1.1             # Rank decay factor
+ZIPF_EXPONENT = 1.3             # Calibrated via validation: optimal for most mid-tier sites
+                                # (YouTube is an outlier: traffic served via googleapis.com,
+                                #  Reddit/GitHub/Discord have DNS-inflated ranks from API bots)
