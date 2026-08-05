@@ -28,35 +28,42 @@ export default function PrivacyPage() {
 
         <div className="space-y-6 text-sm text-[#cbd5e1] leading-relaxed">
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-white">1. Information Collection</h2>
+            <h2 className="text-base font-bold text-white">1. Information Collection &amp; User Privacy</h2>
             <p>
-              Pulse respects visitor privacy. We do not require account registration, and we do not collect, store, or sell personally identifiable information (PII) such as names, email addresses, or phone numbers.
+              Pulse respects visitor privacy. We do not require account creation, and we do not collect, store, or monetize personally identifiable information (PII) such as names, passwords, credit card numbers, or phone numbers.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white">2. Local Storage Usage</h2>
             <p>
-              This application utilizes your browser&apos;s local storage (`localStorage`) exclusively to persist your personal watchlist selections and custom tracked domain preferences on your device. This data is stored locally and is never transmitted to external servers.
+              This application utilizes your browser&apos;s local storage (`localStorage`) exclusively to persist your personal watchlist selections and custom tracked domain preferences on your device. This data is stored locally on your machine and is never transmitted to external servers.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-white">3. Analytics &amp; Cookies</h2>
+            <h2 className="text-base font-bold text-white">3. Public Data Pipeline &amp; Telemetry</h2>
             <p>
-              We use privacy-focused performance analytics (Google Analytics &amp; Vercel Analytics) to aggregate pageview counts, device types, and geographic regions. No intrusive tracking cookies or personal profiling techniques are used.
+              All traffic visualization data displayed on Pulse is computed using public API data feeds (Cloudflare Radar, Tranco List, Open PageRank, Keywords Everywhere) and AI synthesis (Groq Llama 3.3). Pulse does not collect or inspect private user browsing history.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-white">4. Third-Party Connections</h2>
+            <h2 className="text-base font-bold text-white">4. Privacy-Focused Analytics</h2>
             <p>
-              Brand favicons and logos are dynamically fetched from public CDN endpoints (Google Favicon API). No user credentials, authentication tokens, or personal request headers are shared with these external assets.
+              We use lightweight, privacy-focused analytics (Google Analytics &amp; Vercel Analytics) to aggregate pageview counts, device types, and geographic regions. No intrusive tracking cookies or cross-site user profiling technologies are used.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-white">5. Contact Information</h2>
+            <h2 className="text-base font-bold text-white">5. Third-Party CDNs</h2>
+            <p>
+              Brand favicons and logos are dynamically rendered from public CDN endpoints (Google Favicon API). No user credentials, authentication tokens, or personal request headers are shared with these external endpoints.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-white">6. Contact Information</h2>
             <p>
               For questions regarding this privacy policy or data handling practices, please contact us at privacy@pulstraffic.com.
             </p>

@@ -35,33 +35,33 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-white">2. Data Methodology &amp; Simulation Disclaimer</h2>
+            <h2 className="text-base font-bold text-white">2. Pulse Traffic Index (PTI) Disclaimer</h2>
             <p>
-              Pulse metrics and live traffic counters are statistical models derived from public panel data, Cloudflare Radar network telemetry, and published industry estimates (Semrush &amp; Similarweb average benchmarks).
+              Pulse metrics, live visitor counters, and country rankings are probabilistic statistical estimations calculated via the <strong className="text-white">Pulse Traffic Index (PTI v1.2)</strong>. PTI combines public network telemetry (Cloudflare Radar, Tranco List, Open PageRank) and Groq AI contextual momentum analysis.
             </p>
             <p>
-              Pulse data is not a direct server tap into internal corporate load balancers. No third-party platform on the internet has access to private internal server logs of third-party companies. Like Similarweb, Worldometer, or Statista, Pulse utilizes statistical modeling and real-time physics rates to visualize global web traffic scale.
+              Pulse data is not a direct server tap into internal corporate load balancers. No third-party platform on the internet has access to private internal server logs of third-party companies. Like Similarweb, Worldometer, or Statista, Pulse utilizes statistical modeling and real-time rate physics to visualize global web scale.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-white">3. Intellectual Property Rights</h2>
+            <h2 className="text-base font-bold text-white">3. Intellectual Property &amp; Trademarks</h2>
             <p>
-              Company brand names, domain URLs, product names, and registered trademarks displayed on Pulse belong to their respective owners. Use of company names, logos, and brand colors is strictly for identification and educational visualization purposes only, and does not imply endorsement or affiliation.
+              Company brand names, domain URLs, product names, and registered trademarks displayed on Pulse belong to their respective owners. Use of company names, logos, and brand colors is strictly for identification, news reporting, and educational visualization purposes only, and does not imply endorsement or affiliation.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white">4. Limitations of Liability</h2>
             <p>
-              Under no circumstances shall Pulse or its maintainers be liable for any direct, indirect, incidental, or consequential business decisions made based on the estimations shown on this dashboard. Data is provided &quot;as is&quot; without warranties of any kind.
+              Under no circumstances shall Pulse or its maintainers be liable for any direct, indirect, incidental, or consequential business or financial decisions made based on the estimations shown on this dashboard. Data is provided &quot;as is&quot; without warranties of any kind.
             </p>
           </section>
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white">5. Revisions and Modifications</h2>
             <p>
-              Pulse may revise these terms at any time without prior notice. By continuing to use this website, you are agreeing to be bound by the current version of these Terms of Service.
+              Pulse may revise these terms and methodology parameters at any time without prior notice. By continuing to use this website, you are agreeing to be bound by the current version of these Terms of Service.
             </p>
           </section>
         </div>
