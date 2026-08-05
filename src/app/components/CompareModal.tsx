@@ -14,6 +14,7 @@ export default function CompareModal({ siteA, siteB, onClose }: CompareModalProp
 
   const pageLoadTimeRef = useRef<number>(Date.now());
   const [elapsed, setElapsed] = useState(0);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     // Set initial value
@@ -64,6 +65,23 @@ export default function CompareModal({ siteA, siteB, onClose }: CompareModalProp
             Domain Battle: {siteA.name} <span className="text-xs bg-white/10 px-2 py-0.5 rounded uppercase">VS</span> {siteB.name}
           </h2>
           <button className="modal-close-btn" onClick={onClose}>×</button>
+          <button
+            className="text-[11px] font-bold px-3 py-1.5 rounded-lg border transition-all"
+            style={{
+              borderColor: copiedLink ? '#10b981' : 'rgba(255,255,255,0.1)',
+              backgroundColor: copiedLink ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+              color: copiedLink ? '#10b981' : '#82c8e5',
+            }}
+            onClick={() => {
+              const url = `https://www.pulstraffic.com/compare/${siteA.id}-vs-${siteB.id}`;
+              navigator.clipboard.writeText(url).then(() => {
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 2000);
+              });
+            }}
+          >
+            {copiedLink ? '✓ Copied!' : '🔗 Copy Link'}
+          </button>
         </div>
 
         {/* Real-time Ticking comparison ticker card */}

@@ -5,7 +5,7 @@ import { SiteConfig } from '../data/sites';
 import { SiteDetails } from '../data/details';
 import FaviconImage from './ui/FaviconImage';
 import VisitsCounter from './ui/VisitsCounter';
-import { getMostSearchedTopics } from '../page';
+import { getMostSearchedTopics } from '../../utils/searchTopics';
 
 interface SiteDetailModalProps {
   site: SiteConfig;

@@ -32,6 +32,7 @@ export interface PingMetric {
   max: number;      // ms
   jitter: number;   // ms (standard deviation)
   samples: number[];
+  wsUsed?: boolean; // true if WebSocket was used for ping measurement
 }
 
 /** Bufferbloat detection — latency under load */
@@ -65,6 +66,20 @@ export interface ConnectionMeta {
 export type WorkerCommand =
   | { type: 'start'; baseUrl: string }
   | { type: 'abort' };
+
+/* ── WebSocket message types ────────────────────────────────────────────── */
+
+export interface WsPingMessage {
+  type: 'ping' | 'ping-loaded';
+  ts: number; // client timestamp (performance.now or Date.now)
+}
+
+export interface WsPongMessage {
+  type: 'pong';
+  clientTs: number;
+  serverTs: number;
+  loaded: boolean;
+}
 
 export type WorkerMessage =
   | { type: 'phase'; phase: TestPhase }

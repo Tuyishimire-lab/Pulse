@@ -11,6 +11,7 @@ export interface SiteConfig {
   glow: string;
   progress: number;
   asn?: number[];
+  rank_history?: { rank: number; date: string }[];
 }
 
 export const CATEGORIES = [

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { SiteConfig } from '../data/sites';
 import FaviconImage from './ui/FaviconImage';
 import VisitsCounter from './ui/VisitsCounter';
+import RankSparkline from './ui/RankSparkline';
 
 interface SiteGridProps {
   displayedSites: SiteConfig[];
@@ -83,6 +84,9 @@ export default function SiteGrid({
                     <span className="text-[9px] font-extrabold text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse flex items-center gap-0.5 ml-1">
                       Outage
                     </span>
+                  )}
+                  {site.rank_history && site.rank_history.length >= 2 && (
+                    <RankSparkline history={site.rank_history} />
                   )}
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -208,6 +212,9 @@ export default function SiteGrid({
                       return <span className="text-[10px] font-bold text-rose-500">▼ {change}</span>;
                     }
                   })()}
+                  {site.rank_history && site.rank_history.length >= 2 && (
+                    <RankSparkline history={site.rank_history} />
+                  )}
                 </div>
               </div>
 

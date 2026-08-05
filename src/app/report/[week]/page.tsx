@@ -14,7 +14,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return getReportSlugs().map((slug) => ({ week: slug }));
+  const slugs = await getReportSlugs();
+  return slugs.map((slug) => ({ week: slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const date = parsReportSlug(slug);
   if (!date) return { title: 'Report Not Found | Pulse' };
 
-  const report = generateWeeklyReport(date);
+  const report = await generateWeeklyReport(slug);
   const title = `${report.headline} | Pulse`;
   const description = `${report.subheadline}. Track internet traffic trends, outage summaries, AI platform growth, and the top 100 most visited websites globally.`;
   const url = `${BASE_URL}/report/${slug}`;
@@ -51,13 +52,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export const dynamicParams = true;
+export const revalidate = 3600; // ISR: re-check hourly to pick up new snapshots
 
 export default async function ReportPage({ params }: PageProps) {
   const { week: slug } = await params;
   const date = parsReportSlug(slug);
   if (!date) notFound();
 
-  const report = generateWeeklyReport(date);
+  const report = await generateWeeklyReport(slug);
 
   // JSON-LD: Article schema for search engines
   const jsonLd = {
@@ -86,7 +88,7 @@ export default async function ReportPage({ params }: PageProps) {
   };
 
   // Collect adjacent week slugs for navigation
-  const allSlugs = getReportSlugs();
+  const allSlugs = await getReportSlugs();
   const currentIdx = allSlugs.indexOf(slug);
   const prevSlug = currentIdx < allSlugs.length - 1 ? allSlugs[currentIdx + 1] : null;
   const nextSlug = currentIdx > 0 ? allSlugs[currentIdx - 1] : null;

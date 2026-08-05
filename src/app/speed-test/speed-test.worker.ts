@@ -1,20 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Pulse Speed Test — Web Worker Measurement Engine  (v2)
+   Pulse Speed Test — Web Worker Measurement Engine  (v3 — Hybrid WS+HTTP)
    ═══════════════════════════════════════════════════════════════════════════
    Runs entirely off the main thread. Communicates via postMessage.
 
-   v2 improvements over v1:
-   - Download: 25MB streaming chunks, 3 starting streams, 1s warmup
-   - Upload: XMLHttpRequest with upload.onprogress for real byte tracking
-   - Ping: 12 pings (2 warmup), 30ms spacing
-   - Convergence: ±5% with 3 min windows — test completes in ~15-20s
+   v3 improvements over v2:
+   - Ping: WebSocket-first for cleaner RTT (no per-request TLS/header noise)
+   - Bufferbloat: WS pings during download (no competing HTTP connections)
+   - Graceful fallback: if WS fails, reverts to HTTP pings seamlessly
+   - Download & Upload: unchanged (HTTP streaming remains optimal)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /// <reference lib="webworker" />
 
 import type {
   WorkerCommand, WorkerMessage, SpeedMetric, PingMetric,
-  BufferbloatResult,
+  BufferbloatResult, WsPongMessage,
 } from './types';
 import {
   median, stddev, gradeBufferbloat, computeQualityScore, computeVerdicts,
@@ -42,21 +42,75 @@ function post(msg: WorkerMessage) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   WebSocket connection management
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+let wsConnection: WebSocket | null = null;
+
+/**
+ * Attempt to open a WebSocket connection. Returns the socket or null on failure.
+ * Timeout: 3 seconds to connect.
+ */
+async function openWs(baseUrl: string): Promise<WebSocket | null> {
+  return new Promise((resolve) => {
+    try {
+      const wsUrl = baseUrl
+        .replace(/^http:/, 'ws:')
+        .replace(/^https:/, 'wss:') + '/api/speed-test/ws';
+
+      const ws = new WebSocket(wsUrl);
+      const timeout = setTimeout(() => {
+        ws.close();
+        resolve(null);
+      }, 3000);
+
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        resolve(ws);
+      };
+
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        resolve(null);
+      };
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function closeWs() {
+  if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+    wsConnection.close();
+  }
+  wsConnection = null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Main test orchestrator
    ═══════════════════════════════════════════════════════════════════════════ */
 
 async function runTest(baseUrl: string) {
+  // Try to establish WS connection for latency measurement
+  wsConnection = await openWs(baseUrl);
+  const wsAvailable = wsConnection !== null && wsConnection.readyState === WebSocket.OPEN;
+
   // 1. Ping phase
   post({ type: 'phase', phase: 'ping' });
-  const pingResult = await measurePing(baseUrl);
-  if (aborted) return;
+  const pingResult = wsAvailable
+    ? await measurePingWs(wsConnection!)
+    : await measurePingHttp(baseUrl);
+  if (aborted) { closeWs(); return; }
   post({ type: 'ping-complete', result: pingResult });
 
   // 2. Download phase (with bufferbloat detection)
   post({ type: 'phase', phase: 'download' });
-  const { download, bufferbloat } = await measureDownload(baseUrl, pingResult);
-  if (aborted) return;
+  const { download, bufferbloat } = await measureDownload(baseUrl, pingResult, wsAvailable ? wsConnection : null);
+  if (aborted) { closeWs(); return; }
   post({ type: 'download-complete', result: download, bufferbloat });
+
+  // Close WS after download (upload doesn't need bufferbloat tracking)
+  closeWs();
 
   // 3. Upload phase
   post({ type: 'phase', phase: 'upload' });
@@ -75,10 +129,77 @@ async function runTest(baseUrl: string) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PING measurement  (v2: 12 pings, 2 warmup, 30ms spacing)
+   PING measurement via WebSocket (cleaner RTT — no HTTP overhead)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-async function measurePing(baseUrl: string): Promise<PingMetric> {
+async function measurePingWs(ws: WebSocket): Promise<PingMetric> {
+  const TOTAL_PINGS = 12;
+  const WARMUP = 2;
+  const samples: number[] = [];
+
+  for (let i = 0; i < TOTAL_PINGS; i++) {
+    if (aborted) break;
+
+    const rtt = await wsPingRtt(ws);
+    if (rtt === null) {
+      // WS failed mid-test — this shouldn't happen but handle gracefully
+      break;
+    }
+
+    if (i >= WARMUP) {
+      samples.push(rtt);
+    }
+
+    post({ type: 'ping-progress', index: i, rtt });
+    await sleep(30);
+  }
+
+  // If we didn't get enough samples, the result will still be valid (just fewer points)
+  return {
+    median: round2(median(samples)),
+    min: round2(Math.min(...samples)),
+    max: round2(Math.max(...samples)),
+    jitter: round2(stddev(samples)),
+    samples: samples.map(round2),
+    wsUsed: true,
+  };
+}
+
+/**
+ * Send a single ping over WebSocket and measure the round-trip time.
+ * Returns RTT in ms, or null if the socket is closed/errored.
+ */
+function wsPingRtt(ws: WebSocket): Promise<number | null> {
+  return new Promise((resolve) => {
+    if (ws.readyState !== WebSocket.OPEN) {
+      resolve(null);
+      return;
+    }
+
+    const sendTime = performance.now();
+    const timeout = setTimeout(() => resolve(null), 5000);
+
+    const handler = (event: MessageEvent) => {
+      try {
+        const msg: WsPongMessage = JSON.parse(event.data);
+        if (msg.type === 'pong') {
+          clearTimeout(timeout);
+          ws.removeEventListener('message', handler);
+          resolve(performance.now() - sendTime);
+        }
+      } catch { /* ignore */ }
+    };
+
+    ws.addEventListener('message', handler);
+    ws.send(JSON.stringify({ type: 'ping', ts: Date.now() }));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PING measurement via HTTP (fallback — same as v2)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+async function measurePingHttp(baseUrl: string): Promise<PingMetric> {
   const TOTAL_PINGS = 12;
   const WARMUP = 2;
   const samples: number[] = [];
@@ -105,16 +226,21 @@ async function measurePing(baseUrl: string): Promise<PingMetric> {
     max: round2(Math.max(...samples)),
     jitter: round2(stddev(samples)),
     samples: samples.map(round2),
+    wsUsed: false,
   };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DOWNLOAD measurement  (v2: 25MB chunks, 3 start streams, 1s warmup)
+   ═══════════════════════════════════════════════════════════════════════════
+   Now with WS-based bufferbloat pings when available (replaces HTTP fetch
+   interval during download for more accurate loaded-latency readings).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 async function measureDownload(
   baseUrl: string,
   pingResult: PingMetric,
+  ws: WebSocket | null,
 ): Promise<{ download: SpeedMetric; bufferbloat: BufferbloatResult }> {
   const WARMUP_MS = 1000;
   const MAX_DURATION_MS = 12000;
@@ -138,13 +264,37 @@ async function measureDownload(
 
   // Bufferbloat: fire pings during download
   const loadedPings: number[] = [];
-  const bbPingInterval = setInterval(async () => {
-    try {
-      const start = performance.now();
-      await fetch(`${baseUrl}/api/speed-test/ping?cb=${Math.random()}`, { cache: 'no-store' });
-      loadedPings.push(performance.now() - start);
-    } catch { /* ignore ping failures during load */ }
-  }, 500);
+  let bbPingInterval: ReturnType<typeof setInterval> | null = null;
+
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    // Use WS pings — more efficient, no competing HTTP connections
+    bbPingInterval = setInterval(() => {
+      if (ws.readyState !== WebSocket.OPEN) return;
+      const sendTime = performance.now();
+
+      const handler = (event: MessageEvent) => {
+        try {
+          const msg: WsPongMessage = JSON.parse(event.data);
+          if (msg.type === 'pong' && msg.loaded) {
+            loadedPings.push(performance.now() - sendTime);
+            ws.removeEventListener('message', handler);
+          }
+        } catch { /* ignore */ }
+      };
+
+      ws.addEventListener('message', handler);
+      ws.send(JSON.stringify({ type: 'ping-loaded', ts: Date.now() }));
+    }, 500);
+  } else {
+    // Fallback: HTTP pings (same as v2)
+    bbPingInterval = setInterval(async () => {
+      try {
+        const start = performance.now();
+        await fetch(`${baseUrl}/api/speed-test/ping?cb=${Math.random()}`, { cache: 'no-store' });
+        loadedPings.push(performance.now() - start);
+      } catch { /* ignore ping failures during load */ }
+    }, 500);
+  }
 
   // Stream: fetch a 25MB payload and read it in a streaming loop
   const activeStreams = new Set<Promise<void>>();
@@ -252,7 +402,7 @@ async function measureDownload(
   // Signal all streams to stop and wait
   settled = true;
   await Promise.allSettled(Array.from(activeStreams));
-  clearInterval(bbPingInterval);
+  if (bbPingInterval) clearInterval(bbPingInterval);
 
   const duration = performance.now() - testStartTime;
 

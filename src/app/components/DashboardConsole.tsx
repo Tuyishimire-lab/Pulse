@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { SiteConfig, CATEGORIES } from '../data/sites';
+import { exportSitesToCsv } from '../../utils/exportCsv';
 
 interface DashboardConsoleProps {
   searchQuery: string;
@@ -20,6 +21,7 @@ interface DashboardConsoleProps {
   onShowAddCustomModal: () => void;
   activeCategory: string;
   onCategoryChange: (id: string) => void;
+  filteredSites?: SiteConfig[];
 }
 
 /**
@@ -44,6 +46,7 @@ export default function DashboardConsole({
   onShowAddCustomModal,
   activeCategory,
   onCategoryChange,
+  filteredSites,
 }: DashboardConsoleProps) {
   return (
     <div className="dashboard-console animate-fadeIn">
@@ -157,6 +160,15 @@ export default function DashboardConsole({
         >
           Track Custom Domain
         </button>
+
+        {filteredSites && filteredSites.length > 0 && (
+          <button
+            className="action-btn action-btn-secondary"
+            onClick={() => exportSitesToCsv(filteredSites)}
+          >
+            Export CSV ↓
+          </button>
+        )}
       </div>
 
       {/* Category Filter Pills */}

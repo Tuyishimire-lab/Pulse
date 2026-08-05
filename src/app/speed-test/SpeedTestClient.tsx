@@ -263,7 +263,25 @@ export default function SpeedTestClient() {
           {/* Ping */}
           <div className={`speed-metric-card ${pingResult ? 'filled' : ''}`}>
             <div className="metric-card-icon">⏱</div>
-            <div className="metric-card-label">Ping</div>
+            <div className="metric-card-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+              Ping
+              {pingResult?.wsUsed && (
+                <span
+                  style={{
+                    fontSize: '9px',
+                    fontWeight: 800,
+                    color: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.12)',
+                    border: '1px solid rgba(16,185,129,0.25)',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  WS
+                </span>
+              )}
+            </div>
             <div className="metric-card-value">
               {pingResult ? `${pingResult.median.toFixed(0)}` : '—'}
             </div>

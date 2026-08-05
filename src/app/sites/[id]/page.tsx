@@ -49,6 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export const dynamicParams = true;
+export const revalidate = 3600; // ISR: re-render at most once per hour
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;

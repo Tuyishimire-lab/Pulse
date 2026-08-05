@@ -49,6 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export const dynamicParams = false;
+export const revalidate = 86400; // ISR: re-render at most once per day
 
 export default async function CountryPage({ params }: PageProps) {
   const { country: slug } = await params;

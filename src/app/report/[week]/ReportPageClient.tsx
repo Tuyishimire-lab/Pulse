@@ -107,10 +107,15 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
 
         {/* Hero */}
         <header className="mb-10">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className="text-xs font-bold text-[#82c8e5] bg-[#82c8e5]/10 border border-[#82c8e5]/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
               Weekly Internet Report
             </span>
+            {report.isLive && (
+              <span className="text-[9px] font-extrabold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                ● Live Data
+              </span>
+            )}
             <span className="text-xs text-[#6d8196]">{publishedDate}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight bg-gradient-to-r from-white via-white to-[#82c8e5] bg-clip-text text-transparent mb-3">
@@ -172,36 +177,53 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
              Top 5 Sites This Week
           </h2>
           <div className="space-y-3">
-            {report.topMovers.map(({ site, highlight }, i) => (
+            {report.topMovers.map((mover, i) => (
               <Link
-                key={site.id}
-                href={`/sites/${site.id}`}
+                key={mover.site.id}
+                href={`/sites/${mover.site.id}`}
                 className="flex items-center gap-4 p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all group"
               >
                 {/* Rank */}
-                <span className="text-xs font-bold text-[#6d8196] w-5 text-center tabular-nums">#{i + 1}</span>
+                <span className="text-xs font-bold text-[#6d8196] w-5 text-center tabular-nums">#{mover.site.rank}</span>
 
                 {/* Favicon */}
-                <FaviconImg url={site.url} logo={site.logo} color={site.color} />
+                <FaviconImg url={mover.site.url} logo={mover.site.logo} color={mover.site.color} />
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-white group-hover:text-[#82c8e5] transition-colors text-sm">{site.name}</span>
+                    <span className="font-semibold text-white group-hover:text-[#82c8e5] transition-colors text-sm">{mover.site.name}</span>
                     <span
                       className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                      style={{ backgroundColor: site.color + '22', color: site.color }}
+                      style={{ backgroundColor: mover.site.color + '22', color: mover.site.color }}
                     >
-                      {site.baseline}
+                      {mover.site.baseline}
                     </span>
+                    {mover.rankChange !== 0 && (
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{
+                          color: mover.rankChange > 0 ? '#4ade80' : '#f87171',
+                          backgroundColor: mover.rankChange > 0 ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
+                        }}
+                      >
+                        {mover.rankChange > 0 ? '▲' : '▼'} {Math.abs(mover.rankChange)}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-[#6d8196] mt-0.5 leading-relaxed line-clamp-2">{highlight}</p>
+                  <p className="text-xs text-[#6d8196] mt-0.5 leading-relaxed line-clamp-2">{mover.highlight}</p>
                 </div>
 
-                {/* Rate */}
+                {/* Rate + Traffic Delta */}
                 <div className="text-right flex-shrink-0 hidden sm:block">
-                  <div className="text-xs font-mono font-bold text-emerald-400">{site.rate.toLocaleString()}/s</div>
-                  <div className="text-[10px] text-[#6d8196]">req/sec</div>
+                  <div className="text-xs font-mono font-bold text-emerald-400">{mover.site.rate.toLocaleString()}/s</div>
+                  {mover.trafficDelta !== 0 ? (
+                    <div className={`text-[10px] font-bold ${mover.trafficDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {mover.trafficDelta > 0 ? '+' : ''}{mover.trafficDelta.toFixed(1)}%
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-[#6d8196]">req/sec</div>
+                  )}
                 </div>
               </Link>
             ))}
@@ -248,6 +270,7 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                   <th className="text-left px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Category</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Sites</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Est. Monthly</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">vs Last Wk</th>
                 </tr>
               </thead>
               <tbody>
@@ -261,6 +284,15 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                     </td>
                     <td className="px-5 py-3 text-right text-xs text-[#94a3b8]">{cat.count}</td>
                     <td className="px-5 py-3 text-right text-xs font-semibold text-white">{cat.totalBaseline}</td>
+                    <td className="px-5 py-3 text-right text-xs font-bold">
+                      {cat.weekOverWeekChange !== undefined ? (
+                        <span className={cat.weekOverWeekChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                          {cat.weekOverWeekChange >= 0 ? '+' : ''}{cat.weekOverWeekChange.toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span className="text-[#6d8196]">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

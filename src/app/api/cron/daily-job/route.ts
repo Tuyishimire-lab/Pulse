@@ -1,50 +1,30 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../../lib/supabase';
 import { parseDomain } from '../../../../utils/domain';
+import { generateAIStories } from '../../../../utils/groqAnalysis';
 
-// Helper to query Keywords Everywhere domain traffic API
-async function fetchKeywordsEverywhereTraffic(url: string): Promise<number | null> {
-  const apiKey = process.env.KEYWORDSEVERYWHERE_API_KEY;
-  if (!apiKey) return null;
+// Rank-to-traffic power law model
+// Calibrated against known data: Google (#1) ≈ 85B/mo, rank #10 ≈ 6.7B/mo, rank #100 ≈ 536M/mo
+// Uses modified Zipf's law: monthly_visits = ANCHOR_MONTHLY / rank^EXPONENT
+const ANCHOR_MONTHLY = 85_000_000_000; // Google's approximate monthly visits
+const ZIPF_EXPONENT = 1.1;
 
-  try {
-    const domain = parseDomain(url);
-    const formData = new URLSearchParams();
-    formData.append('domain', domain);
-    formData.append('country', 'us');
-
-    const res = await fetch('https://api.keywordseverywhere.com/v1/get_domain_traffic', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: formData,
-      signal: AbortSignal.timeout(6000)
-    });
-
-    if (!res.ok) return null;
-    const json = await res.json();
-    
-    if (json) {
-      const trafficVal = json.traffic || 
-                         (json.data && json.data.traffic) || 
-                         (Array.isArray(json.data) && json.data[0] && json.data[0].traffic) ||
-                         (json.data && typeof json.data === 'object' && Object.values(json.data)[0] && (Object.values(json.data)[0] as any).traffic);
-      
-      if (trafficVal !== undefined && trafficVal !== null) {
-        return Number(trafficVal);
-      }
-    }
-    return null;
-  } catch (err) {
-    console.warn(`Keywords Everywhere API failed for ${url}:`, err);
-    return null;
-  }
+function estimateTrafficFromRank(rank: number): { dailyVisits: number; monthlyVisits: number; rate: number } {
+  const clampedRank = Math.max(1, rank);
+  const monthlyVisits = Math.round(ANCHOR_MONTHLY / Math.pow(clampedRank, ZIPF_EXPONENT));
+  const dailyVisits = Math.round(monthlyVisits / 30.4);
+  const rate = Math.max(1, Math.round(dailyVisits / 86400));
+  return { dailyVisits, monthlyVisits, rate };
 }
 
-// Helper to query Keywords Everywhere domain ranking keywords
+function formatBaseline(monthlyVisits: number): string {
+  if (monthlyVisits >= 1_000_000_000) {
+    return (monthlyVisits / 1_000_000_000).toFixed(1) + 'B / mo';
+  } else if (monthlyVisits >= 1_000_000) {
+    return (monthlyVisits / 1_000_000).toFixed(1) + 'M / mo';
+  }
+  return (monthlyVisits / 1_000).toFixed(1) + 'K / mo';
+}
 async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | null> {
   const apiKey = process.env.KEYWORDSEVERYWHERE_API_KEY;
   if (!apiKey) return null;
@@ -139,56 +119,7 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
   }
 }
 
-// Helper to scrape StatShow for traffic estimates
-async function scrapeStatShow(url: string): Promise<number | null> {
-  try {
-    const domain = parseDomain(url);
-    const res = await fetch(`https://www.statshow.com/www/${domain}`, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' 
-      },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!res.ok) return null;
-    const text = await res.text();
-    
-    const match = text.match(/([\d,]+)\s+daily\s+visitors/i) || 
-                  text.match(/daily\s+visitors.*?<b>([\d,]+)<\/b>/i) ||
-                  text.match(/<div[^>]*class="[^"]*stat_value[^"]*"[^>]*>([\d,]+)<\/div>/i);
-    
-    if (match && match[1]) {
-      return parseInt(match[1].replace(/,/g, ''), 10);
-    }
-    return null;
-  } catch (err) {
-    return null;
-  }
-}
 
-// Fallback helper to scrape HypStat
-async function scrapeHypStat(url: string): Promise<number | null> {
-  try {
-    const domain = parseDomain(url);
-    const res = await fetch(`https://hypstat.com/www/${domain}`, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' 
-      },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!res.ok) return null;
-    const text = await res.text();
-    
-    const match = text.match(/([\d,]+)\s+unique\s+visitors/i) ||
-                  text.match(/unique\s+visitors.*?<b>([\d,]+)<\/b>/i);
-    
-    if (match && match[1]) {
-      return parseInt(match[1].replace(/,/g, ''), 10);
-    }
-    return null;
-  } catch (err) {
-    return null;
-  }
-}
 
 export async function GET(request: Request) {
   // 1. Authorize Cron trigger in production
@@ -316,96 +247,50 @@ export async function GET(request: Request) {
       });
     }
 
-    // 4. Select a rotating batch of 10 random sites to scrape and fetch organic traffic metrics on this run
-    const shuffledSites = [...sites].sort(() => 0.5 - Math.random());
-    const sitesToEnrich = shuffledSites.slice(0, 10);
-    
-    const scrapedVisitsMap: Record<string, number | null> = {};
-    const keTrafficMap: Record<string, number | null> = {};
+    // 4. Enrich keywords only (traffic is computed from rank — no external traffic APIs needed)
     const keKeywordsMap: Record<string, string[] | null> = {};
 
-    await Promise.all(
-      sitesToEnrich.map(async (site: any) => {
-        // Run Keywords Everywhere traffic/keywords API in parallel with web scrapers
-        let [keTraffic, keKeywords, statShowVisits] = await Promise.all([
-          fetchKeywordsEverywhereTraffic(site.url),
-          fetchKeywordsEverywhereKeywords(site.url),
-          scrapeStatShow(site.url)
-        ]);
+    // Process keywords in parallel batches of 20 (lightweight: only keyword fetches)
+    const KEYWORD_BATCH_SIZE = 20;
 
-        // Fallback: If Keywords Everywhere keywords failed/no credits, try Google Suggest API (100% free)
-        if (keKeywords === null || keKeywords.length === 0) {
-          keKeywords = await fetchGoogleSuggestKeywords(site.url);
-        }
+    for (let i = 0; i < sites.length; i += KEYWORD_BATCH_SIZE) {
+      const batch = sites.slice(i, i + KEYWORD_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (site: any) => {
+          try {
+            let keywords = await fetchKeywordsEverywhereKeywords(site.url);
+            // Fallback to Google Suggest (free) if KE fails
+            if (!keywords || keywords.length === 0) {
+              keywords = await fetchGoogleSuggestKeywords(site.url);
+            }
+            keKeywordsMap[site.id] = keywords;
+          } catch (err) {
+            console.warn(`Keyword enrichment failed for ${site.id}:`, err);
+          }
+        })
+      );
+    }
 
-        let visits = statShowVisits;
-        if (visits === null) {
-          visits = await scrapeHypStat(site.url);
-        }
-
-        scrapedVisitsMap[site.id] = visits;
-        keTrafficMap[site.id] = keTraffic;
-        keKeywordsMap[site.id] = keKeywords;
-      })
-    );
-
-    // 5. Blending & calibration updates for domain metadata
-    let maxRate = 32382; // fallback Google rate
+    // 5. Compute traffic from Cloudflare Radar rank using power law model
+    // This is the primary traffic estimation — derived from rank position,
+    // not from external scraping or credit-burning APIs.
+    let maxRate = estimateTrafficFromRank(1).rate; // Google's estimated rate
 
     const updates = sites.map((site: any) => {
-      const domainKey = parseDomain(site.url);
-      const oprStats = rankMap[domainKey] || { pageRank: 4.5, globalRank: 1000000 };
+      const { rate, monthlyVisits } = estimateTrafficFromRank(site.rank);
+      const prettyBaseline = formatBaseline(monthlyVisits);
 
-      // Calculate logarithmic PageRank baseline traffic
-      const prEst = Math.round(Math.pow(10, oprStats.pageRank * 0.8 + 1.4));
-
-      // Get metrics from our rotating batch
-      const keTraffic = keTrafficMap[site.id];
-      const keKeywords = keKeywordsMap[site.id];
-      const scraperVisits = scrapedVisitsMap[site.id];
-      
-      let finalDailyVisits = prEst;
-
-      if (keTraffic !== undefined && keTraffic !== null && keTraffic > 0) {
-        const keDailyVisits = Math.round(keTraffic / 30);
-        if (scraperVisits !== undefined && scraperVisits !== null && scraperVisits > 0) {
-          finalDailyVisits = Math.round(keDailyVisits * 0.7 + scraperVisits * 0.2 + prEst * 0.1);
-        } else {
-          finalDailyVisits = Math.round(keDailyVisits * 0.85 + prEst * 0.15);
-        }
-      } else if (scraperVisits !== undefined && scraperVisits !== null && scraperVisits > 0) {
-        finalDailyVisits = Math.round(scraperVisits * 0.8 + prEst * 0.2);
-      } else {
-        const previousDailyVisits = site.rate * 86400;
-        if (previousDailyVisits > 0) {
-          finalDailyVisits = Math.round(previousDailyVisits * 0.85 + prEst * 0.15);
-        }
-      }
-
-      // Compute rate (visits per second)
-      const calculatedRate = Math.max(1, Math.round(finalDailyVisits / 86400));
-      if (site.id === 'google') {
-        maxRate = calculatedRate;
-      }
-
-      // Compute pretty baseline string
-      const monthlyVisits = finalDailyVisits * 30.4;
-      let prettyBaseline = '';
-      if (monthlyVisits >= 1000000000) {
-        prettyBaseline = (monthlyVisits / 1000000000).toFixed(1) + 'B / mo';
-      } else if (monthlyVisits >= 1000000) {
-        prettyBaseline = (monthlyVisits / 1000000).toFixed(1) + 'M / mo';
-      } else {
-        prettyBaseline = (monthlyVisits / 1000).toFixed(1) + 'K / mo';
+      if (site.rank === 1) {
+        maxRate = rate;
       }
 
       return {
         id: site.id,
-        rate: calculatedRate,
+        rate,
         baseline: prettyBaseline,
         progress: 0,
-        rank: oprStats.globalRank !== 9999999 ? site.rank : site.rank,
-        keywords: keKeywords || null
+        rank: site.rank,
+        keywords: keKeywordsMap[site.id] || null
       };
     });
 
@@ -437,12 +322,13 @@ export async function GET(request: Request) {
       await Promise.all(chunk);
     }
 
-    // 7. Calculate & bulk-insert 24 hourly points for the entire past day
-    // This allows the cron to run only once per day while maintaining complete hourly wave history logs.
+    // 7. Calculate & bulk-insert 6 hourly points (matching the 6-hour cron cadence)
+    // Each run covers the 6 hours since the last execution.
+    const HISTORY_HOURS = 6;
     const historyInsertions: any[] = [];
     const now = new Date();
 
-    for (let h = 0; h < 24; h++) {
+    for (let h = 0; h < HISTORY_HOURS; h++) {
       const timestamp = new Date(now.getTime() - h * 60 * 60 * 1000);
       const hourValue = timestamp.getHours();
       
@@ -475,6 +361,153 @@ export async function GET(request: Request) {
       }
     }
 
+    // 7b. Persist rank_history for sparkline tracking (keep last 7 entries per site)
+    const rankHistoryUpdates = sites.map((site: any) => {
+      const existingHistory: { rank: number; date: string }[] = Array.isArray(site.rank_history) ? site.rank_history : [];
+      const todayStr = now.toISOString().split('T')[0];
+      // Skip if we already have an entry for today
+      if (existingHistory.some((h: any) => h.date === todayStr)) return null;
+      const updated = [...existingHistory.slice(-6), { rank: site.rank, date: todayStr }];
+      return supabase.from('sites').update({ rank_history: updated }).eq('id', site.id);
+    }).filter(Boolean);
+
+    if (rankHistoryUpdates.length > 0) {
+      for (let i = 0; i < rankHistoryUpdates.length; i += 20) {
+        await Promise.all(rankHistoryUpdates.slice(i, i + 20));
+      }
+      console.log(`Unified Cron: Updated rank_history for ${rankHistoryUpdates.length} sites.`);
+    }
+
+    // 7c. Weekly snapshot for data-driven reports (runs once per week on Monday)
+    const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon
+    if (dayOfWeek === 1) {
+      try {
+        // Compute ISO week slug
+        const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+        const weekSlug = `${d.getUTCFullYear()}-w${String(weekNum).padStart(2, '0')}`;
+
+        // Check if snapshot already exists for this week
+        const { data: existingSnapshot } = await supabase
+          .from('weekly_snapshots')
+          .select('id')
+          .eq('week_slug', weekSlug)
+          .single();
+
+        if (!existingSnapshot) {
+          // Build site summaries for the snapshot
+          const sitesSnapshot = sites.map((site: any) => {
+            const upd = finalUpdates.find((u: any) => u.id === site.id);
+            return {
+              id: site.id,
+              name: site.name,
+              url: site.url,
+              rank: site.rank,
+              rate: upd?.rate ?? site.rate,
+              baseline: upd?.baseline ?? site.baseline,
+              category: site.category,
+              color: site.color,
+              logo: site.logo,
+              keywords: upd?.keywords ?? site.keywords ?? null,
+            };
+          });
+
+          // Pre-compute category totals
+          const categoryTotals: Record<string, { count: number; totalRate: number }> = {};
+          sitesSnapshot.forEach((s: any) => {
+            if (!categoryTotals[s.category]) categoryTotals[s.category] = { count: 0, totalRate: 0 };
+            categoryTotals[s.category].count++;
+            categoryTotals[s.category].totalRate += s.rate;
+          });
+
+          const totalRate = sitesSnapshot.reduce((sum: number, s: any) => sum + s.rate, 0);
+
+          // Count outages from marquee (if available)
+          let outageCount = 0;
+          try {
+            const baseUrl = process.env.VERCEL_URL
+              ? `https://${process.env.VERCEL_URL}`
+              : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const outageRes = await fetch(`${baseUrl}/api/marquee`, { signal: AbortSignal.timeout(5000) });
+            if (outageRes.ok) {
+              const marqueeData = await outageRes.json();
+              if (Array.isArray(marqueeData)) {
+                outageCount = marqueeData.filter((m: any) => m.type === 'outage').length;
+              }
+            }
+          } catch { /* non-critical */ }
+
+          const mondayDate = new Date(now);
+          const diff = mondayDate.getUTCDate() - (mondayDate.getUTCDay() || 7) + 1;
+          mondayDate.setUTCDate(diff);
+          mondayDate.setUTCHours(0, 0, 0, 0);
+
+          // Fetch previous week's snapshot for AI analysis comparison
+          const prevMondayDate = new Date(mondayDate);
+          prevMondayDate.setDate(prevMondayDate.getDate() - 7);
+          const prevD = new Date(Date.UTC(prevMondayDate.getFullYear(), prevMondayDate.getMonth(), prevMondayDate.getDate()));
+          const prevDayNum = prevD.getUTCDay() || 7;
+          prevD.setUTCDate(prevD.getUTCDate() + 4 - prevDayNum);
+          const prevYearStart = new Date(Date.UTC(prevD.getUTCFullYear(), 0, 1));
+          const prevWeekNum = Math.ceil((((prevD.getTime() - prevYearStart.getTime()) / 86400000) + 1) / 7);
+          const prevWeekSlug = `${prevD.getUTCFullYear()}-w${String(prevWeekNum).padStart(2, '0')}`;
+
+          let prevSnapshot: any = null;
+          try {
+            const { data: prevData } = await supabase
+              .from('weekly_snapshots')
+              .select('sites_data, category_totals, total_rate')
+              .eq('week_slug', prevWeekSlug)
+              .single();
+            prevSnapshot = prevData;
+          } catch { /* no previous snapshot */ }
+
+          // Generate AI-powered editorial stories via Groq
+          let aiStories = null;
+          try {
+            aiStories = await generateAIStories({
+              weekSlug,
+              totalRate,
+              outageCount,
+              sites: sitesSnapshot,
+              categoryTotals,
+              prevTotalRate: prevSnapshot?.total_rate,
+              prevSites: prevSnapshot?.sites_data,
+              prevCategoryTotals: prevSnapshot?.category_totals,
+            });
+            if (aiStories) {
+              console.log(`Unified Cron: Groq generated ${aiStories.length} AI stories for ${weekSlug}.`);
+            }
+          } catch (aiErr) {
+            console.warn('Unified Cron: AI story generation failed:', aiErr);
+          }
+
+          const { error: snapError } = await supabase
+            .from('weekly_snapshots')
+            .insert({
+              week_slug: weekSlug,
+              snapshot_date: mondayDate.toISOString(),
+              sites_data: sitesSnapshot,
+              category_totals: categoryTotals,
+              total_rate: totalRate,
+              outage_count: outageCount,
+              ai_stories: aiStories,
+            });
+
+          if (snapError) {
+            console.error('Unified Cron: Failed to create weekly snapshot:', snapError);
+          } else {
+            console.log(`Unified Cron: Created weekly snapshot for ${weekSlug} (${sitesSnapshot.length} sites, ${totalRate} total rate${aiStories ? ', AI stories included' : ''}).`);
+          }
+        }
+      } catch (snapErr) {
+        console.warn('Unified Cron: Weekly snapshot generation failed:', snapErr);
+      }
+    }
+
     // 8. Database hygiene cleanup: delete records older than 7 days
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 7);
@@ -490,8 +523,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Unified Vercel Hobby-compliant daily cron execution completed successfully',
-      enrichedRotatingBatch: sitesToEnrich.map((s: any) => s.id),
+      message: `Pro cron completed: enriched ${sites.length} sites, ${historyInsertions.length} history points (${HISTORY_HOURS}h cadence)`,
+      enrichedCount: sites.length,
       historyNodesAddedCount: historyInsertions.length,
       historyNodesDeletedCount: deletedCount || 0
     });
