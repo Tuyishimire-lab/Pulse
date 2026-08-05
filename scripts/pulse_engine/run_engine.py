@@ -117,12 +117,18 @@ def run_pulse_engine(run_validation_report: bool = True):
 
         final_trend = trend_label or classify_trend(old_rate, rate, momentum_score)
         progress = round(min(100.0, (rate / float(max_rate)) * 100.0), 2)
+        
+        # Volatility Score
+        volatility = 0.0
+        if old_rate > 0:
+            volatility = round(((rate - old_rate) / float(old_rate)) * 100.0, 2)
 
         update_payload = {
             "rank": new_rank,
             "rate": rate,
             "baseline": baseline,
             "progress": progress,
+            "volatility": volatility
         }
 
         try:
@@ -133,10 +139,19 @@ def run_pulse_engine(run_validation_report: bool = True):
                 if momentum_score != 0 else f"Trend: {final_trend}"
             )
             rank_source = "CF" if domain in cf_ranks else ("Tr" if domain in tranco_ranks else "DB")
-            print(f"  [{rank_source}] {site_id} | Rank #{new_rank} | Rate {rate}/s | PTI {pti_score} | {momentum_info}")
+            print(f"  [{rank_source}] {site_id} | Rank #{new_rank} | Rate {rate}/s | PTI {pti_score} | Vol: {volatility:+.1f}% | {momentum_info}")
             updated_sites.append({"id": site_id, "rate": rate, "baseline": baseline})
         except Exception as e:
-            print(f"  X Failed to update {site_id}: {e}")
+            if "volatility" in str(e):
+                # Fallback if column not created yet
+                update_payload.pop("volatility", None)
+                supabase.table("sites").update(update_payload).eq("id", site_id).execute()
+                updates_count += 1
+                rank_source = "CF" if domain in cf_ranks else ("Tr" if domain in tranco_ranks else "DB")
+                print(f"  [{rank_source}] {site_id} | Rank #{new_rank} | Rate {rate}/s | (Missing 'volatility' column in DB)")
+                updated_sites.append({"id": site_id, "rate": rate, "baseline": baseline})
+            else:
+                print(f"  X Failed to update {site_id}: {e}")
 
     print()
     print(f"SUCCESS: PTI v1.2 Engine updated {updates_count}/{len(sites)} sites.")

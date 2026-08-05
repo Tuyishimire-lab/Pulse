@@ -5,30 +5,30 @@ from .config import ANCHOR_MONTHLY, ZIPF_EXPONENT
 # Category Density Multipliers (Cm)
 # Adjusts for app-first usage (streaming/chat) vs web link density (social/dev)
 CATEGORY_MULTIPLIERS = {
-    "streaming": 1.45,  # App-heavy: Netflix, Spotify, Twitch, Hulu, Disney+
-    "chat": 1.40,       # App-heavy: Discord, Telegram, WhatsApp
-    "social": 0.55,     # High link density: Reddit (0.55 factor brings 2.9B -> 1.6B ground truth!)
-    "developer": 0.65,  # Bot/CI/CD traffic: GitHub, npm, Docker
-    "search": 1.00,     # Standard: Google, Bing, DuckDuckGo
-    "ecommerce": 1.35,  # High transactional intent: Amazon, Ebay
-    "general": 1.00     # Default baseline
+    "video_platform": 12.0,  # YouTube is heavily underestimated by DNS
+    "streaming": 1.5,
+    "chat": 1.40,
+    "social_network": 3.8,  # Facebook, Instagram, X (DNS deflated due to apps/CDNs)
+    "community": 0.55,      # Reddit, Quora (DNS inflated)
+    "developer": 0.65,
+    "search": 1.00,
+    "ecommerce": 1.5,
+    "ai": 2.0,
+    "general": 1.00
 }
 
 def normalize_category(cat_str: str) -> str:
     """Normalizes arbitrary category strings to canonical model keys."""
     cat = (cat_str or "").lower()
-    if any(k in cat for k in ["stream", "video", "media", "entertainment", "music"]):
-        return "streaming"
-    if any(k in cat for k in ["chat", "messaging", "communication"]):
-        return "chat"
-    if any(k in cat for k in ["social", "community", "forum"]):
-        return "social"
-    if any(k in cat for k in ["dev", "code", "tech", "software"]):
-        return "developer"
-    if any(k in cat for k in ["shop", "e-commerce", "store", "retail"]):
-        return "ecommerce"
-    if any(k in cat for k in ["search", "portal"]):
-        return "search"
+    if "youtube" in cat_str.lower() or "video platform" in cat: return "video_platform"
+    if any(k in cat for k in ["stream", "media", "entertainment", "music"]): return "streaming"
+    if any(k in cat for k in ["chat", "messaging", "communication"]): return "chat"
+    if any(k in cat for k in ["reddit", "quora", "community", "forum", "wiki"]): return "community"
+    if any(k in cat for k in ["social", "network"]): return "social_network"
+    if any(k in cat for k in ["dev", "code", "tech", "software"]): return "developer"
+    if any(k in cat for k in ["shop", "e-commerce", "store", "retail"]): return "ecommerce"
+    if any(k in cat for k in ["search", "portal"]): return "search"
+    if "ai" in cat or "chatgpt" in cat: return "ai"
     return "general"
 
 def estimate_traffic_and_pti(
