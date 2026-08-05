@@ -125,13 +125,32 @@ def fetch_tranco_ranks(top_n: int = 5000) -> Dict[str, int]:
         print(f"[Signals] Tranco fetch error: {type(e).__name__}: {e}")
     return {}
 
+DOMAIN_ALIASES = {
+    "x.com": ["x.com", "twitter.com"],
+    "max.com": ["max.com", "hbomax.com"],
+    "facebook.com": ["facebook.com", "fb.com"],
+}
+
 def merge_rank_sources(cf_ranks: Dict[str, int], tranco_ranks: Dict[str, int]) -> Dict[str, int]:
     """
     Merge Cloudflare Radar (high-precision, top 100) and Tranco (broader coverage, top 5000).
     CF Radar takes precedence for domains it covers; Tranco fills the rest.
+    Applies domain alias resolving (e.g., x.com <-> twitter.com).
     """
     merged = dict(tranco_ranks)   # start with Tranco (broader)
     merged.update(cf_ranks)       # CF Radar overrides (more precise for top 100)
+
+    # Handle domain aliases (take best rank among aliases)
+    for primary_domain, aliases in DOMAIN_ALIASES.items():
+        best_rank = None
+        for alias in aliases:
+            rank = merged.get(alias)
+            if rank is not None:
+                if best_rank is None or rank < best_rank:
+                    best_rank = rank
+        if best_rank is not None:
+            merged[primary_domain] = best_rank
+
     return merged
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -106,11 +106,13 @@ def run_pulse_engine(run_validation_report: bool = True):
         trend_label = momentum.get("trend_label", "")
 
         # Run all 4 signals through PTI model
+        category = site.get("category", "general")
         monthly_visits, daily_visits, rate, pti_score, baseline = estimate_traffic_and_pti(
             rank=new_rank,
             page_rank=page_rank,
             momentum_score=momentum_score,
-            previous_rate=old_rate
+            previous_rate=old_rate,
+            category=category
         )
 
         final_trend = trend_label or classify_trend(old_rate, rate, momentum_score)

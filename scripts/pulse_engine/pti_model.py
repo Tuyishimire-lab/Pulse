@@ -2,25 +2,48 @@ import math
 from typing import Dict, Any, Tuple
 from .config import ANCHOR_MONTHLY, ZIPF_EXPONENT
 
+# Category Density Multipliers (Cm)
+# Adjusts for app-first usage (streaming/chat) vs web link density (social/dev)
+CATEGORY_MULTIPLIERS = {
+    "streaming": 1.45,  # App-heavy: Netflix, Spotify, Twitch, Hulu, Disney+
+    "chat": 1.40,       # App-heavy: Discord, Telegram, WhatsApp
+    "social": 0.55,     # High link density: Reddit (0.55 factor brings 2.9B -> 1.6B ground truth!)
+    "developer": 0.65,  # Bot/CI/CD traffic: GitHub, npm, Docker
+    "search": 1.00,     # Standard: Google, Bing, DuckDuckGo
+    "ecommerce": 1.35,  # High transactional intent: Amazon, Ebay
+    "general": 1.00     # Default baseline
+}
+
+def normalize_category(cat_str: str) -> str:
+    """Normalizes arbitrary category strings to canonical model keys."""
+    cat = (cat_str or "").lower()
+    if any(k in cat for k in ["stream", "video", "media", "entertainment", "music"]):
+        return "streaming"
+    if any(k in cat for k in ["chat", "messaging", "communication"]):
+        return "chat"
+    if any(k in cat for k in ["social", "community", "forum"]):
+        return "social"
+    if any(k in cat for k in ["dev", "code", "tech", "software"]):
+        return "developer"
+    if any(k in cat for k in ["shop", "e-commerce", "store", "retail"]):
+        return "ecommerce"
+    if any(k in cat for k in ["search", "portal"]):
+        return "search"
+    return "general"
+
 def estimate_traffic_and_pti(
     rank: int,
     page_rank: float = 5.0,
     momentum_score: float = 0.0,
-    previous_rate: int = 0
+    previous_rate: int = 0,
+    category: str = "general"
 ) -> Tuple[int, int, int, float, str]:
     """
     Computes Pulse Traffic Index (PTI) metrics using 4 signals:
-      Signal 1: Cloudflare Radar DNS rank (via `rank`)
+      Signal 1: Cloudflare Radar DNS rank & Tranco rank (via `rank`)
       Signal 2: Open PageRank link authority (via `page_rank`)
-      Signal 3: Search intent (applied upstream via rank quality)
+      Signal 3: Search intent & category density (via `category`)
       Signal 4: Groq AI momentum vector (via `momentum_score`, range -1.0 to +1.0)
-
-    Returns:
-      - monthly_visits (int)
-      - daily_visits (int)
-      - rate (visits / second, int) — with optional historical smoothing
-      - pti_score (float, 0.0 to 100.0)
-      - pretty_baseline (str, e.g. "85.0B / mo")
     """
     clamped_rank = max(1, rank)
 
@@ -28,16 +51,18 @@ def estimate_traffic_and_pti(
     monthly_visits = int(round(ANCHOR_MONTHLY / math.pow(clamped_rank, ZIPF_EXPONENT)))
 
     # ── Signal 2: Authority Multiplier ─────────────────────────────────────────
-    # PageRank 0–10 maps to a multiplier range of 0.85 (low authority) → 1.15 (high authority)
     if page_rank > 0:
         auth_factor = 0.85 + (min(page_rank, 10.0) / 10.0) * 0.30
         monthly_visits = int(round(monthly_visits * auth_factor))
 
+    # ── Signal 3: Category Density Adjustment ──────────────────────────────────
+    norm_cat = normalize_category(category)
+    cat_multiplier = CATEGORY_MULTIPLIERS.get(norm_cat, 1.00)
+    monthly_visits = int(round(monthly_visits * cat_multiplier))
+
     # ── Signal 4: Groq AI Momentum Adjustment ──────────────────────────────────
-    # momentum_score ranges from -1.0 (severe decline) to +1.0 (major surge)
-    # Maps to a multiplier range of 0.90 (cooling) → 1.10 (surging)
     if momentum_score != 0.0:
-        momentum_factor = 1.0 + (momentum_score * 0.10)  # max ±10% adjustment
+        momentum_factor = 1.0 + (momentum_score * 0.10)
         monthly_visits = int(round(monthly_visits * momentum_factor))
 
     daily_visits = int(round(monthly_visits / 30.4))
