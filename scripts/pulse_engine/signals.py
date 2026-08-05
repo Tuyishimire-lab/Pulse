@@ -293,3 +293,58 @@ def fetch_groq_momentum(sites_snapshot: List[Dict[str, Any]], batch_size: int = 
 
     print(f"[Signals] Groq AI momentum complete: {len(momentum_map)}/{len(sorted_sites)} domains.")
     return momentum_map
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SIGNAL 5: Google Trends (Human Search Momentum)
+# ─────────────────────────────────────────────────────────────────────────────
+def fetch_google_trends_momentum(domains: List[str], batch_size: int = 5) -> Dict[str, float]:
+    """
+    Fetch Google Trends interest over the last 90 days for given domains.
+    Computes a linear slope and normalizes it to a momentum score (-1.0 to +1.0).
+    Processes in small batches to avoid rate limits.
+    """
+    try:
+        from pytrends.request import TrendReq
+        import numpy as np
+    except ImportError:
+        print("[Signals] Warning: pytrends or numpy not installed. Skipping Google Trends.")
+        return {}
+
+    pytrends = TrendReq(hl='en-US', tz=360, retries=2, backoff_factor=1)
+    momentum_map = {}
+
+    print(f"[Signals] Google Trends: querying {len(domains)} domains...")
+    
+    # Process in small batches (Google Trends limits to 5 keywords per request)
+    batches = [domains[i:i + batch_size] for i in range(0, len(domains), batch_size)]
+    
+    for idx, batch in enumerate(batches):
+        try:
+            pytrends.build_payload(batch, cat=0, timeframe='today 3-m', geo='', gprop='')
+            df = pytrends.interest_over_time()
+            
+            if not df.empty:
+                for kw in batch:
+                    if kw in df.columns:
+                        series = df[kw].values
+                        if len(series) > 1:
+                            # Simple linear regression slope
+                            x = np.arange(len(series))
+                            y = series
+                            slope = np.polyfit(x, y, 1)[0]
+                            # Normalize slope (heuristic: +/- 1.0 slope over 90 days is a max score of 1.0)
+                            score = max(-1.0, min(1.0, slope))
+                            momentum_map[kw] = round(score, 2)
+            
+            # Rate limiting prevention
+            if idx < len(batches) - 1:
+                import random
+                time.sleep(random.uniform(2.0, 4.0))
+        except Exception as e:
+            if "429" in str(e):
+                print(f"[Signals] Google Trends Rate Limit hit at batch {idx}. Stopping early.")
+                break
+            print(f"[Signals] Google Trends batch {idx} error: {e}")
+
+    print(f"[Signals] Google Trends complete: fetched momentum for {len(momentum_map)} domains.")
+    return momentum_map

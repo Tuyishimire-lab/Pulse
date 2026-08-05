@@ -5,15 +5,15 @@ from .config import ANCHOR_MONTHLY, ZIPF_EXPONENT
 # Category Density Multipliers (Cm)
 # Adjusts for app-first usage (streaming/chat) vs web link density (social/dev)
 CATEGORY_MULTIPLIERS = {
-    "video_platform": 12.0,  # YouTube is heavily underestimated by DNS
-    "streaming": 1.5,
+    "video_platform": 12.0,
+    "streaming": 0.8,
     "chat": 1.40,
-    "social_network": 3.8,  # Facebook, Instagram, X (DNS deflated due to apps/CDNs)
-    "community": 0.55,      # Reddit, Quora (DNS inflated)
-    "developer": 0.65,
+    "social_network": 2.6,
+    "community": 0.55,
+    "developer": 0.85,
     "search": 1.00,
     "ecommerce": 1.5,
-    "ai": 2.0,
+    "ai": 2.4,
     "general": 1.00
 }
 

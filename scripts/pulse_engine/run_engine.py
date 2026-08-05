@@ -14,7 +14,8 @@ from scripts.pulse_engine.signals import (
     fetch_tranco_ranks,
     merge_rank_sources,
     fetch_open_pagerank,
-    fetch_groq_momentum
+    fetch_groq_momentum,
+    fetch_google_trends_momentum
 )
 from scripts.pulse_engine.pti_model import estimate_traffic_and_pti, classify_trend
 from scripts.pulse_engine.validation import run_validation, print_validation_report
@@ -77,6 +78,10 @@ def run_pulse_engine(run_validation_report: bool = True):
     ]
     momentum_map = fetch_groq_momentum(sites_snapshot, batch_size=30)
 
+    # 4b. Google Trends momentum for ALL sites
+    print("[4/6] Signal 5 — Google Trends human search momentum...")
+    trends_map = fetch_google_trends_momentum(domain_list, batch_size=5)
+
     # 5. Compute PTI metrics and update Supabase
     print("[5/6] Computing PTI v1.2 metrics and syncing to database...")
     updates_count = 0
@@ -102,10 +107,16 @@ def run_pulse_engine(run_validation_report: bool = True):
 
         # Groq AI momentum
         momentum = momentum_map.get(site_id, {})
-        momentum_score = momentum.get("momentum_score", 0.0)
+        groq_momentum_score = momentum.get("momentum_score", 0.0)
         trend_label = momentum.get("trend_label", "")
 
-        # Run all 4 signals through PTI model
+        # Google Trends momentum
+        trends_momentum_score = trends_map.get(domain, 0.0)
+
+        # Hybrid Momentum (50% AI Context, 50% Human Search Trend)
+        momentum_score = round((groq_momentum_score * 0.5) + (trends_momentum_score * 0.5), 2)
+
+        # Run all 5 signals through PTI model
         category = site.get("category", "general")
         monthly_visits, daily_visits, rate, pti_score, baseline = estimate_traffic_and_pti(
             rank=new_rank,
@@ -153,6 +164,18 @@ def run_pulse_engine(run_validation_report: bool = True):
             else:
                 print(f"  X Failed to update {site_id}: {e}")
 
+        # Log to site_history (Ignore error if table doesn't exist yet)
+        try:
+            history_payload = {
+                "site_id": site_id,
+                "rate": rate,
+                "volatility": volatility,
+                "pti_score": pti_score
+            }
+            supabase.table("site_history").insert(history_payload).execute()
+        except Exception:
+            pass # Table might not be created yet by the user
+
     print()
     print(f"SUCCESS: PTI v1.2 Engine updated {updates_count}/{len(sites)} sites.")
 
@@ -165,6 +188,11 @@ def run_pulse_engine(run_validation_report: bool = True):
     print("=" * 60)
     print("PTI v1.2 Engine completed.")
     print("=" * 60)
+    print()
+    
+    # 7. Auto-Tuner Recommendation
+    from scripts.pulse_engine.auto_tuner import run_auto_tuner
+    run_auto_tuner()
 
 if __name__ == "__main__":
     run_pulse_engine(run_validation_report=True)
