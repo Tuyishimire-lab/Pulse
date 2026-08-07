@@ -216,6 +216,7 @@ interface GroqCountryOutput {
 
 async function callGroqBatch(
   batch: { name: string; slug: string; internetUsers: string; penetrationPct: number }[],
+  attempt = 0,
 ): Promise<GroqCountryOutput[]> {
   const listStr = batch
     .map((c, i) => `${i + 1}. ${c.name} (slug: "${c.slug}", ~${c.internetUsers} internet users, ${c.penetrationPct}% penetration)`)
@@ -248,6 +249,14 @@ Return ONLY a JSON array (no markdown, no extra text) with this structure:
     }),
   });
 
+  // Retry on 429 with exponential backoff (max 3 attempts)
+  if (res.status === 429 && attempt < 3) {
+    const waitMs = (attempt + 1) * 15000; // 15s, 30s, 45s
+    console.warn(`\n   [Groq] 429 — waiting ${waitMs / 1000}s then retrying (attempt ${attempt + 1}/3)...`);
+    await new Promise((r) => setTimeout(r, waitMs));
+    return callGroqBatch(batch, attempt + 1);
+  }
+
   if (!res.ok) {
     console.warn(`[Groq] batch failed: ${res.status} ${res.statusText}`);
     return [];
@@ -256,10 +265,8 @@ Return ONLY a JSON array (no markdown, no extra text) with this structure:
   const data = await res.json();
   const content = data?.choices?.[0]?.message?.content ?? '[]';
   try {
-    // Groq returns a JSON object with json_object mode — handle both array and wrapped
     const parsed = JSON.parse(content);
     if (Array.isArray(parsed)) return parsed;
-    // Sometimes wrapped in a key
     const first = Object.values(parsed)[0];
     if (Array.isArray(first)) return first as GroqCountryOutput[];
     return [];
@@ -325,9 +332,9 @@ async function main() {
     fs.writeFileSync(PARTIAL_CACHE, JSON.stringify(cache, null, 2));
     console.log(`✓ (${results.length}/${batch.length} generated)`);
 
-    // Rate limit — wait 500ms between batches
+    // Rate limit — wait 5s between batches to stay under Groq free-tier limits
     if (i + BATCH_SIZE < toGenerate.length) {
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 5000));
     }
   }
 

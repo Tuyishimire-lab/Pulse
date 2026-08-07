@@ -1,0 +1,366 @@
+{
+  "afghanistan": {
+    "insight": "Afghanistan has around 22 million internet users, with 50% penetration, and the majority of the population accesses the internet through mobile devices. The most popular social media platforms in Afghanistan are Facebook and WhatsApp.",
+    "localNote": "The use of VPNs is notably high in Afghanistan due to internet censorship."
+  },
+  "albania": {
+    "insight": "Albania has approximately 1 million internet users, with 50% penetration, and the country has seen a significant increase in e-commerce activities in recent years. The most popular social media platform in Albania is Facebook, with over 1.5 million users.",
+    "localNote": "The Albanian government has implemented various initiatives to promote digital literacy and online services."
+  },
+  "algeria": {
+    "insight": "Algeria has around 24 million internet users, with 50% penetration, and the country has a growing e-commerce market, with online shopping becoming increasingly popular. The most widely used social media platforms in Algeria are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of French and Arabic languages online is prevalent in Algeria, reflecting the country's linguistic diversity."
+  },
+  "angola": {
+    "insight": "Angola has approximately 20 million internet users, with 50% penetration, and the country has seen significant growth in the use of mobile money services. The most popular social media platforms in Angola are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The Angolan government has launched initiatives to increase internet access and promote digital inclusion in rural areas."
+  },
+  "armenia": {
+    "insight": "Armenia has around 2 million internet users, with 50% penetration, and the country has a well-developed IT sector, with many startups and tech companies. The most popular social media platforms in Armenia are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of Armenian language online is widespread, with many websites and social media platforms offering Armenian language support."
+  },
+  "austria": {
+    "insight": "Austria has approximately 8 million internet users, with 92% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in Austria are Facebook, Instagram, and Twitter.",
+    "localNote": "Austria has a high level of digital banking adoption, with many citizens using online banking services."
+  },
+  "azerbaijan": {
+    "insight": "Azerbaijan has around 9 million internet users, with 91% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Azerbaijan are Facebook, Instagram, and YouTube.",
+    "localNote": "The use of Russian and Azerbaijani languages online is prevalent in Azerbaijan, reflecting the country's cultural and linguistic diversity."
+  },
+  "bahrain": {
+    "insight": "Bahrain has approximately 800,000 internet users, with 50% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in Bahrain are Facebook, Instagram, and Twitter.",
+    "localNote": "Bahrain has a high level of mobile phone penetration, with many citizens using smartphones to access the internet."
+  },
+  "bangladesh": {
+    "insight": "Bangladesh has around 88 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Bangladesh are Facebook, WhatsApp, and YouTube.",
+    "localNote": "The use of Bengali language online is widespread, with many websites and social media platforms offering Bengali language support."
+  },
+  "belarus": {
+    "insight": "Belarus has approximately 5 million internet users, with 50% penetration, and the country has a growing e-commerce market, with online shopping becoming increasingly popular. The most widely used social media platforms in Belarus are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of Russian and Belarusian languages online is prevalent in Belarus, reflecting the country's linguistic diversity."
+  },
+  "belgium": {
+    "insight": "Belgium has around 6 million internet users, with 50% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in Belgium are Facebook, Instagram, and Twitter.",
+    "localNote": "Belgium has a high level of digital banking adoption, with many citizens using online banking services."
+  },
+  "bolivia": {
+    "insight": "Bolivia has approximately 6 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Bolivia are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The use of Spanish and indigenous languages online is prevalent in Bolivia, reflecting the country's linguistic diversity."
+  },
+  "bosnia-and-herzegovina": {
+    "insight": "Bosnia and Herzegovina has around 2 million internet users, with 50% penetration, and the country has a growing e-commerce market, with online shopping becoming increasingly popular. The most widely used social media platforms in Bosnia and Herzegovina are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of Bosnian, Croatian, and Serbian languages online is prevalent in Bosnia and Herzegovina, reflecting the country's linguistic diversity."
+  },
+  "botswana": {
+    "insight": "Botswana has approximately 1 million internet users, with 50% penetration, and the country has seen significant growth in the use of mobile money services. The most popular social media platforms in Botswana are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The use of English and Setswana languages online is prevalent in Botswana, reflecting the country's linguistic diversity."
+  },
+  "bulgaria": {
+    "insight": "Bulgaria has around 3 million internet users, with 50% penetration, and the country has a growing e-commerce market, with online shopping becoming increasingly popular. The most widely used social media platforms in Bulgaria are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of Bulgarian and English languages online is prevalent in Bulgaria, reflecting the country's linguistic diversity."
+  },
+  "cameroon": {
+    "insight": "Cameroon has approximately 15 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Cameroon are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The use of French and English languages online is prevalent in Cameroon, reflecting the country's linguistic diversity."
+  },
+  "chile": {
+    "insight": "Chile has around 10 million internet users, with 50% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in Chile are Facebook, Instagram, and Twitter.",
+    "localNote": "Chile has a high level of digital banking adoption, with many citizens using online banking services."
+  },
+  "china": {
+    "insight": "China has approximately 1.3 billion internet users, with 92% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in China are WeChat, Weibo, and Douyin.",
+    "localNote": "China has a unique digital ecosystem, with many domestic platforms and services that are not available globally."
+  },
+  "colombia": {
+    "insight": "Colombia has around 27 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Colombia are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The use of Spanish language online is prevalent in Colombia, with many websites and social media platforms offering Spanish language support."
+  },
+  "dr-congo": {
+    "insight": "DR Congo has approximately 56 million internet users, with 50% penetration, and the country has seen significant growth in the use of mobile money services. The most popular social media platforms in DR Congo are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The use of French and local languages online is prevalent in DR Congo, reflecting the country's linguistic diversity."
+  },
+  "costa-rica": {
+    "insight": "Costa Rica has around 3 million internet users, with 50% penetration, and the country has a growing e-commerce market, with online shopping becoming increasingly popular. The most widely used social media platforms in Costa Rica are Facebook, Instagram, and Twitter.",
+    "localNote": "Costa Rica has a high level of digital literacy, with many citizens using online services and digital tools."
+  },
+  "cote-divoire": {
+    "insight": "Côte d'Ivoire has approximately 16 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Côte d'Ivoire are Facebook, WhatsApp, and Instagram.",
+    "localNote": "The use of French and local languages online is prevalent in Côte d'Ivoire, reflecting the country's linguistic diversity."
+  },
+  "croatia": {
+    "insight": "Croatia has around 2 million internet users, with 50% penetration, and the country has a growing e-commerce market, with online shopping becoming increasingly popular. The most widely used social media platforms in Croatia are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of Croatian and English languages online is prevalent in Croatia, reflecting the country's linguistic diversity."
+  },
+  "czech-republic": {
+    "insight": "Czech Republic has approximately 5 million internet users, with 50% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in Czech Republic are Facebook, Instagram, and Twitter.",
+    "localNote": "The Czech Republic has a high level of digital literacy, with many citizens using online services and digital tools."
+  },
+  "denmark": {
+    "insight": "Denmark has around 3 million internet users, with 50% penetration, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The most popular social media platforms in Denmark are Facebook, Instagram, and Twitter.",
+    "localNote": "Denmark has a high level of digital banking adoption, with many citizens using online banking services."
+  },
+  "dominican-republic": {
+    "insight": "The Dominican Republic has around 6 million internet users, with a penetration rate of 50%. The most popular social media platforms in the country are Facebook, Instagram, and Twitter.",
+    "localNote": "The use of WhatsApp is particularly prevalent in the Dominican Republic, with over 70% of internet users utilizing the platform."
+  },
+  "ecuador": {
+    "insight": "Ecuador has approximately 9 million internet users, with a 50% penetration rate. E-commerce is growing in the country, with online shopping platforms such as Mercado Libre and Amazon being popular among consumers.",
+    "localNote": "The Ecuadorian government has implemented initiatives to promote digital inclusion, including the provision of free internet access in public spaces."
+  },
+  "egypt": {
+    "insight": "Egypt has around 59 million internet users, with a penetration rate of 50%. The country has seen significant growth in the use of social media, with Facebook being the most popular platform.",
+    "localNote": "The use of Facebook is particularly high in Egypt, with over 80% of internet users having an account on the platform."
+  },
+  "ethiopia": {
+    "insight": "Ethiopia has approximately 68 million internet users, with a 50% penetration rate. The country has seen significant investment in its telecommunications infrastructure, with the aim of increasing internet accessibility.",
+    "localNote": "The Ethiopian government has implemented a policy of promoting the use of local languages online, with the aim of increasing digital inclusion."
+  },
+  "finland": {
+    "insight": "Finland has around 3 million internet users, with a penetration rate of 50%. The country is known for its high level of digital literacy, with over 90% of the population having basic digital skills.",
+    "localNote": "The use of mobile payments is particularly prevalent in Finland, with over 50% of consumers using mobile payment services."
+  },
+  "georgia": {
+    "insight": "Georgia has approximately 2 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Lazada and AliExpress being popular among consumers.",
+    "localNote": "The Georgian government has implemented initiatives to promote the development of the country's IT sector, including the creation of technology parks and incubators."
+  },
+  "ghana": {
+    "insight": "Ghana has around 18 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of mobile money services, with over 70% of the population using mobile payments.",
+    "localNote": "The use of mobile money services is particularly prevalent in Ghana, with the country being one of the leaders in mobile money adoption in Africa."
+  },
+  "greece": {
+    "insight": "Greece has approximately 5 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Facebook and Instagram being the most popular platforms.",
+    "localNote": "The use of online banking is particularly prevalent in Greece, with over 60% of internet users using online banking services."
+  },
+  "guatemala": {
+    "insight": "Guatemala has around 9 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Amazon and Mercado Libre being popular among consumers.",
+    "localNote": "The Guatemalan government has implemented initiatives to promote digital inclusion, including the provision of free internet access in public spaces."
+  },
+  "honduras": {
+    "insight": "Honduras has approximately 6 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Facebook being the most popular platform.",
+    "localNote": "The use of WhatsApp is particularly prevalent in Honduras, with over 70% of internet users utilizing the platform."
+  },
+  "hungary": {
+    "insight": "Hungary has around 5 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Amazon and eBay being popular among consumers.",
+    "localNote": "The Hungarian government has implemented initiatives to promote the development of the country's IT sector, including the creation of technology parks and incubators."
+  },
+  "iran": {
+    "insight": "Iran has approximately 46 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Instagram and Telegram being the most popular platforms.",
+    "localNote": "The use of Telegram is particularly prevalent in Iran, with over 50% of internet users utilizing the platform."
+  },
+  "iraq": {
+    "insight": "Iraq has around 24 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Facebook and Instagram being the most popular platforms.",
+    "localNote": "The use of Facebook is particularly high in Iraq, with over 80% of internet users having an account on the platform."
+  },
+  "ireland": {
+    "insight": "Ireland has approximately 3 million internet users, with a 50% penetration rate. The country is known for its high level of digital literacy, with over 90% of the population having basic digital skills.",
+    "localNote": "The use of online banking is particularly prevalent in Ireland, with over 70% of internet users using online banking services."
+  },
+  "israel": {
+    "insight": "Israel has around 5 million internet users, with a 50% penetration rate. The country is known for its highly developed tech industry, with many startups and innovation hubs.",
+    "localNote": "The use of mobile payments is particularly prevalent in Israel, with over 50% of consumers using mobile payment services."
+  },
+  "jordan": {
+    "insight": "Jordan has approximately 6 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Amazon and Souq being popular among consumers.",
+    "localNote": "The Jordanian government has implemented initiatives to promote the development of the country's IT sector, including the creation of technology parks and incubators."
+  },
+  "kazakhstan": {
+    "insight": "Kazakhstan has around 10 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Facebook and Instagram being the most popular platforms.",
+    "localNote": "The use of Yandex is particularly prevalent in Kazakhstan, with over 50% of internet users utilizing the search engine."
+  },
+  "kenya": {
+    "insight": "Kenya has approximately 29 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of mobile money services, with over 70% of the population using mobile payments.",
+    "localNote": "The use of M-Pesa is particularly prevalent in Kenya, with the country being one of the leaders in mobile money adoption in Africa."
+  },
+  "kuwait": {
+    "insight": "Kuwait has around 5 million internet users, with a 100% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Amazon and Souq being popular among consumers.",
+    "localNote": "The use of online shopping is particularly prevalent in Kuwait, with over 80% of internet users making online purchases."
+  },
+  "lebanon": {
+    "insight": "Lebanon has approximately 3 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Facebook and Instagram being the most popular platforms.",
+    "localNote": "The use of WhatsApp is particularly prevalent in Lebanon, with over 70% of internet users utilizing the platform."
+  },
+  "libya": {
+    "insight": "Libya has around 4 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of social media, with Facebook being the most popular platform.",
+    "localNote": "The use of Facebook is particularly high in Libya, with over 80% of internet users having an account on the platform."
+  },
+  "lithuania": {
+    "insight": "Lithuania has approximately 1 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Amazon and eBay being popular among consumers.",
+    "localNote": "The Lithuanian government has implemented initiatives to promote the development of the country's IT sector, including the creation of technology parks and incubators."
+  },
+  "malaysia": {
+    "insight": "Malaysia has around 18 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Lazada and Shopee being popular among consumers.",
+    "localNote": "The use of Grab is particularly prevalent in Malaysia, with over 50% of internet users utilizing the ride-hailing service."
+  },
+  "mali": {
+    "insight": "Mali has approximately 13 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of mobile money services, with over 50% of the population using mobile payments.",
+    "localNote": "The use of Orange Money is particularly prevalent in Mali, with the country being one of the leaders in mobile money adoption in West Africa."
+  },
+  "morocco": {
+    "insight": "Morocco has around 19 million internet users, with a 50% penetration rate. The country has seen significant growth in the use of e-commerce, with online shopping platforms such as Jumia and Amazon being popular among consumers.",
+    "localNote": "The use of MTN Mobile Money is particularly prevalent in Morocco, with over 50% of internet users utilizing the mobile payment service."
+  },
+  "mozambique": {
+    "insight": "Mozambique has around 18 million internet users, with a penetration rate of 50%, and the majority of the population accesses the internet through mobile devices, with popular platforms including Facebook and WhatsApp. The country's digital economy is growing, with e-commerce and online banking becoming increasingly popular.",
+    "localNote": "The use of mobile money services is notably high in Mozambique, with many people using these services for transactions and payments."
+  },
+  "myanmar": {
+    "insight": "Myanmar has approximately 27 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile phone usage and the expansion of 4G networks. Facebook is the most popular social media platform in Myanmar, with over 20 million users.",
+    "localNote": "Myanmar has a unique social media landscape, with Facebook being used not only for social networking but also as a platform for news and information."
+  },
+  "nepal": {
+    "insight": "Nepal has around 15 million internet users, with a penetration rate of 50%, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Nepal include Facebook, YouTube, and WhatsApp, with many people using these services for communication and entertainment.",
+    "localNote": "The use of digital payment systems is becoming increasingly popular in Nepal, with many people using services such as eSewa and Khalti for online transactions."
+  },
+  "new-zealand": {
+    "insight": "New Zealand has approximately 3 million internet users, with a penetration rate of 50% of the total population of around 6 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in New Zealand include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "New Zealand has a high level of online shopping, with many people using platforms such as Trade Me and The Warehouse for e-commerce transactions."
+  },
+  "nicaragua": {
+    "insight": "Nicaragua has around 4 million internet users, with a penetration rate of 50% of the total population of around 8 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Nicaragua include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Nicaragua, with many people using platforms such as Facebook and WhatsApp for news and information."
+  },
+  "norway": {
+    "insight": "Norway has approximately 3 million internet users, with a penetration rate of 50% of the total population of around 6 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in Norway include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "Norway has a high level of digital payment adoption, with many people using services such as Vipps and BankID for online transactions."
+  },
+  "oman": {
+    "insight": "Oman has around 3 million internet users, with a penetration rate of 50% of the total population of around 6 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Oman include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of e-government services is notably high in Oman, with many people using online platforms for services such as bill payments and license renewals."
+  },
+  "pakistan": {
+    "insight": "Pakistan has approximately 128 million internet users, with a penetration rate of 50% of the total population of around 256 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Pakistan include Facebook, YouTube, and WhatsApp, with many people using these services for communication and entertainment.",
+    "localNote": "The use of mobile wallets is becoming increasingly popular in Pakistan, with many people using services such as JazzCash and Easypaisa for online transactions."
+  },
+  "palestine": {
+    "insight": "Palestine has around 3 million internet users, with a penetration rate of 50% of the total population of around 6 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Palestine include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Palestine, with many people using platforms such as Facebook and Twitter for news and information."
+  },
+  "panama": {
+    "insight": "Panama has approximately 2 million internet users, with a penetration rate of 50% of the total population of around 4 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Panama include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of online banking is notably high in Panama, with many people using services such as online banking and mobile banking for financial transactions."
+  },
+  "paraguay": {
+    "insight": "Paraguay has around 4 million internet users, with a penetration rate of 50% of the total population of around 8 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Paraguay include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Paraguay, with many people using platforms such as Facebook and Instagram for social networking and news."
+  },
+  "peru": {
+    "insight": "Peru has approximately 17 million internet users, with a penetration rate of 50% of the total population of around 34 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Peru include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of e-commerce is becoming increasingly popular in Peru, with many people using platforms such as Mercado Libre and Linio for online shopping."
+  },
+  "portugal": {
+    "insight": "Portugal has around 5 million internet users, with a penetration rate of 50% of the total population of around 10 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in Portugal include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "The use of digital payment systems is notably high in Portugal, with many people using services such as MB Way and PayPal for online transactions."
+  },
+  "puerto-rico": {
+    "insight": "Puerto Rico has approximately 2 million internet users, with a penetration rate of 50% of the total population of around 4 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Puerto Rico include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Puerto Rico, with many people using platforms such as Facebook and Twitter for news and information."
+  },
+  "qatar": {
+    "insight": "Qatar has around 1 million internet users, with a penetration rate of 50% of the total population of around 2 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in Qatar include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "The use of online shopping is notably high in Qatar, with many people using platforms such as Souq and Amazon for e-commerce transactions."
+  },
+  "romania": {
+    "insight": "Romania has approximately 10 million internet users, with a penetration rate of 50% of the total population of around 20 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Romania include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Romania, with many people using platforms such as Facebook and Instagram for social networking and news."
+  },
+  "russia": {
+    "insight": "Russia has around 72 million internet users, with a penetration rate of 50% of the total population of around 144 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Russia include VKontakte, YouTube, and WhatsApp, with many people using these services for communication and entertainment.",
+    "localNote": "The use of domestic social media platforms is notably high in Russia, with many people using services such as VKontakte and Odnoklassniki for social networking."
+  },
+  "rwanda": {
+    "insight": "Rwanda has approximately 7 million internet users, with a penetration rate of 50% of the total population of around 14 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Rwanda include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of mobile money services is notably high in Rwanda, with many people using services such as M-Pesa and Tigo Cash for transactions and payments."
+  },
+  "saudi-arabia": {
+    "insight": "Saudi Arabia has around 18 million internet users, with a penetration rate of 50% of the total population of around 36 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in Saudi Arabia include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "The use of online shopping is notably high in Saudi Arabia, with many people using platforms such as Souq and Amazon for e-commerce transactions."
+  },
+  "senegal": {
+    "insight": "Senegal has approximately 9 million internet users, with a penetration rate of 50% of the total population of around 18 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Senegal include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of mobile money services is notably high in Senegal, with many people using services such as Orange Money and Tigo Cash for transactions and payments."
+  },
+  "serbia": {
+    "insight": "Serbia has around 3 million internet users, with a penetration rate of 50% of the total population of around 6 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Serbia include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Serbia, with many people using platforms such as Facebook and Instagram for social networking and news."
+  },
+  "slovakia": {
+    "insight": "Slovakia has approximately 3 million internet users, with a penetration rate of 50% of the total population of around 6 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in Slovakia include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "The use of online shopping is notably high in Slovakia, with many people using platforms such as Alza and Heureka for e-commerce transactions."
+  },
+  "slovenia": {
+    "insight": "Slovenia has around 1 million internet users, with a penetration rate of 50% of the total population of around 2 million, and the country has a highly developed digital economy, with a strong focus on e-commerce and online banking. Popular platforms in Slovenia include Facebook, Instagram, and Twitter, with many people using these services for social networking and news.",
+    "localNote": "The use of digital payment systems is notably high in Slovenia, with many people using services such as PayPal and Mastercard for online transactions."
+  },
+  "somalia": {
+    "insight": "Somalia has approximately 10 million internet users, with a penetration rate of 50% of the total population of around 20 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Somalia include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of mobile money services is notably high in Somalia, with many people using services such as Hormuud and Telesom for transactions and payments."
+  },
+  "sri-lanka": {
+    "insight": "Sri Lanka has around 11 million internet users, with a penetration rate of 50% of the total population of around 22 million, and the country's digital economy is growing, with the government investing in initiatives to increase internet access and promote e-commerce. Popular platforms in Sri Lanka include Facebook, WhatsApp, and YouTube, with many people using these services for communication and entertainment.",
+    "localNote": "The use of social media is notably high in Sri Lanka, with many people using platforms such as Facebook and Instagram for social networking and news."
+  },
+  "sudan": {
+    "insight": "Sudan has around 26 million internet users with a penetration rate of 50%, and the majority of the population uses mobile devices to access the internet, with popular platforms including Facebook and WhatsApp. The country has seen a significant increase in e-commerce activity in recent years, driven by the growth of online shopping platforms.",
+    "localNote": "The use of mobile money services is notably high in Sudan, with many residents relying on these services for financial transactions due to limited access to traditional banking."
+  },
+  "switzerland": {
+    "insight": "Switzerland has a highly developed digital economy, with around 9 million internet users and a penetration rate of 97%, and the country is home to a number of major tech companies, including Google and Microsoft. The majority of internet users in Switzerland access the internet via high-speed broadband connections, with an average connection speed of over 200 Mbps.",
+    "localNote": "Switzerland has a unique approach to data privacy, with strict regulations in place to protect user data, which has led to the country becoming a hub for data storage and security companies."
+  },
+  "syria": {
+    "insight": "Syria has around 13 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, despite challenges related to infrastructure and access. The majority of internet users in Syria access the internet via mobile devices, with popular platforms including Facebook and YouTube.",
+    "localNote": "The use of virtual private networks (VPNs) is notably high in Syria, as many residents use these services to bypass government restrictions on internet access and to protect their online activity from surveillance."
+  },
+  "taiwan": {
+    "insight": "Taiwan has a highly developed digital economy, with a strong focus on technology and innovation, and the country is home to a number of major tech companies, including Taiwan Semiconductor Manufacturing Company (TSMC) and ASUS. The majority of internet users in Taiwan access the internet via high-speed broadband connections, with an average connection speed of over 150 Mbps.",
+    "localNote": "Taiwan has a unique e-commerce platform called Shopee, which is popular among local residents and has become a major player in the country's online shopping market."
+  },
+  "tanzania": {
+    "insight": "Tanzania has around 35 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Tanzania access the internet via mobile devices, with popular platforms including Facebook and WhatsApp.",
+    "localNote": "The use of mobile money services is notably high in Tanzania, with many residents relying on these services for financial transactions due to limited access to traditional banking."
+  },
+  "thailand": {
+    "insight": "Thailand has around 36 million internet users, with a penetration rate of 50%, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The majority of internet users in Thailand access the internet via mobile devices, with popular platforms including Facebook and Instagram.",
+    "localNote": "Thailand has a unique social media platform called Line, which is popular among local residents and has become a major player in the country's online messaging market."
+  },
+  "tunisia": {
+    "insight": "Tunisia has around 6 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Tunisia access the internet via mobile devices, with popular platforms including Facebook and YouTube.",
+    "localNote": "The use of French-language online platforms is notably high in Tunisia, reflecting the country's historical ties to France and the widespread use of the French language among the population."
+  },
+  "uganda": {
+    "insight": "Uganda has around 26 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Uganda access the internet via mobile devices, with popular platforms including Facebook and WhatsApp.",
+    "localNote": "The use of mobile money services is notably high in Uganda, with many residents relying on these services for financial transactions due to limited access to traditional banking."
+  },
+  "ukraine": {
+    "insight": "Ukraine has around 19 million internet users, with a penetration rate of 50%, and the country has a highly developed digital economy, with a strong focus on technology and innovation. The majority of internet users in Ukraine access the internet via high-speed broadband connections, with an average connection speed of over 100 Mbps.",
+    "localNote": "The use of Russian-language online platforms is notably high in Ukraine, reflecting the country's historical ties to Russia and the widespread use of the Russian language among the population."
+  },
+  "united-arab-emirates": {
+    "insight": "The United Arab Emirates has around 6 million internet users, with a penetration rate of 50%, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The majority of internet users in the UAE access the internet via high-speed broadband connections, with an average connection speed of over 200 Mbps.",
+    "localNote": "The use of Arabic-language online platforms is notably high in the UAE, reflecting the country's cultural and linguistic heritage, and many local residents prefer to use Arabic-language websites and apps for online shopping and communication."
+  },
+  "uruguay": {
+    "insight": "Uruguay has around 2 million internet users, with a penetration rate of 50%, and the country has a highly developed digital economy, with a strong focus on technology and innovation. The majority of internet users in Uruguay access the internet via high-speed broadband connections, with an average connection speed of over 100 Mbps.",
+    "localNote": "The use of Spanish-language online platforms is notably high in Uruguay, reflecting the country's cultural and linguistic heritage, and many local residents prefer to use Spanish-language websites and apps for online shopping and communication."
+  },
+  "uzbekistan": {
+    "insight": "Uzbekistan has around 19 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Uzbekistan access the internet via mobile devices, with popular platforms including Facebook and YouTube.",
+    "localNote": "The use of Russian-language online platforms is notably high in Uzbekistan, reflecting the country's historical ties to Russia and the widespread use of the Russian language among the population."
+  },
+  "venezuela": {
+    "insight": "Venezuela has around 14 million internet users, with a penetration rate of 50%, and the country has a highly developed digital economy, with a strong focus on e-commerce and online services. The majority of internet users in Venezuela access the internet via mobile devices, with popular platforms including Facebook and Instagram.",
+    "localNote": "The use of Spanish-language online platforms is notably high in Venezuela, reflecting the country's cultural and linguistic heritage, and many local residents prefer to use Spanish-language websites and apps for online shopping and communication."
+  },
+  "yemen": {
+    "insight": "Yemen has around 21 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Yemen access the internet via mobile devices, with popular platforms including Facebook and WhatsApp.",
+    "localNote": "The use of Arabic-language online platforms is notably high in Yemen, reflecting the country's cultural and linguistic heritage, and many local residents prefer to use Arabic-language websites and apps for online shopping and communication."
+  },
+  "zambia": {
+    "insight": "Zambia has around 11 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Zambia access the internet via mobile devices, with popular platforms including Facebook and WhatsApp.",
+    "localNote": "The use of mobile money services is notably high in Zambia, with many residents relying on these services for financial transactions due to limited access to traditional banking."
+  },
+  "zimbabwe": {
+    "insight": "Zimbabwe has around 8 million internet users, with a penetration rate of 50%, and the country has seen a significant increase in internet usage in recent years, driven by the growth of mobile devices and online services. The majority of internet users in Zimbabwe access the internet via mobile devices, with popular platforms including Facebook and WhatsApp.",
+    "localNote": "The use of mobile money services is notably high in Zimbabwe, with many residents relying on these services for financial transactions due to limited access to traditional banking."
+  }
+}
