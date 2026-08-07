@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { SITES } from '../../data/sites';
-import { COUNTRIES, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
+import { ALL_COUNTRIES, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
 import CountryPageClient from './CountryPageClient';
 import { notFound } from 'next/navigation';
 
@@ -48,8 +48,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export const dynamicParams = false;
-export const revalidate = 86400; // ISR: re-render at most once per day
+export const dynamicParams = true; // allow ISR for generated countries not pre-rendered
+export const revalidate = 86400;   // ISR: re-render at most once per day
 
 export default async function CountryPage({ params }: PageProps) {
   const { country: slug } = await params;
@@ -119,7 +119,7 @@ export default async function CountryPage({ params }: PageProps) {
       <CountryPageClient
         countryData={countryData}
         sites={orderedSites}
-        allCountries={COUNTRIES}
+        allCountries={ALL_COUNTRIES}
       />
     </>
   );
