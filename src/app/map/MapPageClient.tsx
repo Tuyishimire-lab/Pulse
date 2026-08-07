@@ -114,14 +114,13 @@ export default function MapPageClient({ countryMap }: Props) {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-2xl">🌍</span>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-[#82c8e5] to-[#00D4AA] bg-clip-text text-transparent">
               Global Web Traffic Map
             </h1>
           </div>
           <p className="text-[#6d8196] text-sm sm:text-base max-w-2xl">
-            Internet penetration by country — coloured by connectivity level. Click any country to explore its top websites.
-            Covering <span className="text-[#00D4AA] font-semibold">{countriesWithData} countries</span> with live data.
+            Internet penetration by country, coloured by connectivity level. Click any country to explore
+            its top websites. Covering <span className="text-[#00D4AA] font-semibold">{countriesWithData} countries</span> with live data.
           </p>
         </div>
 
