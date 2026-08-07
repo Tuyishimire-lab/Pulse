@@ -59,7 +59,7 @@ declare module 'react-simple-maps' {
   export const Geography: ComponentType<GeographyProps>;
   export const Marker: ComponentType<{ coordinates: [number, number]; children?: ReactNode }>;
   export const Line: ComponentType<Record<string, unknown>>;
-  export const Graticule: ComponentType<{ stroke?: string; strokeWidth?: number }>;
-  export const Sphere: ComponentType<{ fill?: string; stroke?: string }>;
+  export const Sphere: ComponentType<{ id?: string; fill?: string; stroke?: string; strokeWidth?: number }>;
+  export const Graticule: ComponentType<{ stroke?: string; strokeWidth?: number; clipPath?: string }>;
   export function useZoomPan(config?: object): object;
 }

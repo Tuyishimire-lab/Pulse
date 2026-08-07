@@ -2,11 +2,6 @@ import { NextResponse } from 'next/server';
 
 export const revalidate = 300; // Revalidate at most once every 5 minutes
 
-interface CloudflareTopLocation {
-  location: string;
-  value: string;
-}
-
 // Simple lookup map for country names
 const COUNTRY_NAMES: Record<string, string> = {
   US: 'United States',
@@ -126,6 +121,7 @@ export async function GET(req: Request) {
     }
 
     // 2. Fetch Top Locations (Only relevant for global view)
+    // Real API shape: result.top_0[].{ clientCountryAlpha2, clientCountryName, value }
     let topLocationsData = mockStats.topLocations;
     if (!hasLocation) {
       try {
@@ -135,16 +131,14 @@ export async function GET(req: Request) {
         });
         if (res.ok) {
           const json = await res.json();
-          const locations = json?.result?.topLocations || json?.result?.locations;
-          if (Array.isArray(locations)) {
-            topLocationsData = locations.map((loc: CloudflareTopLocation) => {
-              const pct = parseFloat(parseFloat(loc.value || '0').toFixed(1));
-              return {
-                location: loc.location,
-                name: COUNTRY_NAMES[loc.location] || loc.location,
-                percentage: pct
-              };
-            });
+          const locations: { clientCountryAlpha2: string; clientCountryName: string; value: string }[] =
+            json?.result?.top_0 ?? [];
+          if (Array.isArray(locations) && locations.length > 0) {
+            topLocationsData = locations.map((loc) => ({
+              location: loc.clientCountryAlpha2,
+              name: loc.clientCountryName || COUNTRY_NAMES[loc.clientCountryAlpha2] || loc.clientCountryAlpha2,
+              percentage: parseFloat(parseFloat(loc.value || '0').toFixed(1)),
+            }));
           }
         }
       } catch (e) {
@@ -182,23 +176,30 @@ export async function GET(req: Request) {
     }
 
     // 4. Fetch IQI Summary (Network Health Quality Metrics)
+    // Real API shape: each metric needs a separate request with ?metric=bandwidth|latency|dns
+    // Response: result.summary_0.{ p25, p50, p75 } — we use p50 (median)
     let qualityData = mockQuality;
     try {
-      const res = await fetch(`https://api.cloudflare.com/client/v4/radar/quality/iqi/summary?dateRange=7d&format=json${locationQuery}`, {
-        headers,
-        next: { revalidate: 300 }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const summary = json?.result?.summary;
-        if (summary) {
-          qualityData = {
-            bandwidth: summary.bandwidth?.value !== undefined ? parseFloat(summary.bandwidth.value.toFixed(1)) : mockQuality.bandwidth,
-            latency: summary.latency?.value !== undefined ? parseFloat(summary.latency.value.toFixed(1)) : mockQuality.latency,
-            dnsResponseTime: summary.dnsResponseTime?.value !== undefined ? parseFloat(summary.dnsResponseTime.value.toFixed(1)) : mockQuality.dnsResponseTime,
-          };
-        }
-      }
+      const iqiBase = `https://api.cloudflare.com/client/v4/radar/quality/iqi/summary?dateRange=7d&format=json${locationQuery}`;
+      const [bwRes, latRes, dnsRes] = await Promise.allSettled([
+        fetch(`${iqiBase}&metric=bandwidth`, { headers, next: { revalidate: 300 } }),
+        fetch(`${iqiBase}&metric=latency`,   { headers, next: { revalidate: 300 } }),
+        fetch(`${iqiBase}&metric=dns`,        { headers, next: { revalidate: 300 } }),
+      ]);
+
+      const p50 = async (settled: PromiseSettledResult<Response>): Promise<number | null> => {
+        if (settled.status !== 'fulfilled' || !settled.value.ok) return null;
+        const j = await settled.value.json();
+        const raw = j?.result?.summary_0?.p50;
+        return raw != null ? parseFloat(parseFloat(raw).toFixed(1)) : null;
+      };
+
+      const [bw, lat, dns] = await Promise.all([p50(bwRes), p50(latRes), p50(dnsRes)]);
+      qualityData = {
+        bandwidth:       bw  ?? mockQuality.bandwidth,
+        latency:         lat ?? mockQuality.latency,
+        dnsResponseTime: dns ?? mockQuality.dnsResponseTime,
+      };
     } catch (e) {
       console.warn('Failed to fetch IQI summary from Cloudflare:', e);
     }
