@@ -367,16 +367,15 @@ Reads `lastSynced` (ISO timestamp from `sites.updated_at`):
 ### 🔴 High Priority
 
 #### Traffic Map (`/map`)
-**Status: In development — next feature**
+**Status: ✅ Shipped — 2026-08-07**
 
-An interactive world map where countries are coloured by dominant site category and clicking any country navigates to `/top-sites/[country]`.
+An interactive world map where countries are coloured by internet penetration % and clicking any country navigates to `/top-sites/[country]`.
 
-- **Library:** `react-simple-maps` (SVG-based, ~30kb, no API key needed)
-- **Colour coding:** by dominant category (search=blue, social=purple, AI=green, video=red)
-- **Interaction:** hover → tooltip with #1 site + traffic; click → country page
-- **Coverage:** 115 countries with data; others greyed out with tooltip
-- **Route:** `/map`
-- **SEO:** `"Global Web Traffic Map 2026 | Pulse"` + ItemList JSON-LD
+- **Library:** `react-simple-maps` (SVG-based, ~30kb, no API key)
+- **Colour coding:** choropleth by penetration % — bright teal (≥90%) → dark (< 30%) → grey (no data)
+- **Interaction:** hover → tooltip with country name, #1 site, users, penetration; click → country page
+- **Coverage:** 115 countries with data; others greyed out
+- **Route:** `/map` — added to NavHeader and sitemap (priority 0.95)
 
 #### Groq-Powered Site Summaries
 Generate a 2–3 sentence AI summary per site for the detail modal, cached in Supabase. Triggered on first view, stored permanently.
