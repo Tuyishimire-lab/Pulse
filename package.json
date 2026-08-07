@@ -10,15 +10,17 @@
     "generate:countries": "npx tsx scripts/generate-countries.ts",
     "generate:sql": "node scripts/generate-seed-sql.js"
   },
-
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.2",
+    "@types/topojson-client": "^3.1.5",
     "@types/ws": "^8.18.1",
     "@vercel/analytics": "^2.0.1",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-simple-maps": "^3.0.0",
+    "topojson-client": "^3.1.0",
     "ws": "^8.21.2"
   },
   "devDependencies": {
