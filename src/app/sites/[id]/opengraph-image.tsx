@@ -39,7 +39,7 @@ export default async function Image({ params }: Props) {
         .single();
 
       if (!error && data) {
-        liveSite = data as typeof liveSite;
+        liveSite = data as { name: string; url: string; rank: number; baseline: string; category: string; color: string; logo: string };
       }
     } catch {
       // Non-critical — fall through to static fallback below
