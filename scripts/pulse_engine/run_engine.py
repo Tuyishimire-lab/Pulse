@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add project root to python path
@@ -139,7 +141,8 @@ def run_pulse_engine(run_validation_report: bool = True):
             "rate": rate,
             "baseline": baseline,
             "progress": progress,
-            "volatility": volatility
+            "volatility": volatility,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         try:
@@ -178,6 +181,55 @@ def run_pulse_engine(run_validation_report: bool = True):
 
     print()
     print(f"SUCCESS: PTI v1.2 Engine updated {updates_count}/{len(sites)} sites.")
+
+    # 5b. Upsert weekly_snapshots row
+    print("[5b] Writing weekly snapshot to Supabase...")
+    try:
+        now_utc = datetime.now(timezone.utc)
+        iso_week = now_utc.isocalendar()
+        week_slug = f"{iso_week.year}-w{str(iso_week.week).zfill(2)}"
+
+        # Build sites_data from the sites we fetched + updated this run
+        sites_lookup = {s.get("id"): s for s in sites}
+        sites_data = []
+        category_totals = {}
+        total_rate = 0
+
+        for upd in updated_sites:
+            sid = upd["id"]
+            orig = sites_lookup.get(sid, {})
+            cat = orig.get("category", "general")
+            entry = {
+                "id": sid,
+                "name": orig.get("name", sid),
+                "url": orig.get("url", ""),
+                "rank": orig.get("rank", 999),
+                "rate": upd["rate"],
+                "baseline": upd["baseline"],
+                "category": cat,
+                "color": orig.get("color", "#888"),
+                "logo": orig.get("logo", sid[:2].upper()),
+                "keywords": orig.get("keywords"),
+            }
+            sites_data.append(entry)
+            total_rate += upd["rate"]
+            if cat not in category_totals:
+                category_totals[cat] = {"count": 0, "totalRate": 0}
+            category_totals[cat]["count"] += 1
+            category_totals[cat]["totalRate"] += upd["rate"]
+
+        snapshot_payload = {
+            "week_slug": week_slug,
+            "snapshot_date": now_utc.isoformat(),
+            "sites_data": json.dumps(sites_data),
+            "category_totals": json.dumps(category_totals),
+            "total_rate": total_rate,
+            "outage_count": 0,
+        }
+        supabase.table("weekly_snapshots").upsert(snapshot_payload, on_conflict="week_slug").execute()
+        print(f"  Snapshot written: {week_slug} ({len(sites_data)} sites, total_rate={total_rate}/s)")
+    except Exception as e:
+        print(f"  [Warning] Could not write weekly snapshot: {e}")
 
     # 6. Validation report
     if run_validation_report:

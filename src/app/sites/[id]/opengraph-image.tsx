@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { createClient } from '@supabase/supabase-js';
 import { SITES } from '../../data/sites';
 
 export const alt = 'Pulse Website Traffic Analytics Details';
@@ -14,8 +15,40 @@ interface Props {
 
 export default async function Image({ params }: Props) {
   const { id } = await params;
-  const site = SITES.find((s) => s.id === id);
-  
+
+  // Static entry used purely as a shape-compatible fallback
+  const staticSite = SITES.find((s) => s.id === id);
+
+  // Attempt to fetch fresh data from Supabase (same pattern as page.tsx)
+  let liveSite: { name: string; url: string; rank: number; baseline: string; category: string; color: string; logo: string } | null = null;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    '';
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data, error } = await supabase
+        .from('sites')
+        .select('name, url, rank, baseline, category, color, logo')
+        .eq('id', id)
+        .single();
+
+      if (!error && data) {
+        liveSite = data as typeof liveSite;
+      }
+    } catch {
+      // Non-critical — fall through to static fallback below
+    }
+  }
+
+  // Merge: live Supabase data wins, static file is the fallback
+  const site = liveSite ?? staticSite ?? null;
+
   const siteName = site ? site.name : 'Domain Not Found';
   const siteUrl = site ? site.url.replace('https://', '').replace('http://', '').replace('www.', '') : '';
   const rank = site ? `#${site.rank}` : 'N/A';

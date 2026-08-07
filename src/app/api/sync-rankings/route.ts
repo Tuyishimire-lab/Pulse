@@ -80,12 +80,14 @@ export async function GET(req: Request) {
     });
 
     // Match and update sites
-    const updates: { id: string; rank: number }[] = [];
+    const updates: { id: string; rank: number; baseline_raw?: number }[] = [];
     const ranksObj: Record<string, number> = {};
     
     let currentSites = SITES;
     if (isSupabaseConfigured) {
-      const { data: dbSites, error } = await supabase.from('sites').select('id, url, rank');
+      const { data: dbSites, error } = await supabase
+        .from('sites')
+        .select('id, url, rank, baseline_raw');
       if (!error && dbSites) {
         currentSites = dbSites as any[];
       }
@@ -104,21 +106,29 @@ export async function GET(req: Request) {
       if (newRank !== undefined) {
         ranksObj[site.id] = newRank;
         if (newRank !== site.rank) {
-          updates.push({ id: site.id, rank: newRank });
+          // Carry baseline_raw forward: use existing DB value or fall back to static seed
+          const staticEntry = SITES.find((s) => s.id === site.id);
+          updates.push({
+            id: site.id,
+            rank: newRank,
+            baseline_raw: (site as any).baseline_raw ?? staticEntry?.baselineRaw,
+          });
         }
       }
     });
 
     // Write updates to Supabase ONLY if we are in GLOBAL mode and there are updates
     if (!hasLocation && isSupabaseConfigured && updates.length > 0) {
-      const dbUpdates = updates.map((upd) => 
-        supabase
+      const dbUpdates = updates.map((upd) => {
+        const payload: Record<string, unknown> = { rank: upd.rank };
+        if (upd.baseline_raw !== undefined) payload.baseline_raw = upd.baseline_raw;
+        return supabase
           .from('sites')
-          .update({ rank: upd.rank })
-          .eq('id', upd.id)
-      );
+          .update(payload)
+          .eq('id', upd.id);
+      });
 
-      // Perform updates
+      // Perform updates in chunks to avoid rate limits
       const chunkSize = 10;
       for (let i = 0; i < dbUpdates.length; i += chunkSize) {
         await Promise.all(dbUpdates.slice(i, i + chunkSize));

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SITES, CATEGORIES, SiteConfig } from './data/sites';
+import { CATEGORIES, SiteConfig } from './data/sites';
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { STATIC_TRAFFIC_FACTS } from '../data/marquee';
@@ -46,6 +46,9 @@ export default function HomeClient({
 
   // ── Supabase — seed with server-fetched data ──────────────────────────────
   const [dbSites, setDbSites] = useState<SiteConfig[]>(initialSites);
+  const [lastSynced, setLastSynced] = useState<string | null>(
+    (initialSites[0] as any)?.updated_at ?? null
+  );
 
   // ── Watchlist ─────────────────────────────────────────────────────────────
   const [watchlistIds, setWatchlistIds] = useState<string[]>([]);
@@ -93,17 +96,25 @@ export default function HomeClient({
   const pageLoadTimeRef = useRef<number>(Date.now());
 
   // ── Rank change helper ────────────────────────────────────────────────────
+  // Derives the baseline rank from the oldest rank_history entry stored in
+  // Supabase by the PTI engine — no longer reads from the static sites.ts file.
   const getRankChange = (site: SiteConfig) => {
-    const staticSite = SITES.find((s) => s.id === site.id);
-    if (!staticSite) return null;
-    return staticSite.rank - site.rank;
+    if (!site.rank_history || site.rank_history.length < 2) return null;
+    // Sort oldest-first explicitly — do NOT rely on insertion order from the engine
+    const sorted = [...site.rank_history].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const oldestRank = sorted[0].rank;
+    return oldestRank - site.rank; // positive = moved up, negative = moved down
   };
 
   // ── Incident detection from marquee ──────────────────────────────────────
   const sitesWithIncidents = useMemo(() => {
     const incidentIds = new Set<string>();
-    const baseSites = dbSites.length > 0 ? dbSites : SITES;
-    const allBaseSites = [...baseSites, ...customSites];
+    // Always use live Supabase data — never fall back to the static file.
+    // If dbSites is empty (Supabase not yet loaded) we simply detect no incidents
+    // rather than risk serving stale ASN/name data from the static file.
+    const allBaseSites = [...dbSites, ...customSites];
 
     marqueeItems.forEach((item) => {
       if (item.type !== 'outage') return;
@@ -146,7 +157,7 @@ export default function HomeClient({
       try {
         const { data, error } = await supabase
           .from('sites')
-          .select('id, name, url, rank, category, baseline, rate, logo, color, glow, progress, asn, keywords, rank_history')
+          .select('id, name, url, rank, category, baseline, baseline_raw, rate, logo, color, glow, progress, asn, keywords, rank_history, updated_at')
           .order('rank', { ascending: true });
 
         if (error) {
@@ -155,6 +166,8 @@ export default function HomeClient({
         }
         if (data && data.length > 0) {
           setDbSites(data as SiteConfig[]);
+          const firstUpdated = (data[0] as any).updated_at;
+          if (firstUpdated) setLastSynced(firstUpdated);
         }
       } catch (err) {
         console.error('Failed to connect to Supabase:', err);
@@ -259,6 +272,17 @@ export default function HomeClient({
   const handleAddCustomSite = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSiteName || !newSiteUrl) return;
+
+    // Validate URL — normalise first then check it parses
+    const rawUrl = newSiteUrl.startsWith('http') ? newSiteUrl : `https://${newSiteUrl}`;
+    try {
+      const parsed = new URL(rawUrl);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error();
+    } catch {
+      alert('Please enter a valid domain or URL (e.g. mywebsite.com)');
+      return;
+    }
+
     const numStr = newSiteBaseline.replace(/[^0-9.]/g, '');
     const num = parseFloat(numStr) || 10;
     const isBillion = newSiteBaseline.toLowerCase().includes('b');
@@ -268,15 +292,17 @@ export default function HomeClient({
     const newSite: SiteConfig = {
       id: customId,
       name: newSiteName,
-      url: newSiteUrl.startsWith('http') ? newSiteUrl : `https://${newSiteUrl}`,
-      rank: SITES.length + customSites.length + 1,
+      url: rawUrl,
+      rank: dbSites.length > 0 ? dbSites.length + customSites.length + 1 : 104 + customSites.length,
       category: newSiteCategory,
       baseline: newSiteBaseline,
+      // Store numeric value so comparisons work correctly (fixes the baselineRaw gap for custom sites)
+      baselineRaw: monthlyVisits,
       rate: calculatedRate,
       logo: newSiteName.charAt(0).toUpperCase(),
       color: newSiteColor,
       glow: `${newSiteColor}26`,
-      progress: Math.min(100, (calculatedRate / SITES[0].rate) * 100),
+      progress: Math.min(100, (calculatedRate / (dbSites[0]?.rate || 35198)) * 100),
     };
     const updated = [...customSites, newSite];
     setCustomSites(updated);
@@ -469,6 +495,7 @@ export default function HomeClient({
           activeCategory={activeCategory}
           onCategoryChange={(id) => { setActiveCategory(id); setVisibleCount(30); }}
           filteredSites={filteredSites}
+          lastSynced={lastSynced}
         />
 
         {showAnalyticsPanel && (

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface LegalModalsProps {
   showPrivacyModal: boolean;
@@ -22,18 +22,34 @@ export default function LegalModals({
   onCloseTerms,
   onCloseMethodology = () => {},
 }: LegalModalsProps) {
+  // Close any open modal on Escape key press
+  useEffect(() => {
+    if (!showPrivacyModal && !showTermsModal && !showMethodologyModal) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (showPrivacyModal) onClosePrivacy();
+      else if (showTermsModal) onCloseTerms();
+      else if (showMethodologyModal) onCloseMethodology();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showPrivacyModal, showTermsModal, showMethodologyModal, onClosePrivacy, onCloseTerms, onCloseMethodology]);
+
   return (
     <>
       {/* Privacy Policy glassmorphic popup overlay */}
       {showPrivacyModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Privacy Policy"
           className="modal-overlay flex items-center justify-center animate-fadeIn z-[100]"
           onClick={onClosePrivacy}
         >
           <div className="modal-content max-w-[550px] w-full p-8 rounded-3xl border border-white/10 text-left mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center pb-4 border-b border-white/5">
               <h2 className="text-xl font-bold m-0 text-white">Privacy Policy</h2>
-              <button className="modal-close-btn" onClick={onClosePrivacy}>
+              <button autoFocus className="modal-close-btn" onClick={onClosePrivacy}>
                 &times;
               </button>
             </div>
@@ -50,13 +66,16 @@ export default function LegalModals({
       {/* Terms of Service glassmorphic popup overlay */}
       {showTermsModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Terms of Service"
           className="modal-overlay flex items-center justify-center animate-fadeIn z-[100]"
           onClick={onCloseTerms}
         >
           <div className="modal-content max-w-[550px] w-full p-8 rounded-3xl border border-white/10 text-left mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center pb-4 border-b border-white/5">
               <h2 className="text-xl font-bold m-0 text-white">Terms of Service</h2>
-              <button className="modal-close-btn" onClick={onCloseTerms}>
+              <button autoFocus className="modal-close-btn" onClick={onCloseTerms}>
                 &times;
               </button>
             </div>
@@ -73,13 +92,16 @@ export default function LegalModals({
       {/* Data & Methodology Disclaimer Popup Overlay */}
       {showMethodologyModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Data & Methodology Disclaimer"
           className="modal-overlay flex items-center justify-center animate-fadeIn z-[100]"
           onClick={onCloseMethodology}
         >
           <div className="modal-content max-w-[580px] w-full p-8 rounded-3xl border border-white/10 text-left mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center pb-4 border-b border-white/5">
               <h2 className="text-xl font-bold m-0 text-white">Data &amp; Methodology Disclaimer</h2>
-              <button className="modal-close-btn" onClick={onCloseMethodology}>
+              <button autoFocus className="modal-close-btn" onClick={onCloseMethodology}>
                 &times;
               </button>
             </div>

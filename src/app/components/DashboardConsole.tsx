@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { SiteConfig, CATEGORIES } from '../data/sites';
+import { COUNTRIES } from '../top-sites/data/countries';
 import { exportSitesToCsv } from '../../utils/exportCsv';
 
 interface DashboardConsoleProps {
@@ -22,6 +23,7 @@ interface DashboardConsoleProps {
   activeCategory: string;
   onCategoryChange: (id: string) => void;
   filteredSites?: SiteConfig[];
+  lastSynced?: string | null; // ISO timestamp of last PTI engine run
 }
 
 /**
@@ -47,9 +49,34 @@ export default function DashboardConsole({
   activeCategory,
   onCategoryChange,
   filteredSites,
+  lastSynced,
 }: DashboardConsoleProps) {
+  // Derive human-readable sync label
+  const syncLabel = React.useMemo(() => {
+    if (!lastSynced) return null;
+    const diffMs = Date.now() - new Date(lastSynced).getTime();
+    const diffMin = Math.round(diffMs / 60_000);
+    if (diffMin < 2) return { text: 'just now', stale: false };
+    if (diffMin < 60) return { text: `${diffMin}m ago`, stale: false };
+    const diffHr = Math.round(diffMin / 60);
+    return { text: `${diffHr}h ago`, stale: diffHr >= 2 };
+  }, [lastSynced]);
+
   return (
     <div className="dashboard-console animate-fadeIn">
+      {/* Sync status pill */}
+      {syncLabel && (
+        <div className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold">
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: syncLabel.stale ? '#f59e0b' : '#4ade80' }}
+          />
+          <span style={{ color: syncLabel.stale ? '#f59e0b' : '#4ade80' }}>
+            {syncLabel.stale ? 'Stale' : 'Live'}
+          </span>
+          <span className="text-[#6d8196]">· synced {syncLabel.text}</span>
+        </div>
+      )}
       {/* Top Row: Search & View Layout Toggling */}
       <div className="console-nav-row">
         <div className="search-wrapper">
@@ -91,12 +118,9 @@ export default function DashboardConsole({
               className="bg-[#0f1b2b] text-[#82c8e5] text-xs font-bold px-3 py-1.5 rounded-lg border border-[#1e324a] focus:outline-none focus:border-[#00e5ff] cursor-pointer hover:bg-[#15263d] transition-all"
             >
               <option value="global">Worldwide</option>
-              <option value="US">US - United States</option>
-              <option value="IN">IN - India</option>
-              <option value="GB">GB - United Kingdom</option>
-              <option value="DE">DE - Germany</option>
-              <option value="BR">BR - Brazil</option>
-              <option value="JP">JP - Japan</option>
+              {COUNTRIES.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                <option key={c.cfCode} value={c.cfCode}>{c.cfCode} — {c.name}</option>
+              ))}
             </select>
           </div>
 

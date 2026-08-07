@@ -241,7 +241,7 @@ export default function SiteGrid({
                       onClick={(e) => e.stopPropagation()}
                       className="text-[0.65rem] text-[#82c8e5]/50 hover:text-white transition"
                     >
-                      [SEO] ↗
+                      Details ↗
                     </Link>
                   </div>
                   <a

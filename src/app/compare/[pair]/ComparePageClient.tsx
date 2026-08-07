@@ -88,7 +88,8 @@ function StatRow({ label, a, b, colorA, colorB, winner }: {
 export default function ComparePageClient({ siteA, siteB, pairData, related, allSites }: Props) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const aWinsVisits = siteA.baseline > siteB.baseline;
+  // Use numeric baselineRaw to avoid JS string-comparison bug ("820M" > "2.0B" alphabetically)
+  const aWinsVisits = (siteA.baselineRaw ?? siteA.rate) > (siteB.baselineRaw ?? siteB.rate);
   const aWinsRate = siteA.rate > siteB.rate;
   const aWinsRank = siteA.rank < siteB.rank;
 
@@ -289,6 +290,8 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 hover:bg-white/[0.03] transition-colors"
                   aria-expanded={openFaq === i}
+                  aria-controls={`compare-faq-panel-${i}`}
+                  id={`compare-faq-btn-${i}`}
                 >
                   <span className="font-semibold text-sm text-white">{item.q}</span>
                   <span

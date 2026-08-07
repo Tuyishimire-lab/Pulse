@@ -263,6 +263,8 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 hover:bg-white/[0.03] transition-colors"
                   aria-expanded={openFaq === i}
+                  aria-controls={`country-faq-panel-${i}`}
+                  id={`country-faq-btn-${i}`}
                 >
                   <span className="font-semibold text-sm text-white">{faq.q}</span>
                   <span className="text-[#6d8196] text-lg flex-shrink-0 transition-transform duration-200"

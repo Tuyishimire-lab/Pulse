@@ -6,10 +6,14 @@ CREATE TABLE IF NOT EXISTS public.sites (
   rank INTEGER NOT NULL,
   category TEXT NOT NULL,
   baseline TEXT NOT NULL,
+  baseline_raw BIGINT,
   rate INTEGER NOT NULL,
+  logo TEXT,
   color TEXT NOT NULL,
   glow TEXT NOT NULL,
-  progress NUMERIC NOT NULL
+  progress NUMERIC NOT NULL,
+  volatility NUMERIC DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.traffic_history (
@@ -29,15 +33,56 @@ CREATE TABLE IF NOT EXISTS public.traffic_daily_aggregation (
   PRIMARY KEY (site_id, date)
 );
 
+-- Weekly Snapshots: stores full weekly state for the /report pages
+-- Written by run_engine.py each cron cycle; read by reportGenerator.ts
+CREATE TABLE IF NOT EXISTS public.weekly_snapshots (
+  week_slug       TEXT PRIMARY KEY,      -- e.g. "2026-w31"
+  snapshot_date   TIMESTAMPTZ DEFAULT NOW(),
+  sites_data      JSONB NOT NULL,         -- SiteSummary[] for all tracked sites
+  category_totals JSONB NOT NULL,         -- { category: { count, totalRate } }
+  total_rate      INTEGER NOT NULL,
+  outage_count    INTEGER DEFAULT 0,
+  ai_stories      JSONB                   -- optional AI-generated narrative stories
+);
+
+-- Site History: per-run audit trail written by run_engine.py
+CREATE TABLE IF NOT EXISTS public.site_history (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  site_id    TEXT REFERENCES public.sites(id) ON DELETE CASCADE,
+  recorded_at TIMESTAMPTZ DEFAULT NOW(),
+  rank       INTEGER,
+  rate       INTEGER,
+  volatility NUMERIC,
+  pti_score  NUMERIC
+);
+
+-- Compare Cache: stores Groq-generated FAQs to avoid redundant API calls
+-- A row is written once per pair; subsequent builds read from here instead of calling Groq
+CREATE TABLE IF NOT EXISTS public.compare_cache (
+  pair_slug   TEXT PRIMARY KEY,           -- e.g. "chatgpt-vs-gemini"
+  site_a_id   TEXT NOT NULL,
+  site_b_id   TEXT NOT NULL,
+  verdict     TEXT NOT NULL,
+  context     TEXT NOT NULL,
+  faq         JSONB NOT NULL,             -- { q: string; a: string }[]
+  generated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.traffic_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.traffic_daily_aggregation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.weekly_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.compare_cache ENABLE ROW LEVEL SECURITY;
 
--- Allow Public Read Access (Essential so frontend clients can fetch data)
+-- Allow Public Read Access
 CREATE POLICY "Allow public read access to sites" ON public.sites FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to traffic_history" ON public.traffic_history FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to traffic_daily_aggregation" ON public.traffic_daily_aggregation FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to weekly_snapshots" ON public.weekly_snapshots FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to site_history" ON public.site_history FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to compare_cache" ON public.compare_cache FOR SELECT USING (true);
 
 -- Sync trigger function to update dynamic daily metrics
 CREATE OR REPLACE FUNCTION public.sync_traffic_daily_aggregation()

@@ -1,9 +1,34 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 import { SITES } from '../../../data/sites';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+
+/**
+ * Fetches badge data from Supabase, cached by Next.js for 5 minutes.
+ * unstable_cache is backed by the shared ISR/fetch cache on Vercel — unlike a
+ * module-level Map it survives cold starts and is shared across function instances.
+ */
+const getCachedBadgeData = unstable_cache(
+  async (siteId: string) => {
+    if (!supabaseUrl || !supabaseKey) return null;
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data } = await supabase
+        .from('sites')
+        .select('rank, baseline, name')
+        .eq('id', siteId)
+        .single();
+      return data ?? null;
+    } catch {
+      return null;
+    }
+  },
+  ['badge-data'],
+  { revalidate: 300, tags: ['badge'] } // 5-minute TTL; invalidate with revalidateTag('badge')
+);
 
 export async function GET(
   request: Request,
@@ -12,7 +37,7 @@ export async function GET(
   const { id } = await params;
   const siteId = id.toLowerCase();
 
-  // Find site from static list
+  // Find site from static list as fallback
   const site = SITES.find((s) => s.id === siteId);
 
   let rank = site?.rank || 999;
@@ -20,24 +45,12 @@ export async function GET(
   let siteName = site?.name || siteId.toUpperCase();
   let brandColor = site?.color || '#0047AB';
 
-  // Attempt to fetch fresh rank & baseline from Supabase
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data } = await supabase
-        .from('sites')
-        .select('rank, baseline, name, rate')
-        .eq('id', siteId)
-        .single();
-
-      if (data) {
-        if (data.rank) rank = data.rank;
-        if (data.baseline) baseline = data.baseline;
-        if (data.name) siteName = data.name;
-      }
-    } catch (e) {
-      // Fallback to static values if DB query fails
-    }
+  // Fetch from Supabase via durable Next.js cache (survives cold starts)
+  const liveData = await getCachedBadgeData(siteId);
+  if (liveData) {
+    if (liveData.rank) rank = liveData.rank;
+    if (liveData.baseline) baseline = liveData.baseline;
+    if (liveData.name) siteName = liveData.name;
   }
 
   // Calculate approximate PTI score for badge
@@ -74,7 +87,7 @@ export async function GET(
   return new NextResponse(svg, {
     headers: {
       'Content-Type': 'image/svg+xml',
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
     },
   });
 }

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SITES } from '../../data/sites';
 import { COMPARE_PAIRS, getPairBySlug, PAIR_SLUGS, parsePairSlug } from '../data/pairs';
+import { generateDynamicPair } from './generateDynamicPair';
 import ComparePageClient from './ComparePageClient';
 
 const BASE_URL = 'https://www.pulstraffic.com';
@@ -11,7 +12,25 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return PAIR_SLUGS.map((slug) => ({ pair: slug }));
+  // Start with all hand-crafted SEO pairs
+  const knownSlugs = new Set(PAIR_SLUGS);
+  const params: { pair: string }[] = PAIR_SLUGS.map((slug) => ({ pair: slug }));
+
+  // Add top-20 × top-20 combinations not already covered
+  const top20 = SITES.slice(0, 20);
+  for (const siteA of top20) {
+    for (const siteB of top20) {
+      if (siteA.id === siteB.id) continue;
+      const slug = `${siteA.id}-vs-${siteB.id}`;
+      const reverseSlug = `${siteB.id}-vs-${siteA.id}`;
+      // Skip if this pair or its reverse is already hand-crafted
+      if (knownSlugs.has(slug) || knownSlugs.has(reverseSlug)) continue;
+      knownSlugs.add(slug); // prevent duplicate forward/reverse at build time
+      params.push({ pair: slug });
+    }
+  }
+
+  return params;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -68,11 +87,17 @@ export default async function ComparePage({ params }: PageProps) {
 
   if (!siteA || !siteB) notFound();
 
+  // Resolve pair data: hand-crafted first, then Groq-generated dynamic fallback
+  let pairData = known ?? null;
+  if (!pairData && siteAId && siteBId) {
+    pairData = await generateDynamicPair(siteAId, siteBId);
+  }
+
   // All other pairs for the navigation pill strip (excluding current)
   const related = COMPARE_PAIRS.filter((p) => p.slug !== slug);
 
   // JSON-LD: WebPage + FAQPage + BreadcrumbList
-  const faqItems = known?.faq ?? [];
+  const faqItems = pairData?.faq ?? [];
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -85,18 +110,8 @@ export default async function ComparePage({ params }: PageProps) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
-            item: BASE_URL,
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: 'Compare',
-            item: `${BASE_URL}/compare`,
-          },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Compare', item: `${BASE_URL}/compare` },
           {
             '@type': 'ListItem',
             position: 3,
@@ -112,10 +127,7 @@ export default async function ComparePage({ params }: PageProps) {
               mainEntity: faqItems.map((faq) => ({
                 '@type': 'Question',
                 name: faq.q,
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: faq.a,
-                },
+                acceptedAnswer: { '@type': 'Answer', text: faq.a },
               })),
             },
           ]
@@ -132,7 +144,7 @@ export default async function ComparePage({ params }: PageProps) {
       <ComparePageClient
         siteA={siteA}
         siteB={siteB}
-        pairData={known ?? null}
+        pairData={pairData}
         related={related}
         allSites={SITES}
       />
