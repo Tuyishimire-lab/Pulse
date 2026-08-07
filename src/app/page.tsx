@@ -21,11 +21,15 @@ export default async function Home() {
       const supabase = createClient(supabaseUrl, supabaseKey);
       const { data, error } = await supabase
         .from('sites')
-        .select('id, name, url, rank, category, baseline, rate, logo, color, glow, progress, asn, keywords, rank_history')
+        .select('id, name, url, rank, category, baseline, baseline_raw, rate, logo, color, glow, progress, asn, keywords, rank_history')
         .order('rank', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        initialSites = data as SiteConfig[];
+        // Map baseline_raw (DB snake_case) → baselineRaw (SiteConfig camelCase)
+        initialSites = data.map((row: any) => ({
+          ...row,
+          baselineRaw: row.baseline_raw ?? 0,
+        })) as SiteConfig[];
       }
     } catch (err) {
       console.error('Server: Failed to fetch sites from Supabase:', err);
