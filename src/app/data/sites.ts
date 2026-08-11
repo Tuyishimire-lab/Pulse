@@ -2,19 +2,30 @@ export interface SiteConfig {
   id: string;
   name: string;
   url: string;
-  rank: number;
   category: string;
-  baseline: string;
-  /** Raw monthly visits as a number — use this for all numeric comparisons. */
-  baselineRaw: number;
-  rate: number;
   logo: string;
   color: string;
   glow: string;
+  // ── Engine-owned fields (authoritative from Supabase, optional for static fallback) ──
+  /** Global rank — written by the engine's collision-free arbitration pass. */
+  rank: number;
+  /** Human-readable monthly visits (e.g. '7.2B / mo') — written by engine. */
+  baseline: string;
+  /** Raw monthly visits as a number — use this for all numeric comparisons. */
+  baselineRaw: number;
+  /** Visits per second — written by the PTI model. */
+  rate: number;
+  /** Progress bar width relative to Google (100%). Written by engine. */
   progress: number;
+  // ── Optional / supplemental fields ──
   asn?: number[];
+  keywords?: string[] | null;
   rank_history?: { rank: number; date: string }[];
+  updated_at?: string;
 }
+
+/** Static metadata that never changes — used by getSites.ts to enrich DB rows. */
+export type SiteMeta = Pick<SiteConfig, 'id' | 'name' | 'url' | 'category' | 'logo' | 'color' | 'glow' | 'asn'>;
 
 export const CATEGORIES = [
   { id: 'all', label: 'All Platforms' },
@@ -144,3 +155,27 @@ export const SITES: SiteConfig[] = [
   { id: 'uber', name: 'Uber', url: 'https://uber.com', rank: 102, category: 'ecommerce', baseline: '148M / mo', baselineRaw: 148_000_000, rate: 56, logo: 'Ub', color: '#000000', glow: 'rgba(255, 255, 255, 0.05)', progress: 0.16 },
   { id: 'figma', name: 'Figma', url: 'https://figma.com', rank: 103, category: 'dev', baseline: '152M / mo', baselineRaw: 152_000_000, rate: 58, logo: 'Fg', color: '#f24e1e', glow: 'rgba(242, 78, 30, 0.15)', progress: 0.16 },
 ];
+
+/**
+ * Fast id → static metadata lookup.
+ * Used by getSites.ts to merge color/logo/glow/asn onto Supabase DB rows
+ * without requiring a full array scan on every request.
+ *
+ * Only contains fields that are NOT written by the engine
+ * (i.e. not rank, baseline, rate, progress — those come from Supabase).
+ */
+export const SITE_META: Record<string, SiteMeta> = Object.fromEntries(
+  SITES.map((s) => [
+    s.id,
+    {
+      id: s.id,
+      name: s.name,
+      url: s.url,
+      category: s.category,
+      logo: s.logo,
+      color: s.color,
+      glow: s.glow,
+      asn: s.asn,
+    } satisfies SiteMeta,
+  ])
+);

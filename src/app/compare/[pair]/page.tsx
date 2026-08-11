@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SITES } from '../../data/sites';
+import { getSites } from '../../../lib/getSites';
 import { COMPARE_PAIRS, getPairBySlug, PAIR_SLUGS, parsePairSlug } from '../data/pairs';
 import { generateDynamicPair } from './generateDynamicPair';
 import ComparePageClient from './ComparePageClient';
@@ -39,8 +40,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const known = getPairBySlug(slug);
   const parsed = parsePairSlug(slug);
 
-  const siteA = SITES.find((s) => s.id === (known?.siteAId ?? parsed?.siteAId));
-  const siteB = SITES.find((s) => s.id === (known?.siteBId ?? parsed?.siteBId));
+  // Use live data for metadata so baseline/rank are accurate
+  const sites = await getSites();
+  const siteA = sites.find((s) => s.id === (known?.siteAId ?? parsed?.siteAId));
+  const siteB = sites.find((s) => s.id === (known?.siteBId ?? parsed?.siteBId));
 
   if (!siteA || !siteB) return { title: 'Comparison Not Found | Pulse' };
 
@@ -82,8 +85,10 @@ export default async function ComparePage({ params }: PageProps) {
   const siteAId = known?.siteAId ?? parsed?.siteAId;
   const siteBId = known?.siteBId ?? parsed?.siteBId;
 
-  const siteA = SITES.find((s) => s.id === siteAId);
-  const siteB = SITES.find((s) => s.id === siteBId);
+  // Use live data for rank/baseline — arbitrated by engine
+  const allSites = await getSites();
+  const siteA = allSites.find((s) => s.id === siteAId);
+  const siteB = allSites.find((s) => s.id === siteBId);
 
   if (!siteA || !siteB) notFound();
 
@@ -146,7 +151,7 @@ export default async function ComparePage({ params }: PageProps) {
         siteB={siteB}
         pairData={pairData}
         related={related}
-        allSites={SITES}
+        allSites={allSites}
       />
     </>
   );

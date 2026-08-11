@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { SITES } from '../../data/sites';
+import { getSites } from '../../../lib/getSites';
 import { ALL_COUNTRIES, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
 import CountryPageClient from './CountryPageClient';
 import { notFound } from 'next/navigation';
@@ -57,13 +58,16 @@ export default async function CountryPage({ params }: PageProps) {
 
   if (!countryData) notFound();
 
+  // Use live site data (arbitrated ranks) instead of static SITES
+  const liveSites = await getSites();
+
   // Build the ordered site list for this country
-  // Pinned sites come first in their specified order, then the rest of SITES
+  // Pinned sites come first in their specified order, then the rest
   const pinnedIds = countryData.pinnedSiteIds ?? [];
   const pinned = pinnedIds
-    .map((id) => SITES.find((s) => s.id === id))
-    .filter(Boolean) as typeof SITES;
-  const rest = SITES.filter((s) => !pinnedIds.includes(s.id));
+    .map((id) => liveSites.find((s) => s.id === id))
+    .filter(Boolean) as typeof liveSites;
+  const rest = liveSites.filter((s) => !pinnedIds.includes(s.id));
   const orderedSites = [...pinned, ...rest].slice(0, 20);
 
   // JSON-LD: ItemList + BreadcrumbList schema

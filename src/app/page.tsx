@@ -1,40 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-import { SiteConfig } from './data/sites';
+import { getSites } from '../lib/getSites';
 import HomeClient from './HomeClient';
 
 /**
  * Server Component — fetches initial data server-side to eliminate
  * the client-side Supabase waterfall and reduce JS bundle size.
+ * Uses getSites() which is the single source of truth for site data.
  */
 export default async function Home() {
   // ── Server-side data fetching ──────────────────────────────────────────
-  let initialSites: SiteConfig[] = [];
   let initialRadarStats: any = null;
   let initialMarquee: { text: string; type: string; asns?: number[]; locations?: string[] }[] = [];
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-
-  // Fetch sites from Supabase
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data, error } = await supabase
-        .from('sites')
-        .select('id, name, url, rank, category, baseline, baseline_raw, rate, logo, color, glow, progress, asn, keywords, rank_history')
-        .order('rank', { ascending: true });
-
-      if (!error && data && data.length > 0) {
-        // Map baseline_raw (DB snake_case) → baselineRaw (SiteConfig camelCase)
-        initialSites = data.map((row: any) => ({
-          ...row,
-          baselineRaw: row.baseline_raw ?? 0,
-        })) as SiteConfig[];
-      }
-    } catch (err) {
-      console.error('Server: Failed to fetch sites from Supabase:', err);
-    }
-  }
+  // Fetch sites via unified data layer (Supabase → sites.ts fallback)
+  const initialSites = await getSites(60);
 
   // Fetch radar stats and marquee data in parallel
   const baseUrl = process.env.VERCEL_URL

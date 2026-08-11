@@ -22,6 +22,7 @@ from scripts.pulse_engine.signals import (
 )
 from scripts.pulse_engine.pti_model import estimate_traffic_and_pti, classify_trend
 from scripts.pulse_engine.validation import run_validation, print_validation_report
+from scripts.pulse_engine.rank_arbiter import arbitrate_ranks
 
 # ─────────────────────────────────────────────────────────────────────────────
 # RANK OVERRIDES
@@ -111,8 +112,24 @@ def run_pulse_engine(run_validation_report: bool = True):
     print("[4/6] Signal 5 — Google Trends human search momentum...")
     trends_map = fetch_google_trends_momentum(domain_list, batch_size=5)
 
-    # 5. Compute PTI metrics and update Supabase
-    print("[5/6] Computing PTI v1.2 metrics and syncing to database...")
+    # 5. Global rank arbitration — guaranteed collision-free sequential ranks
+    print("[5/6] Running rank arbitration pass (collision-free sequential assignment)...")
+    domain_for = {
+        s.get("id", ""): parse_domain(s.get("url", ""))
+        for s in sites
+        if s.get("id")
+    }
+    arbitrated_ranks = arbitrate_ranks(
+        sites=sites,
+        cf_ranks=cf_ranks,
+        tranco_ranks=tranco_ranks,
+        opr_map=opr_map,
+        overrides=RANK_OVERRIDES,
+        domain_for=domain_for,
+    )
+
+    # 6. Compute PTI metrics and update Supabase
+    print("[6/6] Computing PTI v1.2 metrics and syncing to database...")
     updates_count = 0
 
     # Compute max_rate anchor
@@ -127,13 +144,8 @@ def run_pulse_engine(run_validation_report: bool = True):
         old_rank = site.get("rank", 999)
         old_rate = site.get("rate", 0)
 
-        # Best available rank (overrides > CF Radar > Tranco > existing DB)
-        # RANK_OVERRIDES take priority for sites where DNS-based ranking is
-        # structurally inaccurate (AI platforms, mobile-SDK-first apps).
-        if site_id in RANK_OVERRIDES:
-            new_rank = RANK_OVERRIDES[site_id]
-        else:
-            new_rank = all_ranks.get(domain, old_rank)
+        # Arbitrated rank — collision-free, globally consistent
+        new_rank = arbitrated_ranks.get(site_id, old_rank)
 
         # Open PageRank authority
         opr_info = opr_map.get(domain, {})

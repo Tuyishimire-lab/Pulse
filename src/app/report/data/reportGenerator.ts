@@ -9,7 +9,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { SITES, SiteConfig } from '../../data/sites';
+import { getSites } from '../../../lib/getSites';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -350,7 +350,7 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
 
   // If no snapshot exists, fall back to static generation
   if (!currentSnapshot) {
-    return generateStaticReport(monday, week, year, slug);
+    return await generateStaticReport(monday, week, year, slug);
   }
 
   const currentSites = currentSnapshot.sites_data;
@@ -451,12 +451,14 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
 
 /* ── Static fallback (for weeks without a snapshot) ─────────────────────── */
 
-function generateStaticReport(monday: Date, week: number, year: number, slug: string): WeeklyReport {
-  const totalRate = SITES.reduce((sum, s) => sum + s.rate, 0);
-  const top5 = SITES.slice(0, 5);
+async function generateStaticReport(monday: Date, week: number, year: number, slug: string): Promise<WeeklyReport> {
+  // Use getSites() so even the static fallback reflects live Supabase data
+  const sites = await getSites();
+  const totalRate = sites.reduce((sum, s) => sum + s.rate, 0);
+  const top5 = sites.slice(0, 5);
 
   const categoryMap: Record<string, { count: number; totalRate: number }> = {};
-  SITES.forEach((s) => {
+  sites.forEach((s) => {
     if (!categoryMap[s.category]) categoryMap[s.category] = { count: 0, totalRate: 0 };
     categoryMap[s.category].count++;
     categoryMap[s.category].totalRate += s.rate;
@@ -475,7 +477,7 @@ function generateStaticReport(monday: Date, week: number, year: number, slug: st
   const stories = [
     {
       title: 'AI platforms continue record growth',
-      summary: `AI assistants collectively account for ${((SITES.filter(s => s.category === 'ai').reduce((a, b) => a + b.rate, 0) / totalRate) * 100).toFixed(1)}% of all tracked web traffic.`,
+      summary: `AI assistants collectively account for ${((sites.filter(s => s.category === 'ai').reduce((a, b) => a + b.rate, 0) / totalRate) * 100).toFixed(1)}% of all tracked web traffic.`,
       tag: 'AI',
       tagColor: '#10a37f',
     },
@@ -487,7 +489,7 @@ function generateStaticReport(monday: Date, week: number, year: number, slug: st
     },
     {
       title: 'Developer tools see sustained growth',
-      summary: `Developer platforms are receiving ${SITES.filter(s => s.category === 'dev').reduce((a, b) => a + b.rate, 0).toLocaleString()} requests per second.`,
+      summary: `Developer platforms are receiving ${sites.filter(s => s.category === 'dev').reduce((a, b) => a + b.rate, 0).toLocaleString()} requests per second.`,
       tag: 'Dev Tools',
       tagColor: '#24292f',
     },
@@ -524,8 +526,8 @@ function generateStaticReport(monday: Date, week: number, year: number, slug: st
     stories,
     quickStats: [
       { label: 'Total Tracked Traffic', value: `${totalRate.toLocaleString()}/s`, note: 'Across all monitored sites' },
-      { label: 'Most Visited Site', value: SITES[0].name, note: `${SITES[0].baseline} at ${SITES[0].rate.toLocaleString()} req/s` },
-      { label: 'Fastest Growing', value: 'AI Assistants', note: `${SITES.filter(s => s.category === 'ai').length} sites tracked` },
+      { label: 'Most Visited Site', value: sites[0].name, note: `${sites[0].baseline} at ${sites[0].rate.toLocaleString()} req/s` },
+      { label: 'Fastest Growing', value: 'AI Assistants', note: `${sites.filter(s => s.category === 'ai').length} sites tracked` },
       { label: 'Internet Health', value: '94 / 100', note: 'All systems operational' },
     ],
     isLive: false,

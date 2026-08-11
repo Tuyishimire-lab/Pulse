@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CATEGORIES, SITES, SiteConfig } from './data/sites';
+import { CATEGORIES, SITES, SITE_META, SiteConfig } from './data/sites';
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { STATIC_TRAFFIC_FACTS } from '../data/marquee';
@@ -157,7 +157,7 @@ export default function HomeClient({
       try {
         const { data, error } = await supabase
           .from('sites')
-          .select('id, name, url, rank, category, baseline, baseline_raw, rate, logo, color, glow, progress, asn, keywords, rank_history, updated_at')
+          .select('id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at')
           .order('rank', { ascending: true });
 
         if (error) {
@@ -165,7 +165,13 @@ export default function HomeClient({
           return;
         }
         if (data && data.length > 0) {
-          setDbSites(data as SiteConfig[]);
+          // Merge static metadata (logo, color, glow, asn) from SITE_META onto DB rows
+          const enriched = data.map((row: any) => ({
+            ...(SITE_META[row.id] ?? {}),
+            ...row,
+            baselineRaw: row.baseline_raw ?? 0,
+          })) as SiteConfig[];
+          setDbSites(enriched);
           const firstUpdated = (data[0] as any).updated_at;
           if (firstUpdated) setLastSynced(firstUpdated);
         }
