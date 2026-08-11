@@ -1,36 +1,123 @@
-name: Pulse Traffic Index (PTI) Engine Cron
+name: Pulse Engine — Automated Data Updates
+
+# ── What this does ─────────────────────────────────────────────────────────────
+#
+#  JOB 1: run-engine (daily, 06:00 UTC)
+#    - Pushes rank/baseline/rate from STATIC_BASELINES → Supabase (immutable truth)
+#    - Updates volatility & trend from Cloudflare Radar + Google Trends signals
+#    - Overwrites weekly snapshot with fresh category breakdown
+#    → This is the "manual step" you used to run locally — now fully automated.
+#
+#  JOB 2: update-baselines (1st of every month, 05:00 UTC)
+#    - Fetches the latest SimilarWeb-equivalent data from Similarweb public API
+#      (or falls back to a curated update script if API unavailable)
+#    - Commits any changes to static_baselines.py, triggering the daily job
+#    → Automates the "update the numbers monthly" step.
+#
+#  Both jobs can also be triggered manually from the GitHub Actions tab.
+# ─────────────────────────────────────────────────────────────────────────────
 
 on:
   schedule:
-    # Runs every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
-    - cron: '0 */6 * * *'
+    # JOB 1: Run engine every day at 06:00 UTC (pushes signals + weekly snapshot)
+    - cron: '0 6 * * *'
+    # JOB 2: Update baselines on the 1st of every month at 05:00 UTC
+    - cron: '0 5 1 * *'
   workflow_dispatch:
-    # Allows manual 1-click execution from GitHub Actions tab
+    inputs:
+      job:
+        description: 'Which job to run'
+        required: false
+        default: 'engine'
+        type: choice
+        options:
+          - engine          # run_engine.py only
+          - baselines       # update_baselines.py + run_engine.py
+          - both
 
 jobs:
-  run-pti-engine:
+  # ── JOB 1: Run Engine (daily signals + weekly snapshot) ─────────────────────
+  run-engine:
+    name: Run Pulse Engine (signals + snapshot)
     runs-on: ubuntu-latest
+    # Skip this job on the 1st of the month (baselines job runs instead, then calls engine)
+    # Also run if manually triggered with job=engine or job=both
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '0 6 * * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'engine' || inputs.job == 'both'))
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
 
-      - name: Install Dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install httpx supabase python-dotenv
+          pip install supabase httpx python-dotenv pytrends
 
-      - name: Run Pulse Traffic Index Engine
+      - name: Run Pulse Engine v2.0
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          OPENPAGERANK_API_KEY: ${{ secrets.OPENPAGERANK_API_KEY }}
-          KEYWORDSEVERYWHERE_API_KEY: ${{ secrets.KEYWORDSEVERYWHERE_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python scripts/pulse_engine/run_engine.py
+
+  # ── JOB 2: Update Baselines (monthly — 1st of each month) ───────────────────
+  update-baselines:
+    name: Update Monthly Baselines
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '0 5 1 * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'baselines' || inputs.job == 'both'))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Use a PAT (not GITHUB_TOKEN) so the commit can trigger downstream workflows
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install supabase httpx python-dotenv pytrends requests
+
+      - name: Run baseline updater
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SIMILARWEB_API_KEY: ${{ secrets.SIMILARWEB_API_KEY }}
+        run: |
+          python scripts/pulse_engine/update_baselines.py
+
+      - name: Commit updated baselines (if changed)
+        run: |
+          git config user.name  "Pulse Engine Bot"
+          git config user.email "bot@pulstraffic.com"
+          git add scripts/pulse_engine/static_baselines.py
+          # Only commit if the file actually changed
+          git diff --cached --quiet || git commit -m "data(baselines): automated monthly update — $(date +'%B %Y')"
+          git push || echo "Nothing to push"
+
+      - name: Run Pulse Engine with updated baselines
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
