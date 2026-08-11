@@ -5,7 +5,8 @@ import { generateAIStories } from '../../../../utils/groqAnalysis';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
+const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
 
 // Rank-to-traffic power law model
 // Calibrated against known data: Google (#1) ≈ 85B/mo, rank #10 ≈ 6.7B/mo, rank #100 ≈ 536M/mo
