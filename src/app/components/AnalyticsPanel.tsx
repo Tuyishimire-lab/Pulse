@@ -78,11 +78,11 @@ export default function AnalyticsPanel({
             </div>
 
             <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
-              <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Avg Global Rank</span>
+              <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Median Global Rank</span>
               <div className="text-2xl font-extrabold text-[#a78bfa] mt-1">
                 #{analyticsStats.avgRank.toLocaleString('en-US')}
               </div>
-              <p className="text-[10px] text-white/40 mt-1">Average PageRank placement index in our active catalog.</p>
+              <p className="text-[10px] text-white/40 mt-1">Median rank position across all filtered sites in our active catalog.</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">

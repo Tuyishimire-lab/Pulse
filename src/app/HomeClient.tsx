@@ -441,14 +441,27 @@ export default function HomeClient({
     const count = filteredSites.length;
     if (count === 0) return { totalRate: 0, avgRank: 0, categoryCounts: {} as Record<string, number> };
     let totalRate = 0;
-    let rankSum = 0;
     const categoryCounts: Record<string, number> = {};
+
+    // Collect valid ranks only (exclude sentinel fallback values like 999/9999)
+    const validRanks: number[] = [];
     filteredSites.forEach((s) => {
       totalRate += s.rate;
-      rankSum += s.rank;
       categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
+      if (s.rank > 0 && s.rank <= 500) validRanks.push(s.rank);
     });
-    return { totalRate, avgRank: Math.round(rankSum / count), categoryCounts };
+
+    // Use median rank — meaningful for a ranked list and immune to outliers
+    let medianRank = 0;
+    if (validRanks.length > 0) {
+      const sorted = [...validRanks].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      medianRank = sorted.length % 2 !== 0
+        ? sorted[mid]
+        : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+    }
+
+    return { totalRate, avgRank: medianRank, categoryCounts };
   }, [filteredSites]);
 
   const displayedSites = useMemo(() => filteredSites.slice(0, visibleCount), [filteredSites, visibleCount]);
