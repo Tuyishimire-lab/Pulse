@@ -45,11 +45,12 @@ export const CATEGORIES = [
 // progress = % of Google traffic (used for bar chart width).
 export const SITES: SiteConfig[] = [
   // ── Global Top 10 (Authentic 2026 Rankings) ──────────────────────────────────
-  { id: 'google', name: 'Google', url: 'https://google.com', rank: 1, category: 'search', baseline: '92.5B / mo', baselineRaw: 92_500_000_000, rate: 35198, logo: 'G', color: '#4285F4', glow: 'rgba(66, 133, 244, 0.15)', progress: 100, asn: [15169] },
+  { id: 'google', name: 'Google', url: 'https://google.com', rank: 1, category: 'search', baseline: '85.0B / mo', baselineRaw: 85_000_000_000, rate: 32328, logo: 'G', color: '#4285F4', glow: 'rgba(66, 133, 244, 0.15)', progress: 100, asn: [15169] },
+
   { id: 'youtube', name: 'YouTube', url: 'https://youtube.com', rank: 2, category: 'entertainment', baseline: '34.8B / mo', baselineRaw: 34_800_000_000, rate: 13242, logo: 'YT', color: '#ef4444', glow: 'rgba(239, 68, 68, 0.15)', progress: 37.6, asn: [15169] },
   { id: 'facebook', name: 'Facebook', url: 'https://facebook.com', rank: 3, category: 'social', baseline: '15.2B / mo', baselineRaw: 15_200_000_000, rate: 5783, logo: 'F', color: '#1877F2', glow: 'rgba(24, 119, 242, 0.15)', progress: 16.4, asn: [32934] },
   { id: 'instagram', name: 'Instagram', url: 'https://instagram.com', rank: 4, category: 'social', baseline: '10.4B / mo', baselineRaw: 10_400_000_000, rate: 3957, logo: 'In', color: '#E1306C', glow: 'rgba(225, 48, 108, 0.15)', progress: 11.2, asn: [32934] },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com', rank: 5, category: 'ai', baseline: '7.2B / mo', baselineRaw: 7_200_000_000, rate: 2739, logo: 'Ci', color: '#10a37f', glow: 'rgba(16, 163, 127, 0.15)', progress: 7.8, asn: [20473] },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com', rank: 5, category: 'ai', baseline: '2.4B / mo', baselineRaw: 2_400_000_000, rate: 913, logo: 'Ci', color: '#10a37f', glow: 'rgba(16, 163, 127, 0.15)', progress: 2.8, asn: [20473] },
   { id: 'reddit', name: 'Reddit', url: 'https://reddit.com', rank: 6, category: 'social', baseline: '4.8B / mo', baselineRaw: 4_800_000_000, rate: 1826, logo: 'Re', color: '#FF4500', glow: 'rgba(255, 69, 0, 0.15)', progress: 5.2, asn: [30064] },
   { id: 'wikipedia', name: 'Wikipedia', url: 'https://wikipedia.org', rank: 7, category: 'reference', baseline: '4.4B / mo', baselineRaw: 4_400_000_000, rate: 1674, logo: 'Wi', color: '#72777D', glow: 'rgba(114, 119, 125, 0.15)', progress: 4.8, asn: [14907] },
   { id: 'x', name: 'X (Twitter)', url: 'https://x.com', rank: 8, category: 'social', baseline: '3.1B / mo', baselineRaw: 3_100_000_000, rate: 1179, logo: 'X', color: '#ffffff', glow: 'rgba(255, 255, 255, 0.1)', progress: 3.4, asn: [13414] },
