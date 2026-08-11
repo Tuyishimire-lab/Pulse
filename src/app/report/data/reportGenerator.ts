@@ -149,7 +149,22 @@ async function fetchSnapshot(slug: string): Promise<WeeklySnapshot | null> {
       .single();
 
     if (error || !data) return null;
-    return data as WeeklySnapshot;
+    
+    // Safely parse JSONB fields if returned as string-encoded JSON
+    const sites_data = typeof data.sites_data === 'string' ? JSON.parse(data.sites_data) : data.sites_data;
+    const category_totals = typeof data.category_totals === 'string' ? JSON.parse(data.category_totals) : data.category_totals;
+    const ai_stories = data.ai_stories ? (typeof data.ai_stories === 'string' ? JSON.parse(data.ai_stories) : data.ai_stories) : undefined;
+
+    if (!Array.isArray(sites_data)) {
+      return null;
+    }
+
+    return {
+      ...data,
+      sites_data,
+      category_totals,
+      ai_stories
+    } as WeeklySnapshot;
   } catch {
     return null;
   }

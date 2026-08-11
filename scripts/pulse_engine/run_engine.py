@@ -222,8 +222,8 @@ def run_pulse_engine(run_validation_report: bool = True):
         snapshot_payload = {
             "week_slug": week_slug,
             "snapshot_date": now_utc.isoformat(),
-            "sites_data": json.dumps(sites_data),
-            "category_totals": json.dumps(category_totals),
+            "sites_data": sites_data,
+            "category_totals": category_totals,
             "total_rate": total_rate,
             "outage_count": 0,
         }
