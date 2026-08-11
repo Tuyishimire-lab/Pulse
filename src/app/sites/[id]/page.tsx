@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { SITES } from '../../data/sites';
+import { getSiteById } from '../../../lib/getSites';
 import SitePageClient from './SitePageClient';
 
 interface PageProps {
@@ -14,8 +15,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const site = SITES.find((s) => s.id === id);
-  
+  // Use live Supabase data so baseline/rank in metadata are always accurate
+  const site = await getSiteById(id);
+
   if (!site) {
     return {
       title: 'Pulse - Domain Not Found',
@@ -24,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const titleText = `${site.name} Real-Time Traffic & Analytics Tracker - Pulse`;
-  const descText = `See live visitor counters, average bounce rates, session durations, device splits, and geographic traffic origins for ${site.url.replace('https://', '')} in real-time.`;
+  const descText = `See live visitor counters, average bounce rates, session durations, device splits, and geographic traffic origins for ${site.url.replace('https://', '')} in real-time. ${site.name} receives approximately ${site.baseline} monthly visits (Global Rank #${site.rank}).`;
 
   return {
     title: titleText,
@@ -53,11 +55,13 @@ export const revalidate = 3600; // ISR: re-render at most once per hour
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  const site = SITES.find((s) => s.id === id);
+  // Fetch live data so JSON-LD schema reflects engine-authoritative rank/baseline
+  const site = await getSiteById(id);
 
   const siteName = site ? site.name : 'Domain';
   const siteUrl = site ? site.url : '';
   const baseline = site ? site.baseline : '';
+  const rank = site ? site.rank : '';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -85,8 +89,8 @@ export default async function Page({ params }: PageProps) {
         },
         {
           '@type': 'PropertyValue',
-          'name': 'Rank',
-          'value': site ? site.rank : '',
+          'name': 'Global Rank',
+          'value': rank,
         }
       ]
     }
@@ -102,5 +106,3 @@ export default async function Page({ params }: PageProps) {
     </>
   );
 }
-
-

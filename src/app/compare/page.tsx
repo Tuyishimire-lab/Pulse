@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
-import { SITES } from '../data/sites';
+import { getSites } from '../../lib/getSites';
 import { COMPARE_PAIRS } from './data/pairs';
 import CompareHubWrapper from './CompareHubWrapper';
-
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -30,7 +29,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ComparePage() {
-  return <CompareHubWrapper sites={SITES} pairs={COMPARE_PAIRS} />;
-
+export default async function ComparePage() {
+  // Use live Supabase data so compare hub dropdowns show accurate rank/baseline
+  const sites = await getSites();
+  return <CompareHubWrapper sites={sites} pairs={COMPARE_PAIRS} />;
 }

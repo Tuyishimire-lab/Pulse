@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
 import { ALL_COUNTRIES } from '../top-sites/data/countries';
-import { SITES } from '../data/sites';
+import { getSites } from '../../lib/getSites';
 import MapClientWrapper from './MapClientWrapper';
-
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -29,12 +28,16 @@ export const metadata: Metadata = {
 
 export const revalidate = 86400;
 
-export default function MapPage() {
+export default async function MapPage() {
+  // Use live data so country tooltip shows the correct top site name/color
+  const liveSites = await getSites();
+  const siteById = Object.fromEntries(liveSites.map((s) => [s.id, s]));
+
   // Build country lookup map — keyed by cfCode (ISO alpha-2)
   const countryMap = new Map(
     ALL_COUNTRIES.map((c) => {
       const topSiteId = c.pinnedSiteIds?.[0] ?? 'google';
-      const topSite = SITES.find((s) => s.id === topSiteId);
+      const topSite = siteById[topSiteId];
       return [
         c.cfCode,
         {
@@ -66,7 +69,6 @@ export default function MapPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <MapClientWrapper countryMap={Object.fromEntries(countryMap)} />
-
     </>
   );
 }

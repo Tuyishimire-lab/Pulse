@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CATEGORIES, SITES, SITE_META, SiteConfig } from './data/sites';
+import { CATEGORIES, SITE_META, SiteConfig } from './data/sites';
+
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { STATIC_TRAFFIC_FACTS } from '../data/marquee';
@@ -401,7 +402,10 @@ export default function HomeClient({
 
   // ── Derived Data ──────────────────────────────────────────────────────────
   const allSites = useMemo(() => {
-    const baseSites = dbSites.length > 0 ? dbSites : SITES;
+    // Prefer Supabase-fetched rows; fall back to server-side initialSites (also live).
+    // Never fall back to the static SITES array, which may have stale rank/baseline.
+    const baseSites = dbSites.length > 0 ? dbSites : initialSites;
+
     const merged = [...baseSites, ...customSites];
     if (selectedCountry !== 'global' && Object.keys(localRanks).length > 0) {
       return merged.map((site) => {
