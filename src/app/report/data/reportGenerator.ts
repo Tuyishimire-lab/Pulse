@@ -177,8 +177,9 @@ function computeTopMovers(
   previous: SiteSummary[] | null,
 ): TopMover[] {
   if (!previous) {
-    // No previous week — just return top 5 by rank with no deltas
-    return current.slice(0, 5).map((site) => ({
+    // No previous week — sort current sites by rank ascending and return top 5
+    const sortedByRank = [...current].sort((a, b) => a.rank - b.rank);
+    return sortedByRank.slice(0, 5).map((site) => ({
       site,
       highlight: `Currently ranked #${site.rank} with ${site.baseline} monthly visits.`,
       rankChange: 0,

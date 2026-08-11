@@ -125,7 +125,8 @@ def run_pulse_engine(run_validation_report: bool = True):
             page_rank=page_rank,
             momentum_score=momentum_score,
             previous_rate=old_rate,
-            category=category
+            category=category,
+            site_id=site_id
         )
 
         final_trend = trend_label or classify_trend(old_rate, rate, momentum_score)
@@ -154,7 +155,7 @@ def run_pulse_engine(run_validation_report: bool = True):
             )
             rank_source = "CF" if domain in cf_ranks else ("Tr" if domain in tranco_ranks else "DB")
             print(f"  [{rank_source}] {site_id} | Rank #{new_rank} | Rate {rate}/s | PTI {pti_score} | Vol: {volatility:+.1f}% | {momentum_info}")
-            updated_sites.append({"id": site_id, "rate": rate, "baseline": baseline})
+            updated_sites.append({"id": site_id, "rank": new_rank, "rate": rate, "baseline": baseline})
         except Exception as e:
             if "volatility" in str(e):
                 # Fallback if column not created yet
@@ -163,7 +164,7 @@ def run_pulse_engine(run_validation_report: bool = True):
                 updates_count += 1
                 rank_source = "CF" if domain in cf_ranks else ("Tr" if domain in tranco_ranks else "DB")
                 print(f"  [{rank_source}] {site_id} | Rank #{new_rank} | Rate {rate}/s | (Missing 'volatility' column in DB)")
-                updated_sites.append({"id": site_id, "rate": rate, "baseline": baseline})
+                updated_sites.append({"id": site_id, "rank": new_rank, "rate": rate, "baseline": baseline})
             else:
                 print(f"  X Failed to update {site_id}: {e}")
 
@@ -204,7 +205,7 @@ def run_pulse_engine(run_validation_report: bool = True):
                 "id": sid,
                 "name": orig.get("name", sid),
                 "url": orig.get("url", ""),
-                "rank": orig.get("rank", 999),
+                "rank": upd.get("rank", orig.get("rank", 999)),
                 "rate": upd["rate"],
                 "baseline": upd["baseline"],
                 "category": cat,
@@ -218,6 +219,9 @@ def run_pulse_engine(run_validation_report: bool = True):
                 category_totals[cat] = {"count": 0, "totalRate": 0}
             category_totals[cat]["count"] += 1
             category_totals[cat]["totalRate"] += upd["rate"]
+
+        # Ensure sites_data is sorted by rank ascending
+        sites_data.sort(key=lambda s: s["rank"])
 
         snapshot_payload = {
             "week_slug": week_slug,

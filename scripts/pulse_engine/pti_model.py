@@ -5,25 +5,28 @@ from .config import ANCHOR_MONTHLY, ZIPF_EXPONENT
 # Category Density Multipliers (Cm)
 # Adjusts for app-first usage (streaming/chat) vs web link density (social/dev)
 CATEGORY_MULTIPLIERS = {
-    "video_platform": 12.0,
+    "video_platform": 1.0,
     "streaming": 0.8,
     "chat": 1.40,
-    "social_network": 2.6,
-    "community": 0.55,
+    "social_network": 1.2,
+    "community": 0.8,
+    "reference": 1.0,
     "developer": 0.85,
     "search": 1.00,
-    "ecommerce": 1.5,
-    "ai": 2.4,
+    "ecommerce": 1.1,
+    "ai": 1.3,
     "general": 1.00
 }
 
-def normalize_category(cat_str: str) -> str:
+def normalize_category(cat_str: str, site_id: str = "") -> str:
     """Normalizes arbitrary category strings to canonical model keys."""
     cat = (cat_str or "").lower()
-    if "youtube" in cat_str.lower() or "video platform" in cat: return "video_platform"
-    if any(k in cat for k in ["stream", "media", "entertainment", "music"]): return "streaming"
+    sid = (site_id or "").lower()
+    if sid in ["youtube", "vimeo", "bilibili"] or "video" in cat: return "video_platform"
+    if sid in ["wikipedia", "wikihow", "quora", "medium"] or "ref" in cat or "wiki" in cat: return "reference"
+    if any(k in cat for k in ["stream", "media", "music"]): return "streaming"
     if any(k in cat for k in ["chat", "messaging", "communication"]): return "chat"
-    if any(k in cat for k in ["reddit", "quora", "community", "forum", "wiki"]): return "community"
+    if any(k in cat for k in ["reddit", "community", "forum"]): return "community"
     if any(k in cat for k in ["social", "network"]): return "social_network"
     if any(k in cat for k in ["dev", "code", "tech", "software"]): return "developer"
     if any(k in cat for k in ["shop", "e-commerce", "store", "retail"]): return "ecommerce"
@@ -36,7 +39,8 @@ def estimate_traffic_and_pti(
     page_rank: float = 5.0,
     momentum_score: float = 0.0,
     previous_rate: int = 0,
-    category: str = "general"
+    category: str = "general",
+    site_id: str = ""
 ) -> Tuple[int, int, int, float, str]:
     """
     Computes Pulse Traffic Index (PTI) metrics using 4 signals:
@@ -56,7 +60,7 @@ def estimate_traffic_and_pti(
         monthly_visits = int(round(monthly_visits * auth_factor))
 
     # ── Signal 3: Category Density Adjustment ──────────────────────────────────
-    norm_cat = normalize_category(category)
+    norm_cat = normalize_category(category, site_id)
     cat_multiplier = CATEGORY_MULTIPLIERS.get(norm_cat, 1.00)
     monthly_visits = int(round(monthly_visits * cat_multiplier))
 
