@@ -32,14 +32,21 @@ from scripts.pulse_engine.validation import run_validation, print_validation_rep
 # so the Zipf model produces accurate baselines consistent with sites.ts.
 # ─────────────────────────────────────────────────────────────────────────────
 RANK_OVERRIDES: dict[str, int] = {
-    "chatgpt":   5,    # SimilarWeb rank #5 globally; DNS under-counts SPA visits
-    "openai":    16,   # openai.com docs/API — same SPA issue
-    "claude":    25,   # Anthropic Claude (rapid growth)
-    "gemini":    28,   # Google Gemini web
+    # ── AI Platforms (SPA / API-first — DNS under-counts true page traffic) ──
+    "chatgpt":    5,   # SimilarWeb #5 globally
+    "openai":    16,   # openai.com docs / API portal
+    "claude":    25,   # Anthropic Claude — fastest-growing AI after ChatGPT
+    "gemini":    28,   # Google Gemini web app
     "copilot":   32,   # Microsoft Copilot
     "perplexity":38,   # Perplexity AI
-    "whatsapp":  9,    # Mostly mobile SDK — DNS volume doesn't reflect users
+    "huggingface":68,  # HF Hub — heavy API/CDN traffic not in DNS
+    "midjourney":69,   # Midjourney — Discord-based, web portal DNS is minimal
+    # ── Mobile-SDK-first apps (traffic routed via mobile SDKs, not DNS) ──────
+    "whatsapp":   9,   # Mostly mobile SDK
     "tiktok":    10,   # Mostly mobile SDK
+    "telegram":  42,   # Mostly mobile SDK
+    "discord":   41,   # Mostly desktop/mobile app
+    "spotify":   28,   # Mostly mobile/desktop app
 }
 
 def run_pulse_engine(run_validation_report: bool = True):
