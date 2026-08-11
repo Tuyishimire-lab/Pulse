@@ -174,8 +174,9 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
         {/* Top Movers */}
         <section className="mb-10">
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-             Top 5 Sites This Week
+             Top Rank Movers This Week
           </h2>
+
           <div className="space-y-3">
             {report.topMovers.map((mover, i) => (
               <Link

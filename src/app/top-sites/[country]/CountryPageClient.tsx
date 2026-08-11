@@ -170,10 +170,11 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
           <div className="overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider w-10">#</th>
+              <tr className="border-b border-white/[0.06]">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider w-10">Local</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Website</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden sm:table-cell">Category</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden lg:table-cell">Global Rank</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Monthly Visits</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden md:table-cell">Visits since you landed</th>
                 </tr>
@@ -207,6 +208,9 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
                       >
                         {site.category}
                       </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right hidden lg:table-cell">
+                      <span className="text-xs font-mono text-[#a78bfa] tabular-nums">#{site.rank}</span>
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       <span className="text-sm font-semibold text-white tabular-nums">

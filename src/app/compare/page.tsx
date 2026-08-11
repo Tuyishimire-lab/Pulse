@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import { SITES } from '../data/sites';
 import { COMPARE_PAIRS } from './data/pairs';
-import CompareHubClient from './CompareHubClient';
+import CompareHubWrapper from './CompareHubWrapper';
+
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -30,5 +31,6 @@ export const metadata: Metadata = {
 };
 
 export default function ComparePage() {
-  return <CompareHubClient sites={SITES} pairs={COMPARE_PAIRS} />;
+  return <CompareHubWrapper sites={SITES} pairs={COMPARE_PAIRS} />;
+
 }

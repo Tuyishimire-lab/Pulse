@@ -104,8 +104,9 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
     },
   ];
 
-  const verdict = pairData?.verdict ??
-    `${aWinsRank ? siteA.name : siteB.name} leads in global traffic, ranked #${Math.min(siteA.rank, siteB.rank)} versus #${Math.max(siteA.rank, siteB.rank)}.`;
+  const verdict = pairData?.verdict
+    ? `${pairData.verdict} Currently: ${siteA.name} receives ${siteA.baseline}/mo vs ${siteB.name}'s ${siteB.baseline}/mo.`
+    : `${aWinsRank ? siteA.name : siteB.name} leads in global traffic, ranked #${Math.min(siteA.rank, siteB.rank)} versus #${Math.max(siteA.rank, siteB.rank)}.`;
 
   // Related site pairs involving A or B (for internal linking)
   const relatedSiteIds = related.flatMap((p) => [p.siteAId, p.siteBId]);

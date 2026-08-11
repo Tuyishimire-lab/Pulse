@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import { ALL_COUNTRIES } from '../top-sites/data/countries';
 import { SITES } from '../data/sites';
-import MapPageClient from './MapPageClient';
+import MapClientWrapper from './MapClientWrapper';
+
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -64,7 +65,8 @@ export default function MapPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <MapPageClient countryMap={Object.fromEntries(countryMap)} />
+      <MapClientWrapper countryMap={Object.fromEntries(countryMap)} />
+
     </>
   );
 }

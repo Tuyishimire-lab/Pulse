@@ -79,6 +79,8 @@ export default function SitePageClient({ id }: { id: string }) {
   const pageLoadTimeRef = useRef<number>(Date.now());
   const [dbHistory, setDbHistory] = useState<{ visits_percentage: number; timestamp: string }[]>([]);
   const [dbKeywords, setDbKeywords] = useState<string[] | null>(null);
+  const [liveRank, setLiveRank] = useState<number | null>(null);
+  const [liveBaseline, setLiveBaseline] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
 
   useEffect(() => {
@@ -120,15 +122,17 @@ export default function SitePageClient({ id }: { id: string }) {
         });
     }
 
-    // Fetch dynamic keywords from database
+    // Fetch live rank, baseline and keywords from database
     supabase
       .from('sites')
-      .select('keywords')
+      .select('rank, baseline, keywords')
       .eq('id', site.id)
       .single()
       .then((res: any) => {
-        if (res && res.data && Array.isArray(res.data.keywords) && res.data.keywords.length > 0) {
-          setDbKeywords(res.data.keywords);
+        if (res && res.data) {
+          if (typeof res.data.rank === 'number' && res.data.rank > 0) setLiveRank(res.data.rank);
+          if (res.data.baseline) setLiveBaseline(res.data.baseline);
+          if (Array.isArray(res.data.keywords) && res.data.keywords.length > 0) setDbKeywords(res.data.keywords);
         }
       });
   }, [site, timeRange]);
@@ -370,8 +374,12 @@ export default function SitePageClient({ id }: { id: string }) {
 
             <div className="modal-stats-grid">
               <div className="modal-stat-box">
-                <span className="modal-stat-label">Rank</span>
-                <span className="modal-stat-value text-2xl">#{site.rank}</span>
+                <span className="modal-stat-label">Global Rank</span>
+                <span className="modal-stat-value text-2xl">#{liveRank ?? site.rank}</span>
+              </div>
+              <div className="modal-stat-box">
+                <span className="modal-stat-label">Monthly Visits</span>
+                <span className="modal-stat-value text-2xl">{liveBaseline ?? site.baseline}</span>
               </div>
               <div className="modal-stat-box">
                 <span className="modal-stat-label">Bounce Rate</span>
