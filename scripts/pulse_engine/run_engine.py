@@ -23,6 +23,25 @@ from scripts.pulse_engine.signals import (
 from scripts.pulse_engine.pti_model import estimate_traffic_and_pti, classify_trend
 from scripts.pulse_engine.validation import run_validation, print_validation_report
 
+# ─────────────────────────────────────────────────────────────────────────────
+# RANK OVERRIDES
+# Cloudflare Radar measures DNS query volume, which structurally under-counts
+# AI platforms (single-page apps + API calls don't generate DNS lookups per
+# pageview) and some large apps (WhatsApp, TikTok) that route via mobile SDKs.
+# These overrides pin the rank to the real-world value (SimilarWeb/Semrush 2026)
+# so the Zipf model produces accurate baselines consistent with sites.ts.
+# ─────────────────────────────────────────────────────────────────────────────
+RANK_OVERRIDES: dict[str, int] = {
+    "chatgpt":   5,    # SimilarWeb rank #5 globally; DNS under-counts SPA visits
+    "openai":    16,   # openai.com docs/API — same SPA issue
+    "claude":    25,   # Anthropic Claude (rapid growth)
+    "gemini":    28,   # Google Gemini web
+    "copilot":   32,   # Microsoft Copilot
+    "perplexity":38,   # Perplexity AI
+    "whatsapp":  9,    # Mostly mobile SDK — DNS volume doesn't reflect users
+    "tiktok":    10,   # Mostly mobile SDK
+}
+
 def run_pulse_engine(run_validation_report: bool = True):
     print("=" * 60)
     print("Pulse Traffic Index (PTI) Engine v1.2")
@@ -101,8 +120,13 @@ def run_pulse_engine(run_validation_report: bool = True):
         old_rank = site.get("rank", 999)
         old_rate = site.get("rate", 0)
 
-        # Best available rank (CF Radar > Tranco > existing DB)
-        new_rank = all_ranks.get(domain, old_rank)
+        # Best available rank (overrides > CF Radar > Tranco > existing DB)
+        # RANK_OVERRIDES take priority for sites where DNS-based ranking is
+        # structurally inaccurate (AI platforms, mobile-SDK-first apps).
+        if site_id in RANK_OVERRIDES:
+            new_rank = RANK_OVERRIDES[site_id]
+        else:
+            new_rank = all_ranks.get(domain, old_rank)
 
         # Open PageRank authority
         opr_info = opr_map.get(domain, {})
