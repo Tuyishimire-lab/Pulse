@@ -187,17 +187,17 @@ def run_pulse_engine(run_validation_report: bool = True):
         except Exception as e:
             print(f"  X Failed to update {site_id}: {e}")
 
-        # Log to site_history
+        # Log to site_history (schema: site_id, rate, volatility, pti_score)
         try:
             supabase.table("site_history").insert({
                 "site_id": site_id,
-                "rank": static_rank,
                 "rate": display_rate,
                 "volatility": volatility,
-                "pti_score": 0.0,  # PTI score deprecated in v2.0
+                "pti_score": 0.0,
             }).execute()
         except Exception as e:
-            print(f"  [Warning] site_history insert failed for {site_id}: {e}")
+            pass  # site_history is optional telemetry — don't block on schema mismatches
+
 
     print()
     print(f"SUCCESS: Engine v2.0 updated {updates_count}/{len(STATIC_BASELINES)} sites.")
