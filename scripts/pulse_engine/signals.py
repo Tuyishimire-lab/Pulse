@@ -348,3 +348,27 @@ def fetch_google_trends_momentum(domains: List[str], batch_size: int = 5) -> Dic
 
     print(f"[Signals] Google Trends complete: fetched momentum for {len(momentum_map)} domains.")
     return momentum_map
+
+def fetch_cloudflare_outage_count() -> int:
+    """Fetch 7-day verified network outage count from Cloudflare Radar Annotations API."""
+    if not CLOUDFLARE_API_TOKEN:
+        return 0
+
+    url = "https://api.cloudflare.com/client/v4/radar/annotations/outages?limit=50&dateRange=7d&format=json"
+    headers = {
+        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
+        "Accept": "application/json"
+    }
+    
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            res = client.get(url, headers=headers)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get("success") and "result" in data and "annotations" in data["result"]:
+                    count = len(data["result"]["annotations"])
+                    print(f"[Signals] Cloudflare Radar Outages: detected {count} incidents in past 7 days.")
+                    return count
+    except Exception as e:
+        print(f"[Signals] Cloudflare Radar outages fetch error: {e}")
+    return 0

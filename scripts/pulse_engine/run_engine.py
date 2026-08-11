@@ -17,7 +17,8 @@ from scripts.pulse_engine.signals import (
     merge_rank_sources,
     fetch_open_pagerank,
     fetch_groq_momentum,
-    fetch_google_trends_momentum
+    fetch_google_trends_momentum,
+    fetch_cloudflare_outage_count
 )
 from scripts.pulse_engine.pti_model import estimate_traffic_and_pti, classify_trend
 from scripts.pulse_engine.validation import run_validation, print_validation_report
@@ -223,13 +224,15 @@ def run_pulse_engine(run_validation_report: bool = True):
         # Ensure sites_data is sorted by rank ascending
         sites_data.sort(key=lambda s: s["rank"])
 
+        outage_count = fetch_cloudflare_outage_count()
+
         snapshot_payload = {
             "week_slug": week_slug,
             "snapshot_date": now_utc.isoformat(),
             "sites_data": sites_data,
             "category_totals": category_totals,
             "total_rate": total_rate,
-            "outage_count": 0,
+            "outage_count": outage_count,
         }
         supabase.table("weekly_snapshots").upsert(snapshot_payload, on_conflict="week_slug").execute()
         print(f"  Snapshot written: {week_slug} ({len(sites_data)} sites, total_rate={total_rate}/s)")
