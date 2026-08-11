@@ -29,11 +29,13 @@ from scripts.pulse_engine.signals import (
 )
 from scripts.pulse_engine.static_baselines import (
     STATIC_BASELINES,
+    SITE_META,
     get_rank_map,
     get_baseline_str,
     get_rate,
     SECONDS_PER_MONTH,
 )
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -109,7 +111,8 @@ def run_pulse_engine(run_validation_report: bool = True):
 
     # ── 2. Fetch existing DB rows (for old_rank / old_rate references) ─────
     print("[2/4] Fetching current DB rows from Supabase...")
-    res = supabase.table("sites").select("id, rank, rate, url").execute()
+    res = supabase.table("sites").select("id, url, rank, rate").execute()
+
     db_sites = res.data or []
     db_lookup: dict[str, dict] = {s["id"]: s for s in db_sites}
     print(f"  Found {len(db_sites)} rows in DB.")
@@ -217,19 +220,22 @@ def run_pulse_engine(run_validation_report: bool = True):
         for upd in updated_sites:
             sid = upd["id"]
             orig = db_lookup_full.get(sid, {})
-            cat = orig.get("category", "general")
+            meta = SITE_META.get(sid, {})
+            # Category, color, logo, name come from SITE_META (not DB columns)
+            cat = meta.get("category", "general")
             entry = {
                 "id": sid,
-                "name": orig.get("name", sid),
+                "name": meta.get("name", sid),
                 "url": orig.get("url", ""),
                 "rank": upd["rank"],
                 "rate": upd["rate"],
                 "baseline": upd["baseline"],
                 "category": cat,
-                "color": orig.get("color", "#888"),
-                "logo": orig.get("logo", sid[:2].upper()),
-                "keywords": orig.get("keywords"),
+                "color": meta.get("color", "#888"),
+                "logo": meta.get("logo", sid[:2].upper()),
+                "keywords": None,
             }
+
             sites_data.append(entry)
             total_rate += upd["rate"]
             category_totals.setdefault(cat, {"count": 0, "totalRate": 0})
