@@ -21,21 +21,10 @@ def run_auto_tuner():
     print("=" * 60)
 
     print("[1/3] Fetching rank signals and known benchmarks...")
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("[Auto-Tuner Warning] Missing Supabase credentials. Skipping auto-tuner.")
+        return
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-res = supabase.table('sites').select('*').execute()
-sites = res.data or []
-
-cf_ranks = fetch_cloudflare_radar_ranks()
-tranco_ranks = fetch_tranco_ranks(top_n=5000)
-all_ranks = merge_rank_sources(cf_ranks, tranco_ranks)
-
-# Build benchmark dataset
-benchmark_dataset = []
-for site in sites:
-    site_id = site.get('id')
-    if site_id in KNOWN_BENCHMARKS:
-        domain = parse_domain(site.get('url', ''))
-        old_rank = site.get('rank', 999)
     res = supabase.table('sites').select('*').execute()
     sites = res.data or []
 

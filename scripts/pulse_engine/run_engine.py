@@ -167,17 +167,18 @@ def run_pulse_engine(run_validation_report: bool = True):
             else:
                 print(f"  X Failed to update {site_id}: {e}")
 
-        # Log to site_history (Ignore error if table doesn't exist yet)
+        # Log to site_history
         try:
             history_payload = {
                 "site_id": site_id,
+                "rank": new_rank,
                 "rate": rate,
                 "volatility": volatility,
                 "pti_score": pti_score
             }
             supabase.table("site_history").insert(history_payload).execute()
-        except Exception:
-            pass # Table might not be created yet by the user
+        except Exception as e:
+            print(f"  [Warning] Could not insert into site_history for {site_id}: {e}")
 
     print()
     print(f"SUCCESS: PTI v1.2 Engine updated {updates_count}/{len(sites)} sites.")
