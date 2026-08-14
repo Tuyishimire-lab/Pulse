@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SiteConfig } from '../data/sites';
 import { SiteDetails } from '../data/details';
 import FaviconImage from './ui/FaviconImage';
@@ -21,6 +21,211 @@ function LiveBadge() {
       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
       CF Radar
     </span>
+  );
+}
+
+// ── ChartSection: tabbed 24h traffic wave + 30-day rank history ───────────────
+
+interface ChartSectionProps {
+  site: SiteConfig;
+  details: SiteDetails;
+  chartPoints: { x: number; y: number; value: number; hour: number }[];
+  linePath: string;
+  fillPath: string;
+  radarStats: any;
+}
+
+function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartSectionProps) {
+  const [activeTab, setActiveTab] = useState<'24h' | '30d'>('24h');
+
+  // ── 30-day rank history chart ─────────────────────────────────────────────
+  const rankPoints = useMemo(() => {
+    if (!site.rank_history || site.rank_history.length < 2) return [];
+    const sorted = [...site.rank_history].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    return sorted;
+  }, [site.rank_history]);
+
+  const rankChartData = useMemo(() => {
+    if (rankPoints.length < 2) return null;
+    const width = 580;
+    const height = 110;
+    const ranks = rankPoints.map((p) => p.rank);
+    const minRank = Math.min(...ranks);
+    const maxRank = Math.max(...ranks);
+    const range = maxRank - minRank || 1;
+
+    const pts = rankPoints.map((p, idx) => {
+      const x = (idx / (rankPoints.length - 1)) * width;
+      // Invert: lower rank number (better) = higher on chart
+      const y = 15 + ((p.rank - minRank) / range) * 80;
+      return { x, y, rank: p.rank, date: p.date, idx };
+    });
+
+    const linePath = pts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ');
+    const fillPath = `M 0 110 ${pts.map((pt) => `L ${pt.x} ${pt.y}`).join(' ')} L 580 110 Z`;
+
+    const best = pts.reduce((a, b) => (a.rank < b.rank ? a : b));
+    const worst = pts.reduce((a, b) => (a.rank > b.rank ? a : b));
+
+    return { pts, linePath, fillPath, minRank, maxRank, best, worst };
+  }, [rankPoints]);
+
+  const hasRankHistory = rankChartData !== null && rankChartData.pts.length >= 2;
+
+  return (
+    <div className="chart-container text-left">
+      {/* Tab header */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => setActiveTab('24h')}
+          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${
+            activeTab === '24h'
+              ? 'bg-white/10 text-white'
+              : 'text-[#6d8196] hover:text-white hover:bg-white/[0.05]'
+          }`}
+        >
+          24h Traffic Wave
+          {details.radarSource === 'cloudflare' && (
+            <span className="ml-1.5 text-[9px] text-emerald-400 font-extrabold">● LIVE</span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('30d')}
+          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${
+            activeTab === '30d'
+              ? 'bg-white/10 text-white'
+              : 'text-[#6d8196] hover:text-white hover:bg-white/[0.05]'
+          } ${!hasRankHistory ? 'opacity-40 cursor-not-allowed' : ''}`}
+          disabled={!hasRankHistory}
+          title={!hasRankHistory ? 'Not enough rank history data yet' : undefined}
+        >
+          30-Day Rank
+          {!hasRankHistory && <span className="ml-1 text-[10px]">N/A</span>}
+        </button>
+      </div>
+
+      {activeTab === '24h' && (
+        <>
+          <div className="chart-wrapper-svg">
+            <svg viewBox="0 0 580 110" className="chart-svg">
+              <defs>
+                <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={site.color} stopOpacity="0.4" />
+                  <stop offset="100%" stopColor={site.color} stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="20" x2="580" y2="20" className="chart-grid-line" />
+              <line x1="0" y1="50" x2="580" y2="50" className="chart-grid-line" />
+              <line x1="0" y1="80" x2="580" y2="80" className="chart-grid-line" />
+              {fillPath && <path d={fillPath} className="chart-fill-path" />}
+              {linePath && (
+                <path
+                  d={linePath}
+                  className="chart-trend-line"
+                  style={{ stroke: site.color, ['--brand-glow' as any]: site.glow }}
+                />
+              )}
+              {chartPoints.map((pt, i) => (
+                <circle
+                  key={i}
+                  cx={pt.x}
+                  cy={pt.y}
+                  className="chart-dot"
+                  style={{ ['--brand-color' as any]: site.color }}
+                >
+                  <title>{`Hour ${pt.hour}:00 — Traffic Capacity: ${pt.value}%`}</title>
+                </circle>
+              ))}
+            </svg>
+          </div>
+          <div className="chart-axis-labels">
+            <span>24h Ago</span>
+            <span>12h Ago</span>
+            <span>Now</span>
+          </div>
+        </>
+      )}
+
+      {activeTab === '30d' && rankChartData && (
+        <>
+          <div className="chart-wrapper-svg">
+            <svg viewBox="0 0 580 110" className="chart-svg">
+              <defs>
+                <linearGradient id="rank-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={site.color} stopOpacity="0.35" />
+                  <stop offset="100%" stopColor={site.color} stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              {/* Grid lines */}
+              <line x1="0" y1="20" x2="580" y2="20" className="chart-grid-line" />
+              <line x1="0" y1="55" x2="580" y2="55" className="chart-grid-line" />
+              <line x1="0" y1="90" x2="580" y2="90" className="chart-grid-line" />
+              {/* Fill area */}
+              <path d={rankChartData.fillPath} fill="url(#rank-gradient)" opacity="0.5" />
+              {/* Line */}
+              <path
+                d={rankChartData.linePath}
+                fill="none"
+                stroke={site.color}
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                style={{ filter: `drop-shadow(0 0 4px ${site.glow})` }}
+              />
+              {/* Best rank label */}
+              <circle cx={rankChartData.best.x} cy={rankChartData.best.y} r="4" fill={site.color} />
+              <text
+                x={Math.min(rankChartData.best.x + 6, 530)}
+                y={rankChartData.best.y - 6}
+                fontSize="9"
+                fill="#4ade80"
+                fontWeight="bold"
+              >
+                #{rankChartData.best.rank} Best
+              </text>
+              {/* Worst rank label */}
+              <circle cx={rankChartData.worst.x} cy={rankChartData.worst.y} r="4" fill="#f87171" />
+              <text
+                x={Math.min(rankChartData.worst.x + 6, 510)}
+                y={rankChartData.worst.y + 14}
+                fontSize="9"
+                fill="#f87171"
+                fontWeight="bold"
+              >
+                #{rankChartData.worst.rank} Worst
+              </text>
+              {/* Hover dots */}
+              {rankChartData.pts.map((pt, i) => (
+                <circle
+                  key={i}
+                  cx={pt.x}
+                  cy={pt.y}
+                  r="3"
+                  fill="transparent"
+                  stroke={site.color}
+                  strokeWidth="1.5"
+                  opacity="0"
+                  className="chart-dot"
+                  style={{ ['--brand-color' as any]: site.color }}
+                >
+                  <title>{`${new Date(pt.date).toLocaleDateString()} — Rank #${pt.rank}`}</title>
+                </circle>
+              ))}
+            </svg>
+          </div>
+          <div className="chart-axis-labels">
+            <span>30 Days Ago</span>
+            <span>15 Days Ago</span>
+            <span>Today</span>
+          </div>
+          <p className="text-[10px] text-[#6d8196] mt-2">
+            Lower rank number = higher position. Y-axis inverted: top of chart = better rank.
+          </p>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -165,50 +370,8 @@ export default function SiteDetailModal({
             )}
           </div>
 
-          {/* Traffic Wave Chart */}
-          <div className="chart-container text-left">
-            <h4 className="chart-title flex items-center gap-2">
-              {details.radarSource === 'cloudflare' ? 'Live Traffic Pattern (Last 24 Hours)' : 'Estimated Traffic Waves (Last 24 Hours)'}
-              {details.radarSource === 'cloudflare' && <LiveBadge />}
-            </h4>
-            <div className="chart-wrapper-svg">
-              <svg viewBox="0 0 580 110" className="chart-svg">
-                <defs>
-                  <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={site.color} stopOpacity="0.4" />
-                    <stop offset="100%" stopColor={site.color} stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-                <line x1="0" y1="20" x2="580" y2="20" className="chart-grid-line" />
-                <line x1="0" y1="50" x2="580" y2="50" className="chart-grid-line" />
-                <line x1="0" y1="80" x2="580" y2="80" className="chart-grid-line" />
-                {fillPath && <path d={fillPath} className="chart-fill-path" />}
-                {linePath && (
-                  <path
-                    d={linePath}
-                    className="chart-trend-line"
-                    style={{ stroke: site.color, ['--brand-glow' as any]: site.glow }}
-                  />
-                )}
-                {chartPoints.map((pt, i) => (
-                  <circle
-                    key={i}
-                    cx={pt.x}
-                    cy={pt.y}
-                    className="chart-dot"
-                    style={{ ['--brand-color' as any]: site.color }}
-                  >
-                    <title>{`Hour ${pt.hour}:00 — Traffic Capacity: ${pt.value}%`}</title>
-                  </circle>
-                ))}
-              </svg>
-            </div>
-            <div className="chart-axis-labels">
-              <span>24h Ago</span>
-              <span>12h Ago</span>
-              <span>Now</span>
-            </div>
-          </div>
+          {/* Chart Section with tabs */}
+          <ChartSection site={site} details={details} chartPoints={chartPoints} linePath={linePath} fillPath={fillPath} radarStats={radarStats} />
 
           {/* Top Geographies */}
           <div className="geo-section text-left">

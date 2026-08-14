@@ -291,7 +291,7 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                           {cat.weekOverWeekChange >= 0 ? '+' : ''}{cat.weekOverWeekChange.toFixed(1)}%
                         </span>
                       ) : (
-                        <span className="text-[#6d8196]">—</span>
+                        <span className="text-[#6d8196]">N/A</span>
                       )}
                     </td>
                   </tr>

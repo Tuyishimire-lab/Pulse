@@ -106,7 +106,7 @@ export default function CompareModal({ siteA, siteB, onClose }: CompareModalProp
                 });
               }}
             >
-              {copiedLink ? '✓ Copied!' : '🔗 Share'}
+              {copiedLink ? 'Copied!' : 'Share'}
             </button>
             <button className="modal-close-btn" onClick={onClose}>×</button>
           </div>
@@ -239,7 +239,7 @@ export default function CompareModal({ siteA, siteB, onClose }: CompareModalProp
 
         {/* Mobile touch indicator footer */}
         <div className="md:hidden text-center text-[10px] text-[#64748b] mt-4">
-          💡 Swipe left or right to switch between domains
+          Swipe left or right to switch between domains
         </div>
 
         {/* Dynamic Comparison Analysis */}

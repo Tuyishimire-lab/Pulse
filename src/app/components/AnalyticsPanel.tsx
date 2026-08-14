@@ -247,19 +247,19 @@ export default function AnalyticsPanel({
                   <div className="p-2.5 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col items-center justify-center text-center">
                     <span className="text-[9px] font-bold text-[#6d8196] uppercase tracking-wider">Latency</span>
                     <span className="text-xs font-extrabold text-emerald-400 mt-1 whitespace-nowrap">
-                      {radarStats?.quality?.latency !== undefined ? `${radarStats.quality.latency} ms` : '—'}
+                      {radarStats?.quality?.latency !== undefined ? `${radarStats.quality.latency} ms` : 'N/A'}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col items-center justify-center text-center">
                     <span className="text-[9px] font-bold text-[#6d8196] uppercase tracking-wider">Bandwidth</span>
                     <span className="text-xs font-extrabold text-[#82c8e5] mt-1 whitespace-nowrap">
-                      {radarStats?.quality?.bandwidth !== undefined ? `${radarStats.quality.bandwidth} Mb/s` : '—'}
+                      {radarStats?.quality?.bandwidth !== undefined ? `${radarStats.quality.bandwidth} Mb/s` : 'N/A'}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-white/[0.01] border border-white/5 flex flex-col items-center justify-center text-center">
                     <span className="text-[9px] font-bold text-[#6d8196] uppercase tracking-wider">DNS Speed</span>
                     <span className="text-xs font-extrabold text-purple-400 mt-1 whitespace-nowrap">
-                      {radarStats?.quality?.dnsResponseTime !== undefined ? `${radarStats.quality.dnsResponseTime} ms` : '—'}
+                      {radarStats?.quality?.dnsResponseTime !== undefined ? `${radarStats.quality.dnsResponseTime} ms` : 'N/A'}
                     </span>
                   </div>
                 </div>

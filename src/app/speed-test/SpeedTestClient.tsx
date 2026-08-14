@@ -191,10 +191,10 @@ export default function SpeedTestClient() {
         {/* Localhost warning */}
         {isLocalhost && (
           <div className="localhost-warning">
-            <span className="localhost-warning-icon">⚠</span>
+            <span className="localhost-warning-icon">!</span>
             <div>
               <strong>Development Mode</strong>
-              <p>You&apos;re testing against localhost — data is not leaving your machine. Results do not reflect real internet speed. Deploy to Vercel for accurate measurements.</p>
+              <p>You&apos;re testing against localhost - data is not leaving your machine. Results do not reflect real internet speed. Deploy to Vercel for accurate measurements.</p>
             </div>
           </div>
         )}
@@ -217,7 +217,7 @@ export default function SpeedTestClient() {
             const isCurrent = phase === step.key;
             return (
               <div key={step.key} className={`phase-dot ${isDone ? 'done' : ''} ${isCurrent ? 'active' : ''}`}>
-                <span className="phase-dot-circle">{isDone ? '✓' : ''}</span>
+                <span className="phase-dot-circle">{isDone ? 'done' : ''}</span>
                 <span className="phase-dot-label">{step.label}</span>
               </div>
             );
@@ -254,7 +254,7 @@ export default function SpeedTestClient() {
 
         {error && (
           <div className="speed-test-error">
-            <span>⚠</span> {error}
+            <span>!</span> {error}
           </div>
         )}
 
@@ -283,7 +283,7 @@ export default function SpeedTestClient() {
               )}
             </div>
             <div className="metric-card-value">
-              {pingResult ? `${pingResult.median.toFixed(0)}` : '—'}
+              {pingResult ? `${pingResult.median.toFixed(0)}` : 'N/A'}
             </div>
             <div className="metric-card-unit">ms</div>
             {pingResult && (
@@ -298,7 +298,7 @@ export default function SpeedTestClient() {
             <div className="metric-card-icon">↓</div>
             <div className="metric-card-label">Download</div>
             <div className="metric-card-value">
-              {downloadResult ? formatSpeed(downloadResult.speed) : phase === 'download' ? formatSpeed(currentSpeed) : '—'}
+              {downloadResult ? formatSpeed(downloadResult.speed) : phase === 'download' ? formatSpeed(currentSpeed) : 'N/A'}
             </div>
             <div className="metric-card-unit">
               {downloadResult && downloadResult.speed >= 1000 ? 'Gbps' : 'Mbps'}
@@ -315,7 +315,7 @@ export default function SpeedTestClient() {
             <div className="metric-card-icon">↑</div>
             <div className="metric-card-label">Upload</div>
             <div className="metric-card-value">
-              {uploadResult ? formatSpeed(uploadResult.speed) : phase === 'upload' ? formatSpeed(currentSpeed) : '—'}
+              {uploadResult ? formatSpeed(uploadResult.speed) : phase === 'upload' ? formatSpeed(currentSpeed) : 'N/A'}
             </div>
             <div className="metric-card-unit">
               {uploadResult && uploadResult.speed >= 1000 ? 'Gbps' : 'Mbps'}

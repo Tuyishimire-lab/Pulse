@@ -74,11 +74,11 @@ function StatRow({ label, a, b, colorA, colorB, winner }: {
     <div className="grid grid-cols-3 items-center py-3 border-b border-white/[0.05] last:border-0">
       <div className={`text-sm font-medium tabular-nums text-right pr-4 ${winner === 'a' ? 'text-white font-bold' : 'text-[#94a3b8]'}`}>
         {a}
-        {winner === 'a' && <span className="ml-1.5 text-[10px] text-emerald-400">✓</span>}
+        {winner === 'a' && <span className="ml-1.5 text-[10px] text-emerald-400 font-bold">win</span>}
       </div>
       <div className="text-xs text-[#6d8196] text-center font-medium uppercase tracking-wider px-2">{label}</div>
       <div className={`text-sm font-medium tabular-nums pl-4 ${winner === 'b' ? 'text-white font-bold' : 'text-[#94a3b8]'}`}>
-        {winner === 'b' && <span className="mr-1.5 text-[10px] text-emerald-400">✓</span>}
+        {winner === 'b' && <span className="mr-1.5 text-[10px] text-emerald-400 font-bold">win</span>}
         {b}
       </div>
     </div>

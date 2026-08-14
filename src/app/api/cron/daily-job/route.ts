@@ -383,7 +383,86 @@ export async function GET(request: Request) {
       console.log(`Unified Cron: Updated rank_history for ${rankHistoryUpdates.length} sites.`);
     }
 
-    // 7c. Weekly snapshot for data-driven reports (runs once per week on Monday)
+    // 7c-pre. Write site_history snapshot — one row per site per run.
+    // This is the PRIMARY data source for the Trending page (Strategy 1).
+    // Each run stamps a consistent recorded_at so the trending page can diff
+    // the two most recent distinct timestamps to get real rank deltas.
+    const siteHistoryTimestamp = now.toISOString();
+    const siteHistoryRows = finalUpdates.map((upd: any) => ({
+      site_id: upd.id,
+      rank: upd.rank,
+      rate: upd.rate,
+      recorded_at: siteHistoryTimestamp,
+    }));
+
+    const siteHistoryChunkSize = 200;
+    for (let i = 0; i < siteHistoryRows.length; i += siteHistoryChunkSize) {
+      const chunk = siteHistoryRows.slice(i, i + siteHistoryChunkSize);
+      const { error: shErr } = await supabase.from('site_history').insert(chunk);
+      if (shErr) {
+        console.error('Unified Cron: Failed to insert site_history chunk:', shErr);
+      }
+    }
+    console.log(`Unified Cron: Wrote ${siteHistoryRows.length} rows to site_history at ${siteHistoryTimestamp}.`);
+
+    // Prune site_history — keep only the last 8 days (32 snapshots at 6h cadence)
+    // to prevent unbounded table growth.
+    try {
+      const pruneDate = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+      await supabase
+        .from('site_history')
+        .delete()
+        .lt('recorded_at', pruneDate.toISOString());
+    } catch { /* non-critical */ }
+
+    // 7d. Compute and write volatility = |rank_delta vs previous snapshot|
+    // This powers Strategy 3 on the Trending page for the first-run case
+    // when only one site_history snapshot exists.
+    try {
+      const { data: prevSnapshot } = await supabase
+        .from('site_history')
+        .select('site_id, rank')
+        .order('recorded_at', { ascending: false })
+        .limit(sites.length * 2); // fetch last 2 snapshots worth of rows
+
+      if (prevSnapshot && prevSnapshot.length > 0) {
+        // Build a map of previous ranks (skip the current snapshot rows)
+        // The current rows were just inserted; previous rows follow immediately.
+        const prevRankMap = new Map<string, number>();
+
+        // Group by site_id: take the SECOND occurrence (i.e. previous snapshot)
+        const seenIds = new Set<string>();
+        for (const row of prevSnapshot as any[]) {
+          if (!seenIds.has(row.site_id)) {
+            seenIds.add(row.site_id); // first occurrence = current (just inserted)
+          } else if (!prevRankMap.has(row.site_id)) {
+            prevRankMap.set(row.site_id, row.rank); // second occurrence = previous
+          }
+        }
+
+        if (prevRankMap.size > 0) {
+          const volatilityUpdates = finalUpdates
+            .map((upd: any) => {
+              const prevRank = prevRankMap.get(upd.id);
+              if (prevRank === undefined) return null;
+              const volatility = Math.abs(prevRank - upd.rank); // always positive
+              return supabase
+                .from('sites')
+                .update({ volatility })
+                .eq('id', upd.id);
+            })
+            .filter(Boolean);
+
+          for (let i = 0; i < volatilityUpdates.length; i += 20) {
+            await Promise.all(volatilityUpdates.slice(i, i + 20));
+          }
+          console.log(`Unified Cron: Updated volatility for ${volatilityUpdates.length} sites.`);
+        }
+      }
+    } catch (volErr) {
+      console.warn('Unified Cron: Volatility update failed:', volErr);
+    }
+
     const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon
     if (dayOfWeek === 1) {
       try {

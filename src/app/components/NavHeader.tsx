@@ -16,7 +16,9 @@ export default function NavHeader() {
   const navLinks = [
     { href: '/', label: 'Live Dashboard' },
     { href: '/top-sites/united-states', label: 'Top Sites' },
+    { href: '/trending', label: 'Trending' },
     { href: '/compare', label: 'Compare' },
+    { href: '/category/ai', label: 'Categories' },
     { href: '/map', label: 'Traffic Map' },
     { href: '/speed-test', label: 'Speed Test' },
     { href: `/report/${getCurrentWeekSlug()}`, label: 'Weekly Report' },
@@ -24,6 +26,8 @@ export default function NavHeader() {
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
+    // Category link is active for any /category/* path
+    if (href === '/category/ai') return pathname.startsWith('/category');
     return pathname.startsWith(href);
   };
 

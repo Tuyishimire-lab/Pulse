@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { SITES } from './data/sites';
+import { SITES, CATEGORIES } from './data/sites';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { COUNTRY_SLUGS } from './top-sites/data/countries';
 import { PAIR_SLUGS } from './compare/data/pairs';
@@ -55,12 +55,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.90,
   }));
 
+  const categoryUrls = CATEGORIES.filter((c) => c.id !== 'all').map((c) => ({
+    url: `${baseUrl}/category/${c.id}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.88,
+  }));
+
   return [
     {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/trending`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.95,
     },
     {
       url: `${baseUrl}/map`,
@@ -98,6 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.6,
     },
+    ...categoryUrls,
     ...reportUrls,
     ...countryUrls,
     ...compareUrls,

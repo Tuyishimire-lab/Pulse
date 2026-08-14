@@ -377,7 +377,7 @@ export default function MapPageClient({ countryMap }: Props) {
           {/* Search — aligned with header */}
           <div ref={searchRef} className="relative w-full sm:w-60 flex-shrink-0 mt-1">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a5568] text-sm">🔍</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a5568] text-sm">S</span>
               <input
                 type="text"
                 placeholder="Fly to a country..."
@@ -503,7 +503,7 @@ export default function MapPageClient({ countryMap }: Props) {
 
             {/* Hint bar */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-[#3a4a58] bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/5 whitespace-nowrap">
-              {isFlying ? '✈ Flying...' : 'Ctrl+scroll to zoom · Drag to rotate · Click to explore'}
+              {isFlying ? 'Flying...' : 'Ctrl+scroll to zoom · Drag to rotate · Click to explore'}
             </div>
 
             {/* Reset button */}
@@ -537,8 +537,8 @@ export default function MapPageClient({ countryMap }: Props) {
                     <span className="text-[#82c8e5]">#1 {tooltip.country.topSiteName}</span>
                   </div>
                   <div className="text-[#6d8196] text-xs space-y-0.5">
-                    <div>👥 {tooltip.country.internetUsers} users</div>
-                    <div>📶 {tooltip.country.internetPenetration} penetration</div>
+                    <div>Users: {tooltip.country.internetUsers}</div>
+                    <div>Penetration: {tooltip.country.internetPenetration}</div>
                   </div>
                   <div className="pt-0.5 text-[10px] text-[#00D4AA] font-medium">Click to explore →</div>
                 </div>

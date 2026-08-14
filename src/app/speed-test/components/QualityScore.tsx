@@ -49,10 +49,10 @@ export default function QualityScore({ score, verdicts, visible }: QualityScoreP
   const grade = getGrade(animatedScore);
 
   const verdictItems: { key: keyof Verdicts; label: string; icon: string }[] = [
-    { key: 'streaming4k', label: '4K Streaming', icon: '📺' },
-    { key: 'gaming', label: 'Gaming', icon: '🎮' },
-    { key: 'videoCalls', label: 'Video Calls', icon: '📹' },
-    { key: 'browsing', label: 'Browsing', icon: '🌐' },
+    { key: 'streaming4k', label: '4K Streaming', icon: '4K' },
+    { key: 'gaming', label: 'Gaming', icon: 'G' },
+    { key: 'videoCalls', label: 'Video Calls', icon: 'VC' },
+    { key: 'browsing', label: 'Browsing', icon: 'B' },
   ];
 
   const verdictStyle = (level: VerdictLevel) => {
