@@ -5,63 +5,63 @@ import CategoryIndexClient, { CategorySummary } from './CategoryIndexClient';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
-const CATEGORY_DETAILS: Record<string, { description: string; icon: string; color: string }> = {
+const CATEGORY_DETAILS: Record<string, { description: string; tag: string; color: string }> = {
   search: {
     description: 'Global search engines and multi-modal information discovery platforms processing billions of daily queries.',
-    icon: '🔍',
+    tag: 'Search & Navigation',
     color: '#4285F4',
   },
   social: {
     description: 'Social networks, short-form video feeds, and community discussion spaces connecting billions worldwide.',
-    icon: '💬',
+    tag: 'Social & Communities',
     color: '#E1306C',
   },
   ai: {
     description: 'Generative AI assistants, reasoning models, and neural productivity agents reshaping internet interaction.',
-    icon: '⚡',
+    tag: 'Artificial Intelligence',
     color: '#10a37f',
   },
   reference: {
     description: 'Collaborative encyclopedias, open educational libraries, and verifiable global knowledge repositories.',
-    icon: '📚',
+    tag: 'Reference & Knowledge',
     color: '#72777D',
   },
   ecommerce: {
     description: 'Online retail marketplaces, direct-to-consumer platforms, and international logistics ecosystems.',
-    icon: '🛍️',
+    tag: 'E-Commerce & Retail',
     color: '#ff9900',
   },
   entertainment: {
     description: 'On-demand video streaming, live broadcasts, digital audio hubs, and interactive gaming networks.',
-    icon: '🎬',
+    tag: 'Streaming & Media',
     color: '#e50914',
   },
   news: {
     description: 'Breaking news outlets, global journalism publications, and financial market media channels.',
-    icon: '📰',
+    tag: 'News & Journalism',
     color: '#ae251f',
   },
   finance: {
     description: 'Digital banking services, global cryptocurrency exchanges, payment gateways, and trading terminals.',
-    icon: '📈',
+    tag: 'Finance & Markets',
     color: '#f3ba2f',
   },
   dev: {
     description: 'Code repositories, package managers, developer question-and-answer forums, and cloud infrastructure.',
-    icon: '💻',
+    tag: 'Developer Tools & Cloud',
     color: '#24292f',
   },
 };
 
 export const metadata: Metadata = {
-  title: 'Website Categories — Global Web Traffic Rankings (2026) | Pulse',
+  title: 'Website Categories - Global Web Traffic Rankings (2026) | Pulse',
   description:
     'Explore website traffic rankings, visitor velocity, and market share across 9 major industries including Search, AI, Social Media, E-Commerce, Dev Tools, and Streaming.',
   alternates: {
     canonical: `${BASE_URL}/category`,
   },
   openGraph: {
-    title: 'Website Categories — Global Web Traffic Rankings (2026) | Pulse',
+    title: 'Website Categories - Global Web Traffic Rankings (2026) | Pulse',
     description:
       'Explore website traffic rankings, visitor velocity, and market share across 9 major industries. Powered by the Pulse Traffic Index.',
     url: `${BASE_URL}/category`,
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Website Categories — Global Web Traffic Rankings (2026) | Pulse',
+    title: 'Website Categories - Global Web Traffic Rankings (2026) | Pulse',
     description:
       'Explore website traffic rankings, visitor velocity, and market share across 9 major industries.',
     images: [`${BASE_URL}/opengraph-image`],
@@ -98,23 +98,43 @@ export default async function CategoryIndexPage() {
   const categorySummaries: CategorySummary[] = CATEGORIES.filter((c) => c.id !== 'all').map((c) => {
     const sites = (categoryGroups[c.id] || []).sort((a, b) => a.rank - b.rank);
     const totalRate = sites.reduce((sum, s) => sum + s.rate, 0);
+    const totalRaw = sites.reduce((sum, s) => sum + (s.baselineRaw || 0), 0);
+    
+    let monthlyVolumeFormatted = '';
+    if (totalRaw >= 1_000_000_000) {
+      monthlyVolumeFormatted = `${(totalRaw / 1_000_000_000).toFixed(1)}B / mo`;
+    } else if (totalRaw >= 1_000_000) {
+      monthlyVolumeFormatted = `${(totalRaw / 1_000_000).toFixed(0)}M / mo`;
+    } else {
+      monthlyVolumeFormatted = `${totalRate * 2600} / mo`;
+    }
+
     const meta = CATEGORY_DETAILS[c.id] || {
       description: `Leading websites in the ${c.label} sector ranked by real-time traffic volume.`,
-      icon: '🌐',
+      tag: c.label,
       color: '#82c8e5',
     };
+
+    const sharePercent = totalTrackedTraffic > 0
+      ? ((totalRate / totalTrackedTraffic) * 100).toFixed(1)
+      : '0.0';
 
     return {
       id: c.id,
       label: c.label,
       color: meta.color,
       description: meta.description,
-      icon: meta.icon,
+      tag: meta.tag,
       siteCount: sites.length,
       totalRate,
+      monthlyVolumeFormatted,
+      sharePercent,
       topSites: sites.slice(0, 3),
     };
   });
+
+  // Sort categories by total traffic volume descending
+  categorySummaries.sort((a, b) => b.totalRate - a.totalRate);
 
   const jsonLd = {
     '@context': 'https://schema.org',

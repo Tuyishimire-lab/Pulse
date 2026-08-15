@@ -11,9 +11,11 @@ export interface CategorySummary {
   label: string;
   color: string;
   description: string;
-  icon: string;
+  tag: string;
   siteCount: number;
   totalRate: number;
+  monthlyVolumeFormatted: string;
+  sharePercent: string;
   topSites: SiteConfig[];
 }
 
@@ -75,7 +77,7 @@ export default function CategoryIndexClient({ categories, totalTrackedTraffic }:
           <div className="relative z-10 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#82c8e5]/10 border border-[#82c8e5]/20 text-[#82c8e5] text-xs font-semibold uppercase tracking-wider mb-4">
               <span className="w-2 h-2 rounded-full bg-[#82c8e5] animate-pulse" />
-              Global Traffic Taxonomies
+              Global Sector Taxonomy
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
               Website Traffic Rankings by Category
@@ -89,10 +91,6 @@ export default function CategoryIndexClient({ categories, totalTrackedTraffic }:
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((cat) => {
-            const sharePercent = totalTrackedTraffic > 0
-              ? ((cat.totalRate / totalTrackedTraffic) * 100).toFixed(1)
-              : '0.0';
-
             return (
               <div
                 key={cat.id}
@@ -103,21 +101,21 @@ export default function CategoryIndexClient({ categories, totalTrackedTraffic }:
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold border"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black uppercase tracking-wider border"
                         style={{
                           backgroundColor: cat.color + '18',
                           borderColor: cat.color + '35',
                           color: cat.color,
                         }}
                       >
-                        {cat.icon}
+                        {cat.id.slice(0, 3)}
                       </div>
                       <div>
                         <h2 className="text-lg font-bold text-white group-hover:text-[#82c8e5] transition-colors">
                           {cat.label}
                         </h2>
                         <span className="text-xs text-[#64748b]">
-                          {cat.siteCount} Tracked Domains
+                          {cat.siteCount} Tracked Platforms
                         </span>
                       </div>
                     </div>
@@ -129,13 +127,19 @@ export default function CategoryIndexClient({ categories, totalTrackedTraffic }:
                         color: cat.color,
                       }}
                     >
-                      {sharePercent}% Share
+                      {cat.sharePercent}% Share
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#94a3b8] leading-relaxed mb-5">
+                  <p className="text-xs text-[#94a3b8] leading-relaxed mb-4">
                     {cat.description}
                   </p>
+
+                  {/* Volume stat */}
+                  <div className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-white/[0.02] border border-white/5 mb-4">
+                    <span className="text-[#64748b]">Monthly Traffic</span>
+                    <span className="font-mono font-bold text-white">{cat.monthlyVolumeFormatted}</span>
+                  </div>
 
                   {/* Top Sites Mini List */}
                   <div className="space-y-2 mb-6">

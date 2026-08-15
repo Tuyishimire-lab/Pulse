@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const category = CATEGORIES.find((c) => c.id === slug);
   if (!category) return { title: 'Category Not Found | Pulse' };
 
-  const title = `${category.label} Websites — Traffic Rankings 2026 | Pulse`;
+  const title = `${category.label} Websites - Traffic Rankings 2026 | Pulse`;
   const description = `Compare traffic, global ranks, and visitor metrics for the top ${category.label.toLowerCase()} websites in 2026. Real-time data powered by the Pulse Traffic Index engine.`;
   const url = `${BASE_URL}/category/${slug}`;
 
@@ -78,7 +78,7 @@ export default async function CategoryPage({ params }: PageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: `${category.label} Websites — Traffic Rankings 2026`,
+    name: `${category.label} Websites - Traffic Rankings 2026`,
     description: `Top ${category.label.toLowerCase()} websites ranked by global traffic in 2026.`,
     url: `${BASE_URL}/category/${slug}`,
     breadcrumb: {
