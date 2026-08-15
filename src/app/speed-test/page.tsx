@@ -28,5 +28,54 @@ export const metadata: Metadata = {
 };
 
 export default function SpeedTestPage() {
-  return <SpeedTestClient />;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'Pulse Internet Speed Test',
+        url: `${BASE_URL}/speed-test`,
+        description: 'Test your internet download speed, upload speed, latency ping, jitter, and connection quality with real-time bufferbloat diagnostics.',
+        applicationCategory: 'UtilityApplication',
+        operatingSystem: 'All',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        creator: {
+          '@type': 'Organization',
+          name: 'Pulse',
+          url: BASE_URL,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: BASE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Speed Test',
+            item: `${BASE_URL}/speed-test`,
+          },
+        ],
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <SpeedTestClient />
+    </>
+  );
 }

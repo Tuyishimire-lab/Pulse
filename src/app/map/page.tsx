@@ -55,11 +55,39 @@ export default async function MapPage() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Global Web Traffic Map 2026',
-    description:
-      'Interactive world map showing internet penetration rates and top websites in 115 countries.',
-    url: `${BASE_URL}/map`,
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'Pulse Global Web Traffic Map',
+        url: `${BASE_URL}/map`,
+        description:
+          'Interactive world map showing internet penetration rates and top websites in 115+ countries.',
+        applicationCategory: 'DataVisualization',
+        operatingSystem: 'All',
+        creator: {
+          '@type': 'Organization',
+          name: 'Pulse',
+          url: BASE_URL,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: BASE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Global Map',
+            item: `${BASE_URL}/map`,
+          },
+        ],
+      },
+    ],
   };
 
   return (

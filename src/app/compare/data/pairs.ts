@@ -1,5 +1,6 @@
 // Pre-defined compare pairs for /compare/[pair] SSG pages
 // Each pair targets a high-search-volume query
+import { SITES } from '../../data/sites';
 
 export interface ComparePair {
   slug: string;       // e.g. "youtube-vs-tiktok"
@@ -499,6 +500,29 @@ export function getPairBySlug(slug: string): ComparePair | undefined {
 }
 
 export const PAIR_SLUGS = COMPARE_PAIRS.map((p) => p.slug);
+
+/**
+ * Returns all hand-crafted comparison slugs PLUS top-20 x top-20 pre-rendered combinations.
+ * Used identically in generateStaticParams and sitemap.ts.
+ */
+export function getAllCompareSlugs(): string[] {
+  const knownSlugs = new Set(PAIR_SLUGS);
+  const allSlugs: string[] = [...PAIR_SLUGS];
+
+  const top20 = SITES.slice(0, 20);
+  for (const siteA of top20) {
+    for (const siteB of top20) {
+      if (siteA.id === siteB.id) continue;
+      const slug = `${siteA.id}-vs-${siteB.id}`;
+      const reverseSlug = `${siteB.id}-vs-${siteA.id}`;
+      if (knownSlugs.has(slug) || knownSlugs.has(reverseSlug)) continue;
+      knownSlugs.add(slug);
+      allSlugs.push(slug);
+    }
+  }
+
+  return allSlugs;
+}
 
 /** Parse a compare slug into two site IDs, e.g. "youtube-vs-tiktok" */
 export function parsePairSlug(slug: string): { siteAId: string; siteBId: string } | null {

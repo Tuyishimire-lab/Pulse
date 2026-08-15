@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SITES } from '../../data/sites';
 import { getSites } from '../../../lib/getSites';
-import { COMPARE_PAIRS, getPairBySlug, PAIR_SLUGS, parsePairSlug } from '../data/pairs';
+import { COMPARE_PAIRS, getPairBySlug, getAllCompareSlugs, parsePairSlug } from '../data/pairs';
 import { generateDynamicPair } from './generateDynamicPair';
 import ComparePageClient from './ComparePageClient';
 
@@ -13,25 +13,8 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  // Start with all hand-crafted SEO pairs
-  const knownSlugs = new Set(PAIR_SLUGS);
-  const params: { pair: string }[] = PAIR_SLUGS.map((slug) => ({ pair: slug }));
-
-  // Add top-20 × top-20 combinations not already covered
-  const top20 = SITES.slice(0, 20);
-  for (const siteA of top20) {
-    for (const siteB of top20) {
-      if (siteA.id === siteB.id) continue;
-      const slug = `${siteA.id}-vs-${siteB.id}`;
-      const reverseSlug = `${siteB.id}-vs-${siteA.id}`;
-      // Skip if this pair or its reverse is already hand-crafted
-      if (knownSlugs.has(slug) || knownSlugs.has(reverseSlug)) continue;
-      knownSlugs.add(slug); // prevent duplicate forward/reverse at build time
-      params.push({ pair: slug });
-    }
-  }
-
-  return params;
+  const slugs = getAllCompareSlugs();
+  return slugs.map((slug) => ({ pair: slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

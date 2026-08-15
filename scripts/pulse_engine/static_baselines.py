@@ -18,107 +18,107 @@ Rate (visits/sec) = monthly_visits // 2_628_000  (pure math, no model)
 # ─────────────────────────────────────────────────────────────────────────────
 STATIC_BASELINES: dict[str, int] = {
     # ── Global Top 10 ─────────────────────────────────────────────────────────
-    "google":       85_000_000_000,   # #1  SimilarWeb 2026-06
-    "youtube":      34_800_000_000,   # #2  SimilarWeb 2026-06
-    "facebook":     15_200_000_000,   # #3  SimilarWeb 2026-06
-    "instagram":    10_400_000_000,   # #4  SimilarWeb 2026-06
-    "chatgpt":       2_400_000_000,   # #5  SimilarWeb 2026-06 (2.4B web visits)
-    "reddit":        4_800_000_000,   # #6  SimilarWeb 2026-06
-    "wikipedia":     4_400_000_000,   # #7  SimilarWeb 2026-06
-    "x":             3_100_000_000,   # #8  SimilarWeb 2026-06 (Twitter/X)
-    "whatsapp":      2_900_000_000,   # #9  SimilarWeb 2026-06
-    "tiktok":        2_800_000_000,   # #10 SimilarWeb 2026-06
+    "google":       85_000_000_000,   # #1  Alphabet SEC consensus
+    "youtube":      34_800_000_000,   # #2  SimilarWeb 2026
+    "facebook":     15_200_000_000,   # #3  Meta 2026 IR
+    "instagram":     6_800_000_000,   # #4  Meta Q2 report
+    "chatgpt":       5_500_000_000,   # #5  Similarweb 2026 (chatgpt.com)
+    "wikipedia":     4_500_000_000,   # #6  Wikimedia Foundation
+    "amazon":        4_200_000_000,   # #7  Amazon SEC 10-Q
+    "x":             4_200_000_000,   # #8  X Corp disclosures
+    "whatsapp":      2_900_000_000,   # #9  Meta messaging
+    "reddit":        2_800_000_000,   # #10 Reddit S-1 IPO & 10-Q
     # ── 11–20 ─────────────────────────────────────────────────────────────────
-    "amazon":        2_700_000_000,   # #11
-    "yahoo":         2_600_000_000,   # #12
+    "tiktok":        2_800_000_000,   # #11 ByteDance Web
+    "yahoo":         2_800_000_000,   # #12
     "yandex":        2_500_000_000,   # #13
     "baidu":         2_200_000_000,   # #14
-    "bing":          2_100_000_000,   # #15
+    "netflix":       2_100_000_000,   # #15 Netflix Shareholder report
     "openai":        2_000_000_000,   # #16 openai.com portal
-    "netflix":       1_900_000_000,   # #17
+    "bing":          1_800_000_000,   # #17 Microsoft Search
     "microsoft":     1_800_000_000,   # #18
-    "linkedin":      1_700_000_000,   # #19
+    "linkedin":      1_750_000_000,   # #19 Microsoft Q3 IR
     "office":        1_600_000_000,   # #20
     # ── 21–40 ─────────────────────────────────────────────────────────────────
-    "github":        1_400_000_000,   # #21
-    "twitch":        1_200_000_000,   # #22
-    "weather":       1_100_000_000,   # #23
-    "pinterest":     1_000_000_000,   # #24
-    "claude":        1_100_000_000,   # #25 Anthropic Claude (Semrush 2026-06)
-    "zoom":            920_000_000,   # #26
-    "canva":           860_000_000,   # #27
+    "twitch":        1_150_000_000,   # #21 Twitch Media Kit
+    "weather":       1_100_000_000,   # #22
+    "pinterest":     1_100_000_000,   # #23 Pinterest Q1 IR
+    "github":        1_000_000_000,   # #24 GitHub Octoverse
+    "zoom":            920_000_000,   # #25
+    "ebay":            900_000_000,   # #26 eBay IR
+    "duckduckgo":      850_000_000,   # #27 DuckDuckGo public stats
     "gemini":          860_000_000,   # #28 Google Gemini web app
-    "spotify":         640_000_000,   # #29
-    "quora":           610_000_000,   # #30
-    "ebay":            580_000_000,   # #31
-    "duckduckgo":      560_000_000,   # #32
-    "roblox":          545_000_000,   # #33
-    "stackoverflow":   410_000_000,   # #34
-    "imgur":           450_000_000,   # #35
-    "apple":           520_000_000,   # #36
-    "naver":           400_000_000,   # #37
-    "bilibili":        390_000_000,   # #38
-    "imdb":            370_000_000,   # #39
-    "fandom":          360_000_000,   # #40
+    "quora":           750_000_000,   # #29 Quora press kit
+    "telegram":        750_000_000,   # #30 Telegram channel stats
+    "aliexpress":      680_000_000,   # #31 Alibaba Group
+    "canva":           650_000_000,   # #32 Canva press release
+    "nytimes":         650_000_000,   # #33 NY Times SEC 10-Q
+    "discord":         580_000_000,   # #34 Discord transparency
+    "bbc":             580_000_000,   # #35 Similarweb (bbc.co.uk + bbc.com)
+    "spotify":         560_000_000,   # #36 Spotify shareholder deck
+    "roblox":          545_000_000,   # #37
+    "booking":         520_000_000,   # #38 Booking Holdings
+    "walmart":         510_000_000,   # #39 Walmart Digital Commerce
+    "disneyplus":      350_000_000,   # #40 Disney Direct-to-Consumer Web
     # ── 41–60 ─────────────────────────────────────────────────────────────────
-    "aliexpress":      340_000_000,   # #41
-    "booking":         330_000_000,   # #42
-    "discord":         320_000_000,   # #43
-    "telegram":        300_000_000,   # #44
-    "adobe":           310_000_000,   # #45
-    "steam":           305_000_000,   # #46
-    "bbc":             285_000_000,   # #47
-    "cnn":             260_000_000,   # #48
-    "mailru":          330_000_000,   # #49
-    "globo":           295_000_000,   # #50
-    "nytimes":         250_000_000,   # #51
-    "paypal":          260_000_000,   # #52
-    "walmart":         265_000_000,   # #53
-    "target":          228_000_000,   # #54
-    "etsy":            218_000_000,   # #55
-    "medium":          195_000_000,   # #56
-    "espn":            210_000_000,   # #57
-    "salesforce":      198_000_000,   # #58
-    "vimeo":           178_000_000,   # #59
-    "dropbox":         172_000_000,   # #60
-    # ── 61–80 ─────────────────────────────────────────────────────────────────
-    "slack":           168_000_000,   # #61
-    "dailymail":       195_000_000,   # #62
-    "coinbase":        175_000_000,   # #63
-    "binance":         158_000_000,   # #64
-    "investing":       162_000_000,   # #65
-    "tradingview":     185_000_000,   # #66
-    "bloomberg":       148_000_000,   # #67
-    "huggingface":     210_000_000,   # #68
-    "midjourney":      145_000_000,   # #69
-    "wikihow":         122_000_000,   # #70
-    "merriamwebster":  118_000_000,   # #71
-    "accuweather":     115_000_000,   # #72
-    "shopify":         128_000_000,   # #73
-    "bestbuy":         108_000_000,   # #74
-    "ikea":            112_000_000,   # #75
-    "indeed":          118_000_000,   # #76
-    "nike":            104_000_000,   # #77
-    "craigslist":       98_000_000,   # #78
-    "patreon":         108_000_000,   # #79
-    "soundcloud":       96_000_000,   # #80
-    # ── 81–103 ────────────────────────────────────────────────────────────────
-    "hulu":            102_000_000,   # #81
-    "disneyplus":      110_000_000,   # #82
-    "max":              94_000_000,   # #83
-    "deviantart":       88_000_000,   # #84
-    "ign":              90_000_000,   # #85
-    "theguardian":      92_000_000,   # #86
-    "reuters":          84_000_000,   # #87
-    "forbes":           82_000_000,   # #88
-    "techcrunch":       75_000_000,   # #89
-    "wired":            78_000_000,   # #90
-    "robinhood":        72_000_000,   # #91
-    "stripe":           88_000_000,   # #92
-    "speedtest":       112_000_000,   # #93
-    "vercel":           80_000_000,   # #94
-    "netlify":          68_000_000,   # #95
-    "npm":              78_000_000,   # #96
+    "cnn":             520_000_000,   # #41 Warner Bros Discovery
+    "apple":           520_000_000,   # #42
+    "imgur":           450_000_000,   # #43
+    "paypal":          440_000_000,   # #44 PayPal IR
+    "etsy":            420_000_000,   # #45 Etsy IR
+    "stackoverflow":   390_000_000,   # #46 Prosus Annual Report
+    "naver":           400_000_000,   # #47
+    "bilibili":        390_000_000,   # #48
+    "imdb":            370_000_000,   # #49
+    "fandom":          360_000_000,   # #50
+    "theguardian":     340_000_000,   # #51 Guardian Media Group
+    "target":          340_000_000,   # #52 Target Corp IR
+    "mailru":          330_000_000,   # #53
+    "adobe":           310_000_000,   # #54
+    "steam":           305_000_000,   # #55
+    "globo":           295_000_000,   # #56
+    "tradingview":     220_000_000,   # #57 TradingView stats
+    "espn":            210_000_000,   # #58
+    "huggingface":     210_000_000,   # #59
+    # ── 60–80 ─────────────────────────────────────────────────────────────────
+    "salesforce":      198_000_000,   # #60
+    "dailymail":       195_000_000,   # #61
+    "medium":          180_000_000,   # #62 Medium Partner stats
+    "vimeo":           178_000_000,   # #63
+    "coinbase":        145_000_000,   # #64 Coinbase Shareholder Letter
+    "binance":         160_000_000,   # #65 Binance transparency
+    "dropbox":         172_000_000,   # #66
+    "slack":           168_000_000,   # #67
+    "investing":       162_000_000,   # #68
+    "claude":          135_000_000,   # #69 Anthropic Claude (135M)
+    "bloomberg":       148_000_000,   # #70
+    "midjourney":      145_000_000,   # #71
+    "shopify":         120_000_000,   # #72 Shopify Financials
+    "wikihow":         122_000_000,   # #73
+    "merriamwebster":  118_000_000,   # #74
+    "accuweather":     115_000_000,   # #75
+    "speedtest":       112_000_000,   # #76
+    "bestbuy":         108_000_000,   # #77
+    "ikea":            112_000_000,   # #78
+    "indeed":          118_000_000,   # #79
+    # ── 80–103 ────────────────────────────────────────────────────────────────
+    "patreon":         108_000_000,   # #80
+    "nike":            104_000_000,   # #81
+    "hulu":            102_000_000,   # #82
+    "craigslist":       98_000_000,   # #83
+    "soundcloud":       96_000_000,   # #84
+    "max":              94_000_000,   # #85
+    "ign":              90_000_000,   # #86
+    "deviantart":       88_000_000,   # #87
+    "reuters":          84_000_000,   # #88
+    "forbes":           82_000_000,   # #89
+    "vercel":           80_000_000,   # #90
+    "wired":            78_000_000,   # #91
+    "techcrunch":       75_000_000,   # #92
+    "robinhood":        72_000_000,   # #93
+    "netlify":          68_000_000,   # #94
+    "stripe":           62_000_000,   # #95 Stripe Annual Letter
+    "npm":              80_000_000,   # #96 NPM registry stats
     "gitlab":           72_000_000,   # #97
     "docker":           70_000_000,   # #98
     "stackexchange":    62_000_000,   # #99

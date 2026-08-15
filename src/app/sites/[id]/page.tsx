@@ -65,35 +65,62 @@ export default async function Page({ params }: PageProps) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    'name': `${siteName} Real-Time Traffic & Analytics Tracker - Pulse`,
-    'description': `See live visitor counters, average bounce rates, session durations, device splits, and geographic traffic origins for ${siteUrl.replace('https://', '')} in real-time.`,
-    'url': `https://www.pulstraffic.com/sites/${id}`,
-    'mainEntity': {
-      '@type': 'Dataset',
-      'name': `${siteName} Traffic Analytics`,
-      'description': `Estimated baseline traffic statistics for ${siteUrl}.`,
-      'identifier': siteUrl,
-      'temporalCoverage': 'Ongoing real-time data stream',
-      'license': 'https://creativecommons.org/licenses/by/4.0/',
-      'creator': {
-        '@type': 'Organization',
-        'name': 'Pulse',
-        'url': 'https://www.pulstraffic.com'
-      },
-      'variableMeasured': [
-        {
-          '@type': 'PropertyValue',
-          'name': 'Estimated Monthly Visits',
-          'value': baseline,
-        },
-        {
-          '@type': 'PropertyValue',
-          'name': 'Global Rank',
-          'value': rank,
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        'name': `${siteName} Real-Time Traffic & Analytics Tracker - Pulse`,
+        'description': `See live visitor counters, average bounce rates, session durations, device splits, and geographic traffic origins for ${siteUrl.replace('https://', '')} in real-time.`,
+        'url': `https://www.pulstraffic.com/sites/${id}`,
+        'mainEntity': {
+          '@type': 'Dataset',
+          'name': `${siteName} Traffic Analytics`,
+          'description': `Estimated baseline traffic statistics for ${siteUrl}.`,
+          'identifier': siteUrl,
+          'temporalCoverage': 'Ongoing real-time data stream',
+          'license': 'https://creativecommons.org/licenses/by/4.0/',
+          'creator': {
+            '@type': 'Organization',
+            'name': 'Pulse',
+            'url': 'https://www.pulstraffic.com'
+          },
+          'variableMeasured': [
+            {
+              '@type': 'PropertyValue',
+              'name': 'Estimated Monthly Visits',
+              'value': baseline,
+            },
+            {
+              '@type': 'PropertyValue',
+              'name': 'Global Rank',
+              'value': rank,
+            }
+          ]
         }
-      ]
-    }
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.pulstraffic.com',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Sites',
+            item: 'https://www.pulstraffic.com',
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: siteName,
+            item: `https://www.pulstraffic.com/sites/${id}`,
+          },
+        ],
+      },
+    ],
   };
 
   return (

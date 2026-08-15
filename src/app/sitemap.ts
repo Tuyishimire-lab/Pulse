@@ -2,13 +2,14 @@ import { MetadataRoute } from 'next';
 import { SITES, CATEGORIES } from './data/sites';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { COUNTRY_SLUGS } from './top-sites/data/countries';
-import { PAIR_SLUGS } from './compare/data/pairs';
-import { getReportSlugs } from './report/data/reportGenerator';
+import { getAllCompareSlugs } from './compare/data/pairs';
+import { getReportSlugs, parsReportSlug } from './report/data/reportGenerator';
 
 export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.pulstraffic.com';
+  const now = new Date();
 
   let activeSites = SITES;
 
@@ -28,36 +29,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const siteUrls = activeSites.map((site) => ({
     url: `${baseUrl}/sites/${site.id}`,
-    lastModified: new Date(),
+    lastModified: now,
     changeFrequency: 'daily' as const,
-    priority: 0.8,
+    priority: 0.80,
   }));
 
   const countryUrls = COUNTRY_SLUGS.map((slug) => ({
     url: `${baseUrl}/top-sites/${slug}`,
-    lastModified: new Date(),
+    lastModified: now,
     changeFrequency: 'weekly' as const,
     priority: 0.85,
   }));
 
-  const compareUrls = PAIR_SLUGS.map((slug) => ({
+  // Pre-rendered and hand-crafted comparisons
+  const compareSlugs = getAllCompareSlugs();
+  const compareUrls = compareSlugs.map((slug) => ({
     url: `${baseUrl}/compare/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
     priority: 0.80,
   }));
 
   const reportSlugs = await getReportSlugs();
-  const reportUrls = reportSlugs.map((slug) => ({
-    url: `${baseUrl}/report/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.90,
-  }));
+  const reportUrls = reportSlugs.map((slug) => {
+    const reportDate = parsReportSlug(slug) || now;
+    return {
+      url: `${baseUrl}/report/${slug}`,
+      lastModified: reportDate,
+      changeFrequency: 'weekly' as const,
+      priority: 0.90,
+    };
+  });
 
   const categoryUrls = CATEGORIES.filter((c) => c.id !== 'all').map((c) => ({
     url: `${baseUrl}/category/${c.id}`,
-    lastModified: new Date(),
+    lastModified: now,
     changeFrequency: 'daily' as const,
     priority: 0.88,
   }));
@@ -65,51 +71,57 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'daily' as const,
       priority: 1.0,
     },
     {
       url: `${baseUrl}/trending`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'daily' as const,
       priority: 0.95,
     },
     {
       url: `${baseUrl}/map`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.95,
     },
     {
+      url: `${baseUrl}/category`,
+      lastModified: now,
+      changeFrequency: 'daily' as const,
+      priority: 0.90,
+    },
+    {
       url: `${baseUrl}/compare`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.90,
     },
     {
       url: `${baseUrl}/speed-test`,
-      lastModified: new Date(),
+      lastModified: new Date('2026-08-01'),
       changeFrequency: 'monthly' as const,
       priority: 0.90,
     },
     {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
+      url: `${baseUrl}/methodology`,
+      lastModified: new Date('2026-08-11'),
       changeFrequency: 'monthly' as const,
-      priority: 0.5,
+      priority: 0.60,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date('2026-08-01'),
+      changeFrequency: 'monthly' as const,
+      priority: 0.50,
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
+      lastModified: new Date('2026-08-01'),
       changeFrequency: 'monthly' as const,
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/methodology`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.6,
+      priority: 0.50,
     },
     ...categoryUrls,
     ...reportUrls,

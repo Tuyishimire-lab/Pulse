@@ -126,9 +126,19 @@ def fetch_tranco_ranks(top_n: int = 5000) -> Dict[str, int]:
     return {}
 
 DOMAIN_ALIASES = {
-    "x.com": ["x.com", "twitter.com"],
-    "max.com": ["max.com", "hbomax.com"],
-    "facebook.com": ["facebook.com", "fb.com"],
+    "x.com": ["x.com", "twitter.com", "t.co"],
+    "max.com": ["max.com", "hbomax.com", "hbo.com"],
+    "facebook.com": ["facebook.com", "fb.com", "m.facebook.com"],
+    "yahoo.com": ["yahoo.com", "yahoo.co.jp", "yahoojapan.co.jp"],
+    "amazon.com": ["amazon.com", "amazon.co.uk", "amazon.de", "amazon.co.jp"],
+    "wikipedia.org": ["wikipedia.org", "en.wikipedia.org"],
+    "bing.com": ["bing.com", "msn.com"],
+    "google.com": ["google.com", "google.co.in", "google.co.uk", "google.co.jp"],
+    "disneyplus.com": ["disneyplus.com", "disney.com"],
+    "chatgpt.com": ["chatgpt.com", "openai.com"],
+    "claude.ai": ["claude.ai", "anthropic.com"],
+    "reddit.com": ["reddit.com", "redd.it"],
+    "youtube.com": ["youtube.com", "youtu.be"],
 }
 
 def merge_rank_sources(cf_ranks: Dict[str, int], tranco_ranks: Dict[str, int]) -> Dict[str, int]:

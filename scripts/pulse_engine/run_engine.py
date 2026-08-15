@@ -35,6 +35,8 @@ from scripts.pulse_engine.static_baselines import (
     get_rate,
     SECONDS_PER_MONTH,
 )
+from scripts.pulse_engine.validation import run_validation, print_validation_report
+
 
 
 
@@ -256,6 +258,14 @@ def run_pulse_engine(run_validation_report: bool = True):
         print(f"  Snapshot written: {week_slug} ({len(sites_data)} sites, total_rate={total_rate}/s)")
     except Exception as e:
         print(f"  [Warning] Could not write weekly snapshot: {e}")
+
+    # ── 7. Run Ground-Truth Benchmark Validation ─────────────────────────────
+    if run_validation_report and updated_sites:
+        try:
+            val_report = run_validation(updated_sites)
+            print_validation_report(val_report)
+        except Exception as e:
+            print(f"  [Warning] Ground-truth validation error: {e}")
 
     print("=" * 60)
     print("Pulse Engine v2.0 completed.")

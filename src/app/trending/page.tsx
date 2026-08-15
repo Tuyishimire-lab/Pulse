@@ -277,11 +277,32 @@ export default async function TrendingPage() {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Trending Websites - Biggest Rank Movers',
-    description:
-      'See which websites are rising and falling in global traffic rankings, updated every 6 hours.',
-    url: `${BASE_URL}/trending`,
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        name: 'Trending Websites - Biggest Rank Movers (2026)',
+        description:
+          'See which websites are rising and falling in global traffic rankings, updated every 6 hours.',
+        url: `${BASE_URL}/trending`,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: BASE_URL,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Trending',
+            item: `${BASE_URL}/trending`,
+          },
+        ],
+      },
+    ],
   };
 
   return (
