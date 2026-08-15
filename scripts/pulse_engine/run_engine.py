@@ -260,7 +260,7 @@ def run_pulse_engine(run_validation_report: bool = True):
         print(f"  [Warning] Could not write weekly snapshot: {e}")
 
     # ── 7. Run Ground-Truth Benchmark Validation ─────────────────────────────
-    if run_validation_report and updated_sites:
+    if updated_sites:
         try:
             val_report = run_validation(updated_sites)
             print_validation_report(val_report)
