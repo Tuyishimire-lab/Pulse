@@ -1,6 +1,6 @@
 # ⚡ Pulse — Live Global Web Traffic Intelligence Platform
 
-**Pulse** is a proprietary, real-time web traffic visualizer and intelligence engine. Powered by the **Pulse Traffic Index™ (PTI v1.2)**, Pulse fuses network DNS telemetry, link authority, search intent, and AI sentiment analysis to track visitor velocity across top global domains.
+**Pulse** is a proprietary, real-time web traffic visualizer, analytics platform, and intelligence engine. Powered by the **Pulse Traffic Index™ (PTI v1.2)**, Pulse fuses network DNS telemetry, link authority, search intent, and AI sentiment analysis to track visitor velocity across top global domains.
 
 ![Pulse Badge Example](https://www.pulstraffic.com/api/badge/google)
 
@@ -10,29 +10,50 @@
 
 - ⏱️ **Live Visitor Ticker Physics:** Calculates real-time visits-per-second velocity based on global traffic baselines.
 - 🧠 **Pulse Traffic Index (PTI v1.2):** A multi-signal Python ensemble engine combining Cloudflare Radar DNS query mass, Tranco Top-5000 multi-source ranks, Open PageRank link authority, and Groq AI (Llama 3.3 70B) momentum.
-- ⚔️ **Domain Battles & Comparisons (`/compare/[pair]`):** Side-by-side comparative analysis of rival web platforms (e.g. YouTube vs. TikTok, ChatGPT vs. Claude).
-- 🌍 **Geographic Rankings (`/top-sites/[country]`):** Country-specific traffic rankings across 20+ countries.
+- ⚔️ **Programmatic Comparison Engine (`/compare/[pair]`):** Over 400+ side-by-side comparative analysis pages for rival web platforms (e.g. YouTube vs. TikTok, ChatGPT vs. Claude, Google vs. Bing).
+- 🧩 **Embeddable Live Traffic Widgets (`/embed/[id]`):** Zero-friction, responsive `<iframe>` widgets for third-party blogs and websites featuring real-time tickers, rank badges, and dark/light themes.
+- 🏷️ **Dynamic SVG Badges (`/api/badge/[id]`):** High-DPI Shields.io-style SVG badges for startup landing pages, documentation, and GitHub READMEs.
+- 🌍 **Geographic Rankings (`/top-sites/[country]`):** Country-specific traffic rankings across 115+ countries.
 - 📊 **AI-Powered Weekly Reports (`/report/[week]`):** Weekly digests synthesizing market shifts and rank volatility using Groq AI.
 - ⚡ **Interactive Speed Tester (`/speed-test`):** Hybrid HTTP + WebSocket download/upload bandwidth and latency tester.
-- 🏷️ **Embeddable Live Badges (`/api/badge/[id]`):** High-DPI SVG badges for startup landing pages and GitHub READMEs.
+- 📢 **Social Sharing & Virality (`SocialShareBar`):** Instant pre-formatted statistical hooks for X/Twitter, Reddit, and LinkedIn.
 - 🤖 **Automated Social Digest Bot (`scripts/social_bot.py`):** Automated weekly X/Twitter traffic shift posts.
 
 ---
 
-## 🎨 Embeddable Live Badges
+## 🎨 Embeddable Widgets & Badges
 
-Site owners, founders, and maintainers can embed live Pulse Traffic Index badges on their landing page or GitHub `README.md`:
+Site owners, founders, bloggers, and maintainers can easily embed live Pulse Traffic statistics:
 
-### 📝 Markdown Embed (GitHub READMEs & Blogs)
-```markdown
-[![Pulse Traffic Index](https://www.pulstraffic.com/api/badge/vercel)](https://www.pulstraffic.com/sites/vercel)
+### 1. 🧩 Interactive Iframe Widget (Card View)
+```html
+<iframe 
+  src="https://www.pulstraffic.com/embed/chatgpt?theme=dark&compact=false" 
+  width="360" 
+  height="200" 
+  frameborder="0" 
+  scrolling="no" 
+  style="border-radius: 12px; overflow: hidden; border: none;"
+  title="ChatGPT Live Traffic by Pulse">
+</iframe>
 ```
 
-### 🌐 HTML Embed (Websites & Landing Pages)
+### 2. ⚡ Compact Live Badge (Iframe)
 ```html
-<a href="https://www.pulstraffic.com/sites/vercel" target="_blank">
-  <img src="https://www.pulstraffic.com/api/badge/vercel" alt="Pulse Traffic Index Badge" />
-</a>
+<iframe 
+  src="https://www.pulstraffic.com/embed/chatgpt?theme=dark&compact=true" 
+  width="280" 
+  height="52" 
+  frameborder="0" 
+  scrolling="no" 
+  style="border-radius: 8px; overflow: hidden; border: none;"
+  title="ChatGPT Traffic Badge">
+</iframe>
+```
+
+### 3. 📝 Markdown SVG Badge (GitHub READMEs & Blogs)
+```markdown
+[![Pulse Traffic Index](https://www.pulstraffic.com/api/badge/chatgpt)](https://www.pulstraffic.com/sites/chatgpt)
 ```
 
 ---
