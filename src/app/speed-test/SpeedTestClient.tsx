@@ -235,18 +235,16 @@ export default function SpeedTestClient() {
         <div className="speed-test-action">
           {phase === 'idle' && (
             <button onClick={startTest} className="speed-test-start-btn">
-              <span className="start-btn-icon">▶</span>
               Start Test
             </button>
           )}
           {isRunning && (
             <button onClick={abortTest} className="speed-test-stop-btn">
-              Stop
+              Stop Test
             </button>
           )}
           {isComplete && (
             <button onClick={startTest} className="speed-test-start-btn">
-              <span className="start-btn-icon">↻</span>
               Test Again
             </button>
           )}
@@ -262,7 +260,7 @@ export default function SpeedTestClient() {
         <div className="speed-metric-cards">
           {/* Ping */}
           <div className={`speed-metric-card ${pingResult ? 'filled' : ''}`}>
-            <div className="metric-card-icon">⏱</div>
+            <div className="metric-card-tag">LATENCY</div>
             <div className="metric-card-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
               Ping
               {pingResult?.wsUsed && (
@@ -295,7 +293,7 @@ export default function SpeedTestClient() {
 
           {/* Download */}
           <div className={`speed-metric-card ${downloadResult ? 'filled' : ''}`}>
-            <div className="metric-card-icon">↓</div>
+            <div className="metric-card-tag">DOWNLOAD</div>
             <div className="metric-card-label">Download</div>
             <div className="metric-card-value">
               {downloadResult ? formatSpeed(downloadResult.speed) : phase === 'download' ? formatSpeed(currentSpeed) : 'N/A'}
@@ -312,7 +310,7 @@ export default function SpeedTestClient() {
 
           {/* Upload */}
           <div className={`speed-metric-card ${uploadResult ? 'filled' : ''}`}>
-            <div className="metric-card-icon">↑</div>
+            <div className="metric-card-tag">UPLOAD</div>
             <div className="metric-card-label">Upload</div>
             <div className="metric-card-value">
               {uploadResult ? formatSpeed(uploadResult.speed) : phase === 'upload' ? formatSpeed(currentSpeed) : 'N/A'}

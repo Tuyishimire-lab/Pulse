@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Pulse Speed Test — Shared Types
+   Pulse Speed Test  -  Shared Types
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /** Complete result from a single speed test run */
@@ -35,10 +35,10 @@ export interface PingMetric {
   wsUsed?: boolean; // true if WebSocket was used for ping measurement
 }
 
-/** Bufferbloat detection — latency under load */
+/** Bufferbloat detection  -  latency under load */
 export interface BufferbloatResult {
-  idlePing: number;    // ms — baseline latency
-  loadedPing: number;  // ms — latency during download
+  idlePing: number;    // ms  -  baseline latency
+  loadedPing: number;  // ms  -  latency during download
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
 }
 

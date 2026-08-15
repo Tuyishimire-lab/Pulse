@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   Pulse Speed Test — Web Worker Measurement Engine  (v3 — Hybrid WS+HTTP)
+   Pulse Speed Test  -  Web Worker Measurement Engine  (v3  -  Hybrid WS+HTTP)
    ═══════════════════════════════════════════════════════════════════════════
    Runs entirely off the main thread. Communicates via postMessage.
 
@@ -129,7 +129,7 @@ async function runTest(baseUrl: string) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PING measurement via WebSocket (cleaner RTT — no HTTP overhead)
+   PING measurement via WebSocket (cleaner RTT  -  no HTTP overhead)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 async function measurePingWs(ws: WebSocket): Promise<PingMetric> {
@@ -142,7 +142,7 @@ async function measurePingWs(ws: WebSocket): Promise<PingMetric> {
 
     const rtt = await wsPingRtt(ws);
     if (rtt === null) {
-      // WS failed mid-test — this shouldn't happen but handle gracefully
+      // WS failed mid-test  -  this shouldn't happen but handle gracefully
       break;
     }
 
@@ -196,7 +196,7 @@ function wsPingRtt(ws: WebSocket): Promise<number | null> {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PING measurement via HTTP (fallback — same as v2)
+   PING measurement via HTTP (fallback  -  same as v2)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 async function measurePingHttp(baseUrl: string): Promise<PingMetric> {
@@ -267,7 +267,7 @@ async function measureDownload(
   let bbPingInterval: ReturnType<typeof setInterval> | null = null;
 
   if (ws && ws.readyState === WebSocket.OPEN) {
-    // Use WS pings — more efficient, no competing HTTP connections
+    // Use WS pings  -  more efficient, no competing HTTP connections
     bbPingInterval = setInterval(() => {
       if (ws.readyState !== WebSocket.OPEN) return;
       const sendTime = performance.now();
@@ -361,7 +361,7 @@ async function measureDownload(
             // Hard time limit
             if (elapsed > MAX_DURATION_MS) { settled = true; reader.cancel(); return; }
           }
-        } catch { /* stream error — retry if not settled */ }
+        } catch { /* stream error  -  retry if not settled */ }
       }
     })();
 
@@ -455,7 +455,7 @@ async function measureUpload(baseUrl: string): Promise<SpeedMetric> {
   let streamCount = 0;
   let settled = false;
 
-  // Generate random upload payload — fill in 64KB chunks
+  // Generate random upload payload  -  fill in 64KB chunks
   const payload = new Uint8Array(UPLOAD_CHUNK);
   const CRYPTO_CHUNK = 65536;
   for (let offset = 0; offset < UPLOAD_CHUNK; offset += CRYPTO_CHUNK) {
