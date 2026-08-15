@@ -9,6 +9,9 @@ import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 import { COMPARE_PAIRS } from '../../compare/data/pairs';
 import { COUNTRIES } from '../../top-sites/data/countries';
 import NavHeader from '../../components/NavHeader';
+import SocialShareBar from '../../components/SocialShareBar';
+import EmbedWidgetModal from '../../components/EmbedWidgetModal';
+
 
 // Reusable Favicon Component with Letter Fallback
 function FaviconImage({ url, logo, color }: { url: string; logo: string; color: string }) {
@@ -82,6 +85,8 @@ export default function SitePageClient({ id }: { id: string }) {
   const [liveRank, setLiveRank] = useState<number | null>(null);
   const [liveBaseline, setLiveBaseline] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
+  const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
+
 
   useEffect(() => {
     if (!site || !isSupabaseConfigured) return;
@@ -604,6 +609,28 @@ export default function SitePageClient({ id }: { id: string }) {
         </div>
       </main>
 
+      {/* Social Share & Embed Widget Section */}
+      {site && (
+        <section className="w-full max-w-[800px] px-6 mt-6">
+          <div className="p-4 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-0.5">
+                Share or Embed {site.name} Stats
+              </h3>
+              <p className="text-xs text-[#6d8196]">
+                Post real-time rank #{liveRank ?? site.rank} metrics or embed a live counter badge.
+              </p>
+            </div>
+            <SocialShareBar
+              title={`📈 ${site.name} Real-Time Traffic & Analytics`}
+              summary={`Ranked #${liveRank ?? site.rank} globally with ${liveBaseline ?? site.baseline} visits/mo and ${site.rate.toLocaleString()} req/s.`}
+              hashtags={['WebTraffic', site.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}
+              onOpenEmbed={() => setIsEmbedOpen(true)}
+            />
+          </div>
+        </section>
+      )}
+
       {/* ── Compare With links ─────────────────────────────────────────── */}
       {site && (() => {
         const compareLinks = COMPARE_PAIRS.filter(
@@ -611,7 +638,7 @@ export default function SitePageClient({ id }: { id: string }) {
         ).slice(0, 4);
         if (compareLinks.length === 0) return null;
         return (
-          <section className="w-full max-w-[800px] mt-10 mb-2">
+          <section className="w-full max-w-[800px] px-6 mt-6 mb-2">
             <h2 className="text-xs font-bold text-[#6d8196] uppercase tracking-wider mb-3">Compare {site.name} with</h2>
             <div className="flex flex-wrap gap-2">
               {compareLinks.map((pair) => {
@@ -633,6 +660,13 @@ export default function SitePageClient({ id }: { id: string }) {
         );
       })()}
 
+      {site && (
+        <EmbedWidgetModal
+          site={site}
+          isOpen={isEmbedOpen}
+          onClose={() => setIsEmbedOpen(false)}
+        />
+      )}
 
     </div>
   );

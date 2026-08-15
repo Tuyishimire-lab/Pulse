@@ -502,22 +502,46 @@ export function getPairBySlug(slug: string): ComparePair | undefined {
 export const PAIR_SLUGS = COMPARE_PAIRS.map((p) => p.slug);
 
 /**
- * Returns all hand-crafted comparison slugs PLUS top-20 x top-20 pre-rendered combinations.
+ * Returns all hand-crafted comparison slugs PLUS top-20 global combinations
+ * PLUS top same-category competitors across all categories.
  * Used identically in generateStaticParams and sitemap.ts.
  */
 export function getAllCompareSlugs(): string[] {
   const knownSlugs = new Set(PAIR_SLUGS);
   const allSlugs: string[] = [...PAIR_SLUGS];
 
+  const addPair = (idA: string, idB: string) => {
+    if (idA === idB) return;
+    const slug = `${idA}-vs-${idB}`;
+    const reverseSlug = `${idB}-vs-${idA}`;
+    if (!knownSlugs.has(slug) && !knownSlugs.has(reverseSlug)) {
+      knownSlugs.add(slug);
+      allSlugs.push(slug);
+    }
+  };
+
+  // 1. Top 20 Global x Top 20 Global
   const top20 = SITES.slice(0, 20);
   for (const siteA of top20) {
     for (const siteB of top20) {
-      if (siteA.id === siteB.id) continue;
-      const slug = `${siteA.id}-vs-${siteB.id}`;
-      const reverseSlug = `${siteB.id}-vs-${siteA.id}`;
-      if (knownSlugs.has(slug) || knownSlugs.has(reverseSlug)) continue;
-      knownSlugs.add(slug);
-      allSlugs.push(slug);
+      addPair(siteA.id, siteB.id);
+    }
+  }
+
+  // 2. Category rivals (e.g., AI vs AI, Dev vs Dev, E-Commerce vs E-Commerce)
+  const categoryMap = new Map<string, typeof SITES>();
+  for (const site of SITES) {
+    const list = categoryMap.get(site.category) || [];
+    list.push(site);
+    categoryMap.set(site.category, list);
+  }
+
+  for (const [, catSites] of categoryMap.entries()) {
+    const topCat = catSites.slice(0, 8); // Top 8 per category
+    for (let i = 0; i < topCat.length; i++) {
+      for (let j = i + 1; j < topCat.length; j++) {
+        addPair(topCat[i].id, topCat[j].id);
+      }
     }
   }
 
@@ -530,3 +554,4 @@ export function parsePairSlug(slug: string): { siteAId: string; siteBId: string 
   if (!match) return null;
   return { siteAId: match[1], siteBId: match[2] };
 }
+

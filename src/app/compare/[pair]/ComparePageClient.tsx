@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { SiteConfig } from '../../data/sites';
 import { ComparePair } from '../data/pairs';
 import NavHeader from '../../components/NavHeader';
+import SocialShareBar from '../../components/SocialShareBar';
+import EmbedWidgetModal from '../../components/EmbedWidgetModal';
+
 
 interface Props {
   siteA: SiteConfig;
@@ -87,6 +90,7 @@ function StatRow({ label, a, b, colorA, colorB, winner }: {
 
 export default function ComparePageClient({ siteA, siteB, pairData, related, allSites }: Props) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [embedSite, setEmbedSite] = useState<SiteConfig | null>(null);
 
   // Use numeric baselineRaw to avoid JS string-comparison bug ("820M" > "2.0B" alphabetically)
   const aWinsVisits = (siteA.baselineRaw ?? siteA.rate) > (siteB.baselineRaw ?? siteB.rate);
@@ -279,6 +283,25 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           </div>
         </section>
 
+        {/* Social Share & Embed Bar */}
+        <section className="mb-8 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-1">
+              Share or Embed this Comparison
+            </h3>
+            <p className="text-xs text-[#6d8196]">
+              Share live metrics with your network or embed live widgets on your site.
+            </p>
+          </div>
+          <SocialShareBar
+            title={`📊 ${siteA.name} vs ${siteB.name} Traffic Comparison (2026)`}
+            summary={`${aWinsRank ? siteA.name : siteB.name} leads with ${aWinsRank ? siteA.baseline : siteB.baseline}/mo vs ${aWinsRank ? siteB.baseline : siteA.baseline}/mo.`}
+            hashtags={['WebTraffic', siteA.name.replace(/[^a-zA-Z0-9]/g, ''), siteB.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}
+            onOpenEmbed={() => setEmbedSite(aWinsRank ? siteA : siteB)}
+          />
+        </section>
+
+
         {/* FAQ */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-white mb-5">
@@ -335,6 +358,13 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           </div>
         </section>
 
+        {embedSite && (
+          <EmbedWidgetModal
+            site={embedSite}
+            isOpen={true}
+            onClose={() => setEmbedSite(null)}
+          />
+        )}
 
       </div>
     </div>
