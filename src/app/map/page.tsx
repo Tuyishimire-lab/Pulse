@@ -8,21 +8,24 @@ const BASE_URL = 'https://www.pulstraffic.com';
 export const metadata: Metadata = {
   title: 'Global Web Traffic Map 2026 | Pulse',
   description:
-    'Interactive world map showing internet penetration and top websites by country. Click any country to see its top 20 most visited websites with live traffic data.',
+    'Interactive 3D world map visualizing internet penetration, dominant platform ecosystems, and connected online population volume across 115+ countries.',
   alternates: { canonical: `${BASE_URL}/map` },
   openGraph: {
     title: 'Global Web Traffic Map 2026 | Pulse',
     description:
-      'Interactive world map showing internet penetration and top websites by country.',
+      'Interactive 3D world map visualizing internet penetration, dominant platform ecosystems, and connected online population volume across 115+ countries.',
     url: `${BASE_URL}/map`,
     siteName: 'Pulse',
     type: 'website',
     locale: 'en_US',
+    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Global Web Traffic Map 2026 | Pulse',
-    description: 'Interactive world map showing internet penetration and top websites by country.',
+    description:
+      'Interactive 3D world map visualizing internet penetration, dominant platform ecosystems, and connected online population volume across 115+ countries.',
+    images: [`${BASE_URL}/opengraph-image`],
   },
 };
 
