@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     "cloudflare radar traffic",
   ],
   alternates: {
-    canonical: "/",
+    canonical: "https://www.pulstraffic.com",
   },
   openGraph: {
     title: "Pulse - Live Global Web Traffic Visualizer & Rankings (2026)",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Pulse — Live Global Web Traffic Visualizer",
+        alt: "Pulse - Live Global Web Traffic Visualizer",
       },
     ],
     locale: "en_US",

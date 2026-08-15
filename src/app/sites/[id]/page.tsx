@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: titleText,
     description: descText,
     alternates: {
-      canonical: `/sites/${site.id}`,
+      canonical: `https://www.pulstraffic.com/sites/${site.id}`,
     },
     openGraph: {
       title: titleText,
