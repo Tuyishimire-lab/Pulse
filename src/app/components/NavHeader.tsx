@@ -61,13 +61,13 @@ export default function NavHeader() {
             </kbd>
           </button>
 
-          {/* Desktop Nav */}
-          <nav className="hidden sm:flex items-center gap-1 flex-shrink-0" aria-label="Main navigation">
+          {/* Desktop Nav (>= lg / 1024px) */}
+          <nav className="hidden lg:flex items-center gap-1 flex-shrink-0" aria-label="Main navigation">
             {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   isActive(href)
                     ? 'bg-white/[0.08] text-white'
                     : 'text-[#6d8196] hover:text-white hover:bg-white/[0.04]'
@@ -78,22 +78,22 @@ export default function NavHeader() {
             ))}
           </nav>
 
-          {/* Mobile hamburger */}
+          {/* Mobile & Tablet hamburger (< lg) */}
           <button
-            className="sm:hidden flex flex-col justify-center gap-1.5 w-8 h-8 items-center"
+            className="lg:hidden flex flex-col justify-center gap-1.5 w-9 h-9 items-center rounded-lg hover:bg-white/[0.05] transition-colors"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
           >
-            <span className={`block h-0.5 w-5 bg-white/60 transition-all ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-            <span className={`block h-0.5 w-5 bg-white/60 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-0.5 w-5 bg-white/60 transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+            <span className={`block h-0.5 w-5 bg-white/70 transition-all ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+            <span className={`block h-0.5 w-5 bg-white/70 transition-all ${menuOpen ? 'opacity-0' : ''}`} />
+            <span className={`block h-0.5 w-5 bg-white/70 transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
         </div>
 
-        {/* Mobile dropdown */}
+        {/* Mobile & Tablet dropdown */}
         {menuOpen && (
-          <nav className="sm:hidden border-t border-white/[0.06] bg-[#02020a]/95 px-4 py-3 flex flex-col gap-1" aria-label="Mobile navigation">
+          <nav className="lg:hidden border-t border-white/[0.06] bg-[#02020a]/98 backdrop-blur-xl px-4 py-3 flex flex-col gap-1 shadow-2xl animate-fadeIn" aria-label="Mobile navigation">
             {navLinks.map(({ href, label }) => (
               <Link
                 key={href}

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ComposableMap, Geographies, Geography, Sphere, Graticule } from 'react-simple-maps';
 import NavHeader from '../components/NavHeader';
 
-const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+const GEO_URL = '/data/countries-110m.json';
 const DEFAULT_ROTATION: [number, number, number] = [-20, -25, 0];
 const DEFAULT_SCALE = 220;
 const FLY_DURATION = 800; // ms
@@ -113,12 +113,12 @@ function getPenetrationHover(penetration: string | undefined): string {
 // ── Stars sub-component ───────────────────────────────────────────────────────
 function Stars() {
   const stars = useMemo(() => {
-    // Deterministic pseudo-random so it's stable across renders
+    // 40 deterministic stars for subtle ambiance without compositor overhead
     const s: { x: number; y: number; size: number; opacity: number; delay: number }[] = [];
     let seed = 42;
     const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; };
-    for (let i = 0; i < 160; i++) {
-      s.push({ x: rand() * 100, y: rand() * 100, size: rand() * 1.5 + 0.5, opacity: rand() * 0.6 + 0.2, delay: rand() * 6 });
+    for (let i = 0; i < 40; i++) {
+      s.push({ x: rand() * 100, y: rand() * 100, size: rand() * 1.5 + 0.5, opacity: rand() * 0.5 + 0.2, delay: rand() * 4 });
     }
     return s;
   }, []);
@@ -184,16 +184,35 @@ export default function MapPageClient({ countryMap }: Props) {
   // Mount flag — avoids SSR hydration mismatch on RAF-driven rotation
   useEffect(() => setMounted(true), []);
 
-  // Auto-rotation — pauses on hover, drag, or fly
+  // Auto-rotation — throttled to ~30 FPS to leave the main thread completely free for UI/nav events
   useEffect(() => {
-    const tick = () => {
-      if (!isHovered && !isDragging && !isFlying) {
-        setRotation((r) => [r[0] - 0.12, r[1], r[2]]);
+    let lastTime = performance.now();
+    let isVisible = true;
+
+    const onVisibilityChange = () => {
+      isVisible = document.visibilityState === 'visible';
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    const tick = (now: number) => {
+      if (isVisible && !isHovered && !isDragging && !isFlying) {
+        const delta = now - lastTime;
+        if (delta >= 33.3) {
+          // Rotate smoothly based on elapsed time (at 30 FPS)
+          setRotation((r) => [r[0] - (0.12 * (delta / 16.67)), r[1], r[2]]);
+          lastTime = now;
+        }
+      } else {
+        lastTime = now;
       }
       autoRafRef.current = requestAnimationFrame(tick);
     };
     autoRafRef.current = requestAnimationFrame(tick);
-    return () => { if (autoRafRef.current) cancelAnimationFrame(autoRafRef.current); };
+
+    return () => {
+      if (autoRafRef.current) cancelAnimationFrame(autoRafRef.current);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [isHovered, isDragging, isFlying]);
 
   // Ctrl+scroll = zoom. Plain scroll = page scrolls normally.
