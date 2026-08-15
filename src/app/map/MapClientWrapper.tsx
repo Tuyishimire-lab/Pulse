@@ -10,6 +10,7 @@ interface Props {
     slug: string;
     name: string;
     internetUsers: string;
+    internetUsersMillions?: number;
     internetPenetration: string;
     topSiteName: string;
     topSiteId: string;

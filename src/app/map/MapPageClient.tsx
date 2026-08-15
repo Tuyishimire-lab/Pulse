@@ -9,9 +9,9 @@ import NavHeader from '../components/NavHeader';
 const GEO_URL = '/data/countries-110m.json';
 const DEFAULT_ROTATION: [number, number, number] = [-20, -25, 0];
 const DEFAULT_SCALE = 220;
-const FLY_DURATION = 800; // ms
+const FLY_DURATION = 750; // ms
 
-// ── ISO numeric → alpha-2 ─────────────────────────────────────────────────────
+// ISO numeric to alpha-2
 const NUMERIC_TO_ALPHA2: Record<string, string> = {
   '4': 'AF',   '8': 'AL',   '12': 'DZ',  '24': 'AO',  '32': 'AR',  '36': 'AU',
   '40': 'AT',  '50': 'BD',  '56': 'BE',  '68': 'BO',  '76': 'BR',  '84': 'BZ',
@@ -38,7 +38,7 @@ const NUMERIC_TO_ALPHA2: Record<string, string> = {
   '70': 'BA',  '72': 'BW',  '158': 'TW',
 };
 
-// ── Capital city coordinates [lon, lat] ───────────────────────────────────────
+// Capital city coordinates [lon, lat]
 const CAPITAL_COORDS: Record<string, [number, number]> = {
   AF: [69.2, 34.5],    AL: [19.8, 41.3],    DZ: [3.1, 36.7],     AO: [13.2, -8.8],
   AR: [-58.4, -34.6],  AM: [44.5, 40.2],    AU: [149.1, -35.3],  AT: [16.4, 48.2],
@@ -76,7 +76,16 @@ const CAPITAL_COORDS: Record<string, [number, number]> = {
   ZM: [28.3, -15.4],   ZW: [31.0, -17.8],
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const REGIONS = [
+  { id: 'all', label: 'Global', coords: [-20, -25] as [number, number], scale: 220 },
+  { id: 'na', label: 'North America', coords: [-100, 42] as [number, number], scale: 320 },
+  { id: 'eu', label: 'Europe', coords: [15, 52] as [number, number], scale: 380 },
+  { id: 'apac', label: 'Asia Pacific', coords: [115, 20] as [number, number], scale: 310 },
+  { id: 'latam', label: 'Latin America', coords: [-60, -18] as [number, number], scale: 300 },
+  { id: 'africa', label: 'Africa', coords: [20, 2] as [number, number], scale: 300 },
+  { id: 'mideast', label: 'Middle East', coords: [45, 28] as [number, number], scale: 360 },
+];
+
 function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
@@ -86,34 +95,70 @@ function shortestAngle(from: number, to: number): number {
   return from + d;
 }
 
-function getPenetrationColor(penetration: string | undefined): string {
-  if (!penetration || penetration === 'N/A') return '#111827';
-  const pct = parseInt(penetration.replace('%', ''), 10);
-  if (isNaN(pct)) return '#111827';
-  if (pct >= 90) return '#00D4AA';
-  if (pct >= 75) return '#00A882';
-  if (pct >= 60) return '#007A60';
-  if (pct >= 45) return '#005244';
-  if (pct >= 30) return '#002E27';
-  return '#001A17';
+export type MapLayer = 'penetration' | 'ecosystem' | 'population';
+
+export interface CountryInfo {
+  slug: string;
+  name: string;
+  internetUsers: string;
+  internetUsersMillions?: number;
+  internetPenetration: string;
+  topSiteName: string;
+  topSiteId: string;
+  topSiteColor: string;
 }
 
-function getPenetrationHover(penetration: string | undefined): string {
-  if (!penetration || penetration === 'N/A') return '#1f2937';
-  const pct = parseInt(penetration.replace('%', ''), 10);
-  if (isNaN(pct)) return '#1f2937';
-  if (pct >= 90) return '#00FFCC';
-  if (pct >= 75) return '#00CCAA';
-  if (pct >= 60) return '#009980';
-  if (pct >= 45) return '#006655';
-  if (pct >= 30) return '#003D33';
-  return '#002820';
+interface Props {
+  countryMap: Record<string, CountryInfo>;
 }
 
-// ── Stars sub-component ───────────────────────────────────────────────────────
+function getCountryColor(country: CountryInfo | undefined, layer: MapLayer): { fill: string; hover: string } {
+  if (!country) {
+    return { fill: '#111827', hover: '#1f2937' };
+  }
+
+  if (layer === 'penetration') {
+    const pct = parseInt((country.internetPenetration || '').replace('%', ''), 10);
+    if (isNaN(pct)) return { fill: '#111827', hover: '#1f2937' };
+    if (pct >= 90) return { fill: '#00D4AA', hover: '#00FFCC' };
+    if (pct >= 75) return { fill: '#00A882', hover: '#00CCAA' };
+    if (pct >= 60) return { fill: '#007A60', hover: '#009980' };
+    if (pct >= 45) return { fill: '#005244', hover: '#006655' };
+    if (pct >= 30) return { fill: '#002E27', hover: '#003D33' };
+    return { fill: '#001A17', hover: '#002820' };
+  }
+
+  if (layer === 'ecosystem') {
+    const siteId = country.topSiteId || 'google';
+    const siteColorMap: Record<string, { fill: string; hover: string }> = {
+      google: { fill: '#3b82f6', hover: '#60a5fa' },
+      youtube: { fill: '#ef4444', hover: '#f87171' },
+      facebook: { fill: '#2563eb', hover: '#3b82f6' },
+      instagram: { fill: '#ec4899', hover: '#f472b6' },
+      chatgpt: { fill: '#10b981', hover: '#34d399' },
+      yandex: { fill: '#dc2626', hover: '#ef4444' },
+      naver: { fill: '#059669', hover: '#10b981' },
+      yahoo: { fill: '#7c3aed', hover: '#8b5cf6' },
+      baidu: { fill: '#1d4ed8', hover: '#2563eb' },
+    };
+    return siteColorMap[siteId] || { fill: country.topSiteColor || '#3b82f6', hover: '#60a5fa' };
+  }
+
+  if (layer === 'population') {
+    const millions = country.internetUsersMillions || 0;
+    if (millions >= 200) return { fill: '#8b5cf6', hover: '#a78bfa' };
+    if (millions >= 100) return { fill: '#6366f1', hover: '#818cf8' };
+    if (millions >= 50)  return { fill: '#3b82f6', hover: '#60a5fa' };
+    if (millions >= 20)  return { fill: '#0284c7', hover: '#38bdf8' };
+    if (millions >= 5)   return { fill: '#0369a1', hover: '#0284c7' };
+    return { fill: '#082f49', hover: '#075985' };
+  }
+
+  return { fill: '#111827', hover: '#1f2937' };
+}
+
 function Stars() {
   const stars = useMemo(() => {
-    // 40 deterministic stars for subtle ambiance without compositor overhead
     const s: { x: number; y: number; size: number; opacity: number; delay: number }[] = [];
     let seed = 42;
     const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return (seed >>> 0) / 0xffffffff; };
@@ -144,25 +189,11 @@ function Stars() {
   );
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface CountryInfo {
-  slug: string;
-  name: string;
-  internetUsers: string;
-  internetPenetration: string;
-  topSiteName: string;
-  topSiteId: string;
-  topSiteColor: string;
-}
-
-interface Props {
-  countryMap: Record<string, CountryInfo>;
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
 export default function MapPageClient({ countryMap }: Props) {
   const router = useRouter();
 
+  const [activeLayer, setActiveLayer] = useState<MapLayer>('penetration');
+  const [activeRegion, setActiveRegion] = useState<string>('all');
   const [rotation, setRotation] = useState<[number, number, number]>(DEFAULT_ROTATION);
   const [scale, setScale] = useState(DEFAULT_SCALE);
   const [isHovered, setIsHovered] = useState(false);
@@ -181,10 +212,9 @@ export default function MapPageClient({ countryMap }: Props) {
 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; country: CountryInfo } | null>(null);
 
-  // Mount flag — avoids SSR hydration mismatch on RAF-driven rotation
   useEffect(() => setMounted(true), []);
 
-  // Auto-rotation — throttled to ~30 FPS to leave the main thread completely free for UI/nav events
+  // Auto-rotation - throttled to 30 FPS and pauses on tab visibility / user interaction
   useEffect(() => {
     let lastTime = performance.now();
     let isVisible = true;
@@ -198,7 +228,6 @@ export default function MapPageClient({ countryMap }: Props) {
       if (isVisible && !isHovered && !isDragging && !isFlying) {
         const delta = now - lastTime;
         if (delta >= 33.3) {
-          // Rotate smoothly based on elapsed time (at 30 FPS)
           setRotation((r) => [r[0] - (0.12 * (delta / 16.67)), r[1], r[2]]);
           lastTime = now;
         }
@@ -215,7 +244,7 @@ export default function MapPageClient({ countryMap }: Props) {
     };
   }, [isHovered, isDragging, isFlying]);
 
-  // Ctrl+scroll = zoom. Plain scroll = page scrolls normally.
+  // Ctrl+scroll = zoom
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -240,12 +269,9 @@ export default function MapPageClient({ countryMap }: Props) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // ── Fly-to animation (rotates + zooms simultaneously) ────────────────────
-  const flyTo = useCallback((alpha2: string) => {
-    const coords = CAPITAL_COORDS[alpha2];
-    if (!coords) return;
-    const targetRot: [number, number, number] = [-coords[0], -coords[1], 0];
-    const targetScale = 360;
+  // Animated fly-to coordinates
+  const flyToCoords = useCallback((lonLat: [number, number], targetScale: number = 360) => {
+    const targetRot: [number, number, number] = [-lonLat[0], -lonLat[1], 0];
 
     setIsFlying(true);
     setSearchOpen(false);
@@ -274,7 +300,19 @@ export default function MapPageClient({ countryMap }: Props) {
     flyRafRef.current = requestAnimationFrame(animate);
   }, [rotation, scale]);
 
-  // ── Mouse drag handlers ───────────────────────────────────────────────────
+  const flyTo = useCallback((alpha2: string) => {
+    const coords = CAPITAL_COORDS[alpha2];
+    if (coords) flyToCoords(coords, 360);
+  }, [flyToCoords]);
+
+  const flyToRegion = useCallback((regionId: string) => {
+    const region = REGIONS.find((r) => r.id === regionId);
+    if (!region) return;
+    setActiveRegion(regionId);
+    flyToCoords(region.coords, region.scale);
+  }, [flyToCoords]);
+
+  // Mouse drag handlers
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
     dragRef.current = { x: e.clientX, y: e.clientY, rot: [...rotation] as [number, number, number] };
@@ -300,7 +338,7 @@ export default function MapPageClient({ countryMap }: Props) {
     setIsHovered(false); setIsDragging(false); setTooltip(null); dragRef.current = null;
   }, []);
 
-  // ── Touch handlers ────────────────────────────────────────────────────────
+  // Touch handlers
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       const t = e.touches[0];
@@ -340,7 +378,7 @@ export default function MapPageClient({ countryMap }: Props) {
     pinchRef.current = null;
   }, []);
 
-  // ── Search ────────────────────────────────────────────────────────────────
+  // Search
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
@@ -371,7 +409,6 @@ export default function MapPageClient({ countryMap }: Props) {
       {/* Starfield */}
       <Stars />
 
-      {/* Top page gradient */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,212,170,0.07) 0%, transparent 70%)' }}
@@ -380,43 +417,49 @@ export default function MapPageClient({ countryMap }: Props) {
       <NavHeader />
 
       <main className="relative z-10 flex flex-col flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-8">
-
         {/* Header row */}
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-start gap-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-[#82c8e5] to-[#00D4AA] bg-clip-text text-transparent mb-2">
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[11px] font-bold tracking-widest text-[#00D4AA] uppercase bg-[#00D4AA]/10 border border-[#00D4AA]/20 px-2.5 py-0.5 rounded-md">
+                Geospatial Telemetry
+              </span>
+              <span className="text-xs text-[#6d8196]">
+                {countriesWithData} countries covered
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-[#82c8e5] to-[#00D4AA] bg-clip-text text-transparent">
               Global Web Traffic Map
             </h1>
-            <p className="text-[#6d8196] text-sm max-w-xl">
-              Coloured by internet penetration. Click any country to explore its top websites.{' '}
-              <span className="text-[#00D4AA] font-semibold">{countriesWithData} countries</span> covered.
+            <p className="text-[#8899aa] text-sm max-w-xl mt-1">
+              Interactive 3D orthographic globe visualizing global connectivity, platform dominance, and online population volume.
             </p>
           </div>
 
-          {/* Search — aligned with header */}
-          <div ref={searchRef} className="relative w-full sm:w-60 flex-shrink-0 mt-1">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4a5568] text-sm">S</span>
-              <input
-                type="text"
-                placeholder="Fly to a country..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
-                onFocus={() => setSearchOpen(true)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-white placeholder-[#4a5568] focus:outline-none focus:border-[#00D4AA]/40 focus:bg-white/[0.07] transition-all"
-              />
-            </div>
+          {/* Search bar */}
+          <div ref={searchRef} className="relative w-full sm:w-64 flex-shrink-0">
+            <input
+              type="text"
+              placeholder="Fly to a country..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)}
+              className="w-full pl-3.5 pr-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-xs text-white placeholder-[#6d8196] focus:outline-none focus:border-[#00D4AA]/50 focus:bg-white/[0.07] transition-all"
+            />
             {searchOpen && searchResults.length > 0 && (
               <div className="absolute top-full mt-1 left-0 right-0 z-50 rounded-xl border border-white/10 bg-[#0d0d1e]/98 backdrop-blur-xl shadow-2xl overflow-hidden">
                 {searchResults.map((r) => (
                   <button
                     key={r.code}
                     onClick={() => flyTo(r.code)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.06] transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-white/[0.06] transition-colors text-xs"
                   >
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getPenetrationColor(r.internetPenetration) }} />
-                    <span className="text-sm text-white">{r.name}</span>
-                    <span className="ml-auto text-xs text-[#4a5568]">{r.internetPenetration}</span>
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getCountryColor(r, activeLayer).fill }}
+                    />
+                    <span className="text-white font-medium">{r.name}</span>
+                    <span className="ml-auto text-[11px] text-[#6d8196]">{r.internetPenetration}</span>
                   </button>
                 ))}
               </div>
@@ -424,32 +467,123 @@ export default function MapPageClient({ countryMap }: Props) {
           </div>
         </div>
 
+        {/* View Mode Switcher + Regional Orbit Control Bar */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 mb-6 p-2 rounded-2xl border border-white/[0.08] bg-white/[0.015]">
+          {/* Layer View Mode Switcher */}
+          <div className="flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            <span className="text-[10px] text-[#6d8196] px-2.5 font-bold uppercase tracking-wider hidden sm:inline">
+              Layer:
+            </span>
+            {[
+              { id: 'penetration', label: 'Penetration %' },
+              { id: 'ecosystem', label: 'Dominant Platform' },
+              { id: 'population', label: 'Connected Population' },
+            ].map((layer) => (
+              <button
+                key={layer.id}
+                onClick={() => setActiveLayer(layer.id as MapLayer)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeLayer === layer.id
+                    ? 'bg-[#00D4AA] text-black font-bold shadow-md'
+                    : 'text-[#8899aa] hover:text-white'
+                }`}
+              >
+                {layer.label}
+              </button>
+            ))}
+          </div>
 
-
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 mb-5">
-          {[
-            { label: '≥90%', color: '#00D4AA' },
-            { label: '75–90%', color: '#00A882' },
-            { label: '60–75%', color: '#007A60' },
-            { label: '45–60%', color: '#005244' },
-            { label: '30–45%', color: '#002E27' },
-            { label: '<30%', color: '#001A17' },
-            { label: 'No data', color: '#111827' },
-          ].map(({ label, color }) => (
-            <div key={label} className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: color }} />
-              <span className="text-xs text-[#8899aa]">{label}</span>
-            </div>
-          ))}
+          {/* Regional Orbit Quick-Fly Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+            <span className="text-[10px] text-[#6d8196] px-2 font-bold uppercase tracking-wider hidden xl:inline">
+              Orbit:
+            </span>
+            {REGIONS.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => flyToRegion(r.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all ${
+                  activeRegion === r.id
+                    ? 'bg-white/15 text-white border border-white/20'
+                    : 'text-[#8899aa] hover:text-white bg-white/[0.02] border border-white/5 hover:bg-white/[0.05]'
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Globe + Sidebar */}
+        {/* Dynamic Legend Bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-xl border border-white/[0.06] bg-white/[0.01]">
+          <span className="text-xs font-bold text-white uppercase tracking-wider mr-2">
+            Legend:
+          </span>
+
+          {activeLayer === 'penetration' && (
+            <>
+              {[
+                { label: '≥90%', color: '#00D4AA' },
+                { label: '75-90%', color: '#00A882' },
+                { label: '60-75%', color: '#007A60' },
+                { label: '45-60%', color: '#005244' },
+                { label: '30-45%', color: '#002E27' },
+                { label: '<30%', color: '#001A17' },
+                { label: 'No data', color: '#111827' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: color }} />
+                  <span className="text-xs text-[#8899aa]">{label}</span>
+                </div>
+              ))}
+            </>
+          )}
+
+          {activeLayer === 'ecosystem' && (
+            <>
+              {[
+                { label: 'Google', color: '#3b82f6' },
+                { label: 'YouTube', color: '#ef4444' },
+                { label: 'Facebook', color: '#2563eb' },
+                { label: 'Instagram', color: '#ec4899' },
+                { label: 'ChatGPT', color: '#10b981' },
+                { label: 'Yandex', color: '#dc2626' },
+                { label: 'Naver', color: '#059669' },
+                { label: 'Yahoo', color: '#7c3aed' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: color }} />
+                  <span className="text-xs text-[#8899aa]">{label}</span>
+                </div>
+              ))}
+            </>
+          )}
+
+          {activeLayer === 'population' && (
+            <>
+              {[
+                { label: '>200M Users', color: '#8b5cf6' },
+                { label: '100M-200M', color: '#6366f1' },
+                { label: '50M-100M', color: '#3b82f6' },
+                { label: '20M-50M', color: '#0284c7' },
+                { label: '5M-20M', color: '#0369a1' },
+                { label: '<5M Users', color: '#082f49' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: color }} />
+                  <span className="text-xs text-[#8899aa]">{label}</span>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* Globe and Sidebar */}
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           <div
             ref={containerRef}
             className="relative w-full lg:flex-1 flex items-center justify-center select-none"
-            style={{ height: 420 }}
+            style={{ height: 440 }}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -470,7 +604,7 @@ export default function MapPageClient({ countryMap }: Props) {
               ].join(', '),
             }} />
 
-            {/* Globe — client-only to avoid hydration mismatch */}
+            {/* Globe */}
             {!mounted ? (
               <div
                 className="rounded-full bg-[#040d1a] border border-[#0d2035] animate-pulse"
@@ -491,8 +625,8 @@ export default function MapPageClient({ countryMap }: Props) {
                     geographies.map((geo) => {
                       const alpha2 = NUMERIC_TO_ALPHA2[String(geo.id)];
                       const countryData = alpha2 ? countryMap[alpha2] : undefined;
-                      const fill = getPenetrationColor(countryData?.internetPenetration);
-                      const hoverFill = getPenetrationHover(countryData?.internetPenetration);
+                      const { fill, hover } = getCountryColor(countryData, activeLayer);
+
                       return (
                         <Geography
                           key={geo.rsmKey}
@@ -502,8 +636,8 @@ export default function MapPageClient({ countryMap }: Props) {
                           strokeWidth={0.4}
                           style={{
                             default: { fill, outline: 'none', cursor: countryData ? 'pointer' : 'grab' },
-                            hover: { fill: hoverFill, outline: 'none', cursor: countryData ? 'pointer' : 'grab' },
-                            pressed: { fill: hoverFill, outline: 'none' },
+                            hover: { fill: hover, outline: 'none', cursor: countryData ? 'pointer' : 'grab' },
+                            pressed: { fill: hover, outline: 'none' },
                           }}
                           onMouseEnter={(e) => {
                             if (!countryData) return;
@@ -521,27 +655,27 @@ export default function MapPageClient({ countryMap }: Props) {
             )}
 
             {/* Hint bar */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-[#3a4a58] bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/5 whitespace-nowrap">
-              {isFlying ? 'Flying...' : 'Ctrl+scroll to zoom · Drag to rotate · Click to explore'}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-[#6d8196] bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/5 whitespace-nowrap">
+              {isFlying ? 'Flying to coordinate...' : 'Ctrl+scroll to zoom · Drag to rotate · Click country to inspect'}
             </div>
 
             {/* Reset button */}
             <button
               onClick={() => {
-                flyTo('US');
+                flyToRegion('all');
                 setTimeout(() => setRotation(DEFAULT_ROTATION), 50);
                 setScale(DEFAULT_SCALE);
               }}
-              className="absolute top-3 right-3 text-xs text-[#4a5568] hover:text-[#00D4AA] bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/5 hover:border-[#00D4AA]/30 transition-all"
+              className="absolute top-3 right-3 text-xs text-[#8899aa] hover:text-[#00D4AA] bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 hover:border-[#00D4AA]/40 transition-all"
               title="Reset view"
             >
-              ↺ Reset
+              Reset View
             </button>
 
             {/* Tooltip */}
             {tooltip && (
               <div
-                className="absolute pointer-events-none z-50 max-w-[210px]"
+                className="absolute pointer-events-none z-50 max-w-[220px]"
                 style={{
                   left: tooltip.x + 14,
                   top: tooltip.y - 10,
@@ -549,7 +683,7 @@ export default function MapPageClient({ countryMap }: Props) {
                     ? 'translateX(calc(-100% - 28px))' : 'none',
                 }}
               >
-                <div className="rounded-xl border border-white/10 bg-[#0d0d1e]/95 backdrop-blur-md shadow-2xl p-3 space-y-1.5">
+                <div className="rounded-xl border border-white/10 bg-[#0d0d1e]/98 backdrop-blur-md shadow-2xl p-3 space-y-1.5">
                   <div className="font-bold text-white text-sm">{tooltip.country.name}</div>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tooltip.country.topSiteColor }} />
@@ -559,7 +693,7 @@ export default function MapPageClient({ countryMap }: Props) {
                     <div>Users: {tooltip.country.internetUsers}</div>
                     <div>Penetration: {tooltip.country.internetPenetration}</div>
                   </div>
-                  <div className="pt-0.5 text-[10px] text-[#00D4AA] font-medium">Click to explore →</div>
+                  <div className="pt-0.5 text-[10px] text-[#00D4AA] font-medium">Click to explore full report →</div>
                 </div>
               </div>
             )}
@@ -567,28 +701,27 @@ export default function MapPageClient({ countryMap }: Props) {
 
           {/* Quick Access sidebar */}
           <div className="w-full lg:w-72 flex-shrink-0 space-y-3">
-            <h2 className="text-sm font-semibold text-[#6d8196] uppercase tracking-widest mb-4">
-              Quick Access
+            <h2 className="text-xs font-bold text-[#6d8196] uppercase tracking-widest mb-3">
+              Country Directory ({countriesWithData})
             </h2>
             <div className="space-y-1.5 max-h-[460px] overflow-y-auto pr-1 globe-sidebar">
               {Object.entries(countryMap)
                 .sort(([, a], [, b]) => a.name.localeCompare(b.name))
                 .map(([code, country]) => {
-                  const pct = parseInt(country.internetPenetration.replace('%', ''), 10);
-                  const dotColor = getPenetrationColor(country.internetPenetration);
+                  const { fill } = getCountryColor(country, activeLayer);
                   return (
                     <button
                       key={code}
                       onClick={() => flyTo(code)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/20 transition-all group text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/20 transition-all group text-left"
                     >
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
-                      <span className="text-xs text-[#8899aa] group-hover:text-white transition-colors truncate">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: fill }} />
+                      <span className="text-xs text-[#8899aa] group-hover:text-white transition-colors truncate flex-1">
                         {country.name}
                       </span>
-                      {!isNaN(pct) && (
-                        <span className="ml-auto text-[10px] text-[#4a5568] flex-shrink-0">{pct}%</span>
-                      )}
+                      <span className="text-[10px] text-[#6d8196] font-mono flex-shrink-0">
+                        {activeLayer === 'penetration' ? country.internetPenetration : (activeLayer === 'ecosystem' ? country.topSiteName : country.internetUsers)}
+                      </span>
                     </button>
                   );
                 })}

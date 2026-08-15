@@ -33,17 +33,31 @@ export default async function MapPage() {
   const liveSites = await getSites();
   const siteById = Object.fromEntries(liveSites.map((s) => [s.id, s]));
 
-  // Build country lookup map — keyed by cfCode (ISO alpha-2)
+  // Build country lookup map - keyed by cfCode (ISO alpha-2)
   const countryMap = new Map(
     ALL_COUNTRIES.map((c) => {
       const topSiteId = c.pinnedSiteIds?.[0] ?? 'google';
       const topSite = siteById[topSiteId];
+
+      let usersRaw = 0;
+      const lowerUsers = (c.internetUsers || '').toLowerCase();
+      if (lowerUsers.includes('billion')) {
+        usersRaw = (parseFloat(lowerUsers) || 1) * 1000;
+      } else if (lowerUsers.includes('million')) {
+        usersRaw = parseFloat(lowerUsers) || 1;
+      } else if (lowerUsers.includes('k')) {
+        usersRaw = (parseFloat(lowerUsers) || 1) / 1000;
+      } else {
+        usersRaw = parseFloat(lowerUsers) || 10;
+      }
+
       return [
         c.cfCode,
         {
           slug: c.slug,
           name: c.name,
           internetUsers: c.internetUsers,
+          internetUsersMillions: usersRaw,
           internetPenetration: c.internetPenetration,
           topSiteName: topSite?.name ?? 'Google',
           topSiteId: topSiteId,
