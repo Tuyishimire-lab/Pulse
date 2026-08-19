@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { SITES } from '../../data/sites';
 import { getCountryBySlug } from '../data/countries';
 
+export const runtime = 'edge';
 export const alt = 'Most Visited Websites by Country Analytics';
 export const size = {
   width: 1200,
@@ -33,7 +34,7 @@ export default async function Image({ params }: Props) {
     (
       <div
         style={{
-          background: 'radial-gradient(circle at center, #0a0e1a 0%, #02020a 100%)',
+          background: 'linear-gradient(135deg, #0a0e1a 0%, #02020a 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -46,20 +47,6 @@ export default async function Image({ params }: Props) {
           padding: '40px',
         }}
       >
-        {/* Background Grid Pattern */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.04,
-            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
         {/* Outer Card */}
         <div
           style={{
@@ -70,7 +57,6 @@ export default async function Image({ params }: Props) {
             border: '1px solid rgba(255, 255, 255, 0.08)',
             padding: '45px 55px',
             width: '1080px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
           }}
         >
           {/* Header Row: Country Code Badge & Title */}
@@ -89,7 +75,6 @@ export default async function Image({ params }: Props) {
                   height: '64px',
                   borderRadius: '16px',
                   border: '1px solid rgba(130, 200, 229, 0.3)',
-                  boxShadow: '0 0 25px rgba(0, 71, 171, 0.5)',
                 }}
               >
                 {cfCode}

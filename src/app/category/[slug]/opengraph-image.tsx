@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { CATEGORIES, SITES } from '../../data/sites';
 import { getSites } from '../../../lib/getSites';
 
+export const runtime = 'edge';
 export const alt = 'Website Category Traffic Rankings';
 export const size = {
   width: 1200,
@@ -33,7 +34,7 @@ export default async function Image({ params }: Props) {
     (
       <div
         style={{
-          background: 'radial-gradient(circle at center, #0a0e1a 0%, #02020a 100%)',
+          background: 'linear-gradient(135deg, #0a0e1a 0%, #02020a 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -151,7 +152,7 @@ export default async function Image({ params }: Props) {
                       width: '36px',
                       height: '36px',
                       borderRadius: '50%',
-                      backgroundColor: (site.color || '#82c8e5') + '30',
+                      backgroundColor: 'rgba(130, 200, 229, 0.15)',
                       color: site.color || '#82c8e5',
                       display: 'flex',
                       alignItems: 'center',

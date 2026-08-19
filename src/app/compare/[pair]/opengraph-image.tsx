@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { SITES } from '../../data/sites';
 import { getPairBySlug, parsePairSlug } from '../data/pairs';
 
+export const runtime = 'edge';
 export const alt = 'Pulse Platform VS Traffic Comparison';
 export const size = {
   width: 1200,
@@ -37,7 +38,7 @@ export default async function Image({ params }: Props) {
     (
       <div
         style={{
-          background: 'radial-gradient(circle at center, #0a0e1a 0%, #02020a 100%)',
+          background: 'linear-gradient(135deg, #0a0e1a 0%, #02020a 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -50,20 +51,6 @@ export default async function Image({ params }: Props) {
           padding: '40px',
         }}
       >
-        {/* Background Subtle Grid Pattern */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.04,
-            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
         {/* Top Header Badge */}
         <div
           style={{
@@ -101,7 +88,6 @@ export default async function Image({ params }: Props) {
             border: '1px solid rgba(255, 255, 255, 0.08)',
             padding: '40px 50px',
             width: '1080px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
           }}
         >
           {/* Site A Side */}
@@ -125,7 +111,6 @@ export default async function Image({ params }: Props) {
                 width: '84px',
                 height: '84px',
                 borderRadius: '50%',
-                boxShadow: `0 0 35px ${colorA}50`,
                 marginBottom: '16px',
               }}
             >
@@ -165,7 +150,6 @@ export default async function Image({ params }: Props) {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              boxShadow: '0 0 25px rgba(0, 71, 171, 0.6)',
               margin: '0 20px',
               border: '2px solid rgba(255, 255, 255, 0.2)',
             }}
@@ -194,7 +178,6 @@ export default async function Image({ params }: Props) {
                 width: '84px',
                 height: '84px',
                 borderRadius: '50%',
-                boxShadow: `0 0 35px ${colorB}50`,
                 marginBottom: '16px',
               }}
             >

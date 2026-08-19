@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { createClient } from '@supabase/supabase-js';
 import { SITES } from '../../data/sites';
 
+export const runtime = 'edge';
 export const alt = 'Pulse Website Traffic Analytics Details';
 export const size = {
   width: 1200,
@@ -61,7 +62,7 @@ export default async function Image({ params }: Props) {
     (
       <div
         style={{
-          background: 'radial-gradient(circle at center, #11132a 0%, #03030b 100%)',
+          background: 'linear-gradient(135deg, #11132a 0%, #03030b 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -74,20 +75,6 @@ export default async function Image({ params }: Props) {
           padding: '60px',
         }}
       >
-        {/* Grid pattern overlay */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.05,
-            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
         {/* Dashboard Card Container */}
         <div
           style={{
@@ -98,7 +85,6 @@ export default async function Image({ params }: Props) {
             border: '1px solid rgba(255, 255, 255, 0.08)',
             padding: '50px 60px',
             width: '900px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
           }}
         >
           {/* Top Row with Brand & Logo */}
@@ -116,7 +102,6 @@ export default async function Image({ params }: Props) {
                   width: '72px',
                   height: '72px',
                   borderRadius: '50%',
-                  boxShadow: `0 0 30px ${color}40`,
                 }}
               >
                 {logo}

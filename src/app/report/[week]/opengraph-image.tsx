@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { generateWeeklyReport, parsReportSlug } from '../data/reportGenerator';
 
+export const runtime = 'edge';
 export const alt = 'Pulse Weekly Internet Traffic Intelligence Report';
 export const size = {
   width: 1200,
@@ -39,7 +40,7 @@ export default async function Image({ params }: Props) {
     (
       <div
         style={{
-          background: 'radial-gradient(circle at center, #0a0e1a 0%, #02020a 100%)',
+          background: 'linear-gradient(135deg, #0a0e1a 0%, #02020a 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',

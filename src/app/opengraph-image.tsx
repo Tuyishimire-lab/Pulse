@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 
+export const runtime = 'edge';
 export const alt = 'Pulse - Live Global Web Traffic Visualizer';
 export const size = {
   width: 1200,
@@ -12,7 +13,7 @@ export default async function Image() {
     (
       <div
         style={{
-          background: 'radial-gradient(circle at center, #11132a 0%, #03030b 100%)',
+          background: 'linear-gradient(135deg, #11132a 0%, #03030b 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -25,20 +26,6 @@ export default async function Image() {
           padding: '60px',
         }}
       >
-        {/* Background Grid Pattern */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.05,
-            backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
         {/* Outer Glow Card Container */}
         <div
           style={{
@@ -49,7 +36,6 @@ export default async function Image() {
             borderRadius: '24px',
             border: '1px solid rgba(255, 255, 255, 0.08)',
             padding: '50px 80px',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
           }}
         >
           {/* Logo Badge */}
@@ -66,7 +52,6 @@ export default async function Image() {
               height: '56px',
               borderRadius: '50%',
               marginBottom: '20px',
-              boxShadow: '0 0 20px rgba(130, 200, 229, 0.4)',
             }}
           >
             P
@@ -78,9 +63,7 @@ export default async function Image() {
               fontSize: '64px',
               fontWeight: 900,
               letterSpacing: '-2px',
-              background: 'linear-gradient(to right, #ffffff, #82c8e5)',
-              backgroundClip: 'text',
-              color: 'transparent',
+              color: '#82c8e5',
               marginBottom: '16px',
             }}
           >
