@@ -119,6 +119,7 @@ export default function RootLayout({
             gtag('config', 'G-PL277Z4KW6');
           `}
         </Script>
+        <Script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com/"></Script>
         {children}
         <Footer />
         <Analytics />
