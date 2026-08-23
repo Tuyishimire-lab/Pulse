@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+﻿export const runtime = 'edge';
 
 const DEFAULT_BYTES = 25 * 1024 * 1024;  // 25 MB
 const MAX_BYTES = 25 * 1024 * 1024;      // 25 MB cap
@@ -6,7 +6,7 @@ const STREAM_CHUNK = 262144;             // 256 KB per stream chunk (4x previous
 
 // Pre-fill a 1MB reusable buffer with random data ONCE at cold-start.
 // Reusing this avoids the huge CPU cost of calling crypto.getRandomValues()
-// for every 64KB chunk during streaming — which was the main throughput
+// for every 64KB chunk during streaming - which was the main throughput
 // bottleneck on Edge and the reason download was CPU-limited.
 const PREFILL_SIZE = 1024 * 1024; // 1 MB
 let prefilled: Uint8Array | null = null;
@@ -25,7 +25,7 @@ function getPrefilledBuffer(): Uint8Array {
 }
 
 /**
- * Download endpoint — streams data to the client for throughput measurement.
+ * Download endpoint - streams data to the client for throughput measurement.
  *
  * v2: Uses a pre-filled random buffer that's reused cyclically instead of
  * calling crypto.getRandomValues() per chunk. This makes the Edge function
@@ -33,8 +33,8 @@ function getPrefilledBuffer(): Uint8Array {
  * connection (not our CPU), giving accurate speed measurements.
  *
  * Query params:
- *   ?bytes=<n>  — total bytes to stream (default 25MB, max 25MB)
- *   ?cb=<rand>  — cache buster (ignored server-side)
+ *   ?bytes=<n>  - total bytes to stream (default 25MB, max 25MB)
+ *   ?cb=<rand>  - cache buster (ignored server-side)
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);

@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SITES } from '../../data/sites';
 import { getSites } from '../../../lib/getSites';
@@ -68,7 +68,7 @@ export default async function ComparePage({ params }: PageProps) {
   const siteAId = known?.siteAId ?? parsed?.siteAId;
   const siteBId = known?.siteBId ?? parsed?.siteBId;
 
-  // Use live data for rank/baseline — arbitrated by engine
+  // Use live data for rank/baseline - arbitrated by engine
   const allSites = await getSites();
   const siteA = allSites.find((s) => s.id === siteAId);
   const siteB = allSites.find((s) => s.id === siteBId);

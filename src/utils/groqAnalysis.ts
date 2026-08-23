@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Groq AI Analysis Utility
  *
  * Generates editorial-quality weekly report narratives using Groq's
@@ -58,7 +58,7 @@ const TAG_COLORS: Record<string, string> = {
 
 /**
  * Call Groq API to generate 3 editorial stories from the weekly data.
- * Returns null on any failure — caller should fall back to template stories.
+ * Returns null on any failure - caller should fall back to template stories.
  */
 export async function generateAIStories(input: AnalysisInput): Promise<AIStory[] | null> {
   const apiKey = process.env.GROQ_API_KEY;
@@ -68,7 +68,7 @@ export async function generateAIStories(input: AnalysisInput): Promise<AIStory[]
     // Build a compact data summary for the prompt
     const top10 = input.sites.slice(0, 10);
     const topSitesSummary = top10.map((s) =>
-      `#${s.rank} ${s.name} (${s.category}) — ${s.baseline}, ${s.rate}/s`
+      `#${s.rank} ${s.name} (${s.category}) - ${s.baseline}, ${s.rate}/s`
     ).join('\n');
 
     const categorySummary = Object.entries(input.categoryTotals)
@@ -118,7 +118,7 @@ ${moversSummary}
 
 RULES:
 - Each story needs: title (max 10 words), summary (2-3 sentences, max 60 words), tag (one of: AI, Social, Search, E-Commerce, Entertainment, Dev Tools, Finance, News, Traffic, Outage, Growth, Trend)
-- Be factual — only reference data provided above. Do not invent statistics.
+- Be factual - only reference data provided above. Do not invent statistics.
 - Write in a professional but engaging tone. No clickbait.
 - Focus on the most interesting patterns: category growth, rank shifts, traffic milestones.
 - If outages > 0, make one story about outages.

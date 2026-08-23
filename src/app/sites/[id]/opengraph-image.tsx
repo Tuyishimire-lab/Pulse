@@ -1,4 +1,4 @@
-import { ImageResponse } from 'next/og';
+﻿import { ImageResponse } from 'next/og';
 import { createClient } from '@supabase/supabase-js';
 import { SITES } from '../../data/sites';
 
@@ -43,7 +43,7 @@ export default async function Image({ params }: Props) {
         liveSite = data as { name: string; url: string; rank: number; baseline: string; category: string; color: string; logo: string };
       }
     } catch {
-      // Non-critical — fall through to static fallback below
+      // Non-critical - fall through to static fallback below
     }
   }
 

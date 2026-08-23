@@ -1,8 +1,8 @@
-import { SiteConfig } from '../app/data/sites';
+﻿import { SiteConfig } from '../app/data/sites';
 
 /**
  * Exports the given sites array as a CSV file and triggers a browser download.
- * Entirely client-side — no server requests.
+ * Entirely client-side - no server requests.
  */
 export function exportSitesToCsv(sites: SiteConfig[], filename?: string): void {
   const headers = ['Rank', 'Name', 'URL', 'Category', 'Baseline Traffic', 'Rate (visits/sec)', 'Progress (%)'];

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CATEGORIES, SITE_META, SiteConfig } from './data/sites';
@@ -45,7 +45,7 @@ export default function HomeClient({
   const [selectedSite, setSelectedSite] = useState<SiteConfig | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<SiteDetails | null>(null);
 
-  // ── Supabase — seed with server-fetched data ──────────────────────────────
+  // ── Supabase - seed with server-fetched data ──────────────────────────────
   const [dbSites, setDbSites] = useState<SiteConfig[]>(initialSites);
   const [lastSynced, setLastSynced] = useState<string | null>(
     (initialSites[0] as any)?.updated_at ?? null
@@ -69,7 +69,7 @@ export default function HomeClient({
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>([]);
   const [showCompareModal, setShowCompareModal] = useState<boolean>(false);
 
-  // ── Marquee — seed with server-fetched data ───────────────────────────────
+  // ── Marquee - seed with server-fetched data ───────────────────────────────
   const [marqueeItems, setMarqueeItems] = useState<
     { text: string; type: string; asns?: number[]; locations?: string[] }[]
   >(initialMarquee.length > 0 ? initialMarquee : STATIC_TRAFFIC_FACTS);
@@ -87,21 +87,21 @@ export default function HomeClient({
   const [selectedCountry, setSelectedCountry] = useState<string>('global');
   const [localRanks, setLocalRanks] = useState<Record<string, number>>({});
 
-  // ── Cloudflare Radar — seed with server-fetched data ──────────────────────
+  // ── Cloudflare Radar - seed with server-fetched data ──────────────────────
   const [radarStats, setRadarStats] = useState<any>(initialRadarStats);
   const [loadingRadar, setLoadingRadar] = useState<boolean>(!initialRadarStats);
 
   // ── Refs ──────────────────────────────────────────────────────────────────
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  /** Captured once on mount — never resets during re-renders */
+  /** Captured once on mount - never resets during re-renders */
   const pageLoadTimeRef = useRef<number>(Date.now());
 
   // ── Rank change helper ────────────────────────────────────────────────────
   // Derives the baseline rank from the oldest rank_history entry stored in
-  // Supabase by the PTI engine — no longer reads from the static sites.ts file.
+  // Supabase by the PTI engine - no longer reads from the static sites.ts file.
   const getRankChange = (site: SiteConfig) => {
     if (!site.rank_history || site.rank_history.length < 2) return null;
-    // Sort oldest-first explicitly — do NOT rely on insertion order from the engine
+    // Sort oldest-first explicitly - do NOT rely on insertion order from the engine
     const sorted = [...site.rank_history].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
@@ -112,7 +112,7 @@ export default function HomeClient({
   // ── Incident detection from marquee ──────────────────────────────────────
   const sitesWithIncidents = useMemo(() => {
     const incidentIds = new Set<string>();
-    // Always use live Supabase data — never fall back to the static file.
+    // Always use live Supabase data - never fall back to the static file.
     // If dbSites is empty (Supabase not yet loaded) we simply detect no incidents
     // rather than risk serving stale ASN/name data from the static file.
     const allBaseSites = [...dbSites, ...customSites];
@@ -150,7 +150,7 @@ export default function HomeClient({
   }, []);
 
   // ── Supabase realtime subscription (incremental updates only) ─────────────
-  // Initial data already loaded from server props — no fetch waterfall
+  // Initial data already loaded from server props - no fetch waterfall
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
@@ -208,7 +208,7 @@ export default function HomeClient({
 
   // ── Cloudflare Radar stats ────────────────────────────────────────────────
   useEffect(() => {
-    // Skip initial global fetch — we already have server-side data
+    // Skip initial global fetch - we already have server-side data
     if (selectedCountry === 'global' && initialRadarStats) {
       setRadarStats(initialRadarStats);
       setLoadingRadar(false);
@@ -280,7 +280,7 @@ export default function HomeClient({
     e.preventDefault();
     if (!newSiteName || !newSiteUrl) return;
 
-    // Validate URL — normalise first then check it parses
+    // Validate URL - normalise first then check it parses
     const rawUrl = newSiteUrl.startsWith('http') ? newSiteUrl : `https://${newSiteUrl}`;
     try {
       const parsed = new URL(rawUrl);
@@ -382,7 +382,7 @@ export default function HomeClient({
           });
         })
         .catch(() => {
-          // Silent fallback — seeded estimates remain
+          // Silent fallback - seeded estimates remain
         });
     }
   };
@@ -455,7 +455,7 @@ export default function HomeClient({
       if (s.rank > 0 && s.rank <= 500) validRanks.push(s.rank);
     });
 
-    // Use median rank — meaningful for a ranked list and immune to outliers
+    // Use median rank - meaningful for a ranked list and immune to outliers
     let medianRank = 0;
     if (validRanks.length > 0) {
       const sorted = [...validRanks].sort((a, b) => a - b);

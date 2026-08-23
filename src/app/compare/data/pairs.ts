@@ -1,4 +1,4 @@
-// Pre-defined compare pairs for /compare/[pair] SSG pages
+﻿// Pre-defined compare pairs for /compare/[pair] SSG pages
 // Each pair targets a high-search-volume query
 import { SITES } from '../../data/sites';
 
@@ -28,10 +28,10 @@ export const COMPARE_PAIRS: ComparePair[] = [
     slug: 'google-vs-bing',
     siteAId: 'google',
     siteBId: 'bing',
-    verdict: 'Google is the undisputed search leader, processing over 90% of global search queries — far more than any rival. The gap between Google and Bing is one of the largest in any major technology market.',
+    verdict: 'Google is the undisputed search leader, processing over 90% of global search queries - far more than any rival. The gap between Google and Bing is one of the largest in any major technology market.',
     context: 'The search engine market has been dominated by Google for two decades.',
     faq: [
-      { q: 'How much more traffic does Google get than Bing?', a: 'Google receives dramatically more monthly visits than Bing — roughly 70× more by web traffic. You can see the live numbers in the comparison table above.' },
+      { q: 'How much more traffic does Google get than Bing?', a: 'Google receives dramatically more monthly visits than Bing - roughly 70× more by web traffic. You can see the live numbers in the comparison table above.' },
       { q: 'Which search engine is more private?', a: 'DuckDuckGo and Brave Search are considered the most privacy-focused alternatives. Bing does collect user data but offers more privacy controls than Google.' },
       { q: 'Is Google\'s market share declining?', a: 'Google\'s search market share has remained above 90% globally for over a decade. In 2024, it dipped slightly to around 91% amid growing interest in AI search alternatives.' },
     ],
@@ -93,7 +93,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
     faq: [
       { q: 'Is ChatGPT taking traffic from Google?', a: 'Some studies suggest ChatGPT has influenced search behaviour, particularly among younger users, but Google\'s overall traffic has not declined measurably. See the live comparison table above for current monthly visit numbers for both platforms.' },
       { q: 'Which AI search is better in 2026?', a: 'Google\'s AI Overviews offer better real-time information and web citations. ChatGPT excels at complex reasoning, writing, and multi-turn conversations where a single answer isn\'t sufficient.' },
-      { q: 'How fast did ChatGPT grow?', a: 'ChatGPT reached 100 million users in 2 months — the fastest consumer app growth in history — and has since grown to become one of the most-visited AI platforms on the web.' },
+      { q: 'How fast did ChatGPT grow?', a: 'ChatGPT reached 100 million users in 2 months - the fastest consumer app growth in history - and has since grown to become one of the most-visited AI platforms on the web.' },
     ],
   },
   {
@@ -139,7 +139,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
     verdict: 'X (Twitter) currently receives more raw web traffic than LinkedIn, but LinkedIn generates stronger professional engagement and B2B advertising returns due to its high-intent professional audience.',
     context: 'Professional networking vs. real-time public discourse.',
     faq: [
-      { q: 'Which gets more traffic, LinkedIn or Twitter/X?', a: 'X (Twitter) receives more monthly visits than LinkedIn — see the live comparison above for current figures. However, LinkedIn\'s users have higher average income and professional intent, making it more valuable for B2B marketing.' },
+      { q: 'Which gets more traffic, LinkedIn or Twitter/X?', a: 'X (Twitter) receives more monthly visits than LinkedIn - see the live comparison above for current figures. However, LinkedIn\'s users have higher average income and professional intent, making it more valuable for B2B marketing.' },
       { q: 'Is LinkedIn better than Twitter for business?', a: 'For B2B lead generation and professional networking, LinkedIn consistently outperforms Twitter. LinkedIn ads generate 277% more leads than Facebook ads for B2B companies, according to HubSpot research.' },
       { q: 'Has Twitter/X lost users since Elon Musk\'s acquisition?', a: 'X experienced notable advertiser departures in 2022–2023, but user traffic has largely stabilised. The platform rebranded from Twitter to X in July 2023 and continues to attract significant daily active users globally.' },
     ],
@@ -151,7 +151,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
     verdict: 'Google processes over 100× more searches than DuckDuckGo, but DuckDuckGo has carved out a loyal audience of privacy-conscious users and grew from 30M to 100M+ daily queries between 2020 and 2024.',
     context: 'Privacy-focused search versus the dominant search giant.',
     faq: [
-      { q: 'How much traffic does DuckDuckGo get vs Google?', a: 'Google receives dramatically more monthly visits than DuckDuckGo — see the live comparison table above for current numbers. Google processes over 8.5 billion searches per day versus DuckDuckGo\'s approximately 100 million.' },
+      { q: 'How much traffic does DuckDuckGo get vs Google?', a: 'Google receives dramatically more monthly visits than DuckDuckGo - see the live comparison table above for current numbers. Google processes over 8.5 billion searches per day versus DuckDuckGo\'s approximately 100 million.' },
       { q: 'Is DuckDuckGo actually private?', a: 'DuckDuckGo does not store IP addresses, search histories, or create user profiles. It uses Microsoft\'s Bing for some results but applies privacy protections. It is significantly more private than Google by design.' },
       { q: 'Which countries use DuckDuckGo the most?', a: 'DuckDuckGo is disproportionately popular in the United States, Germany, and the United Kingdom, countries with strong digital privacy awareness. Germany in particular has 3× the global DuckDuckGo market share average.' },
     ],
@@ -199,7 +199,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
     verdict: 'Reddit and X (Twitter) are closely matched in web traffic, but Reddit\'s SEO authority has surged dramatically since 2023 due to Google prioritising community discussions in its algorithm updates.',
     context: 'Social discussion platforms competing for opinion-forming internet conversations.',
     faq: [
-      { q: 'Which gets more traffic, Reddit or Twitter/X?', a: 'Reddit and X are closely matched in monthly traffic — see the live comparison above for current figures. Reddit\'s traffic has grown faster since Google\'s 2023 algorithm update boosted discussion forums.' },
+      { q: 'Which gets more traffic, Reddit or Twitter/X?', a: 'Reddit and X are closely matched in monthly traffic - see the live comparison above for current figures. Reddit\'s traffic has grown faster since Google\'s 2023 algorithm update boosted discussion forums.' },
       { q: 'Why is Reddit ranking higher in Google searches?', a: 'Google\'s "helpful content" updates in 2023–2024 specifically rewarded authentic community discussions over SEO-optimised articles. Reddit\'s genuine user opinions made it a beneficiary of these changes.' },
       { q: 'Is Reddit more influential than Twitter?', a: 'Reddit drives more internet culture, memes, and product research behaviour due to its subreddit structure. Twitter/X is more influential for breaking news, political discourse, and real-time events.' },
     ],
@@ -223,7 +223,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
     verdict: 'Wikipedia receives significantly more traffic than Quora. Wikipedia\'s volunteer-edited, citation-backed model gives it more trust and SEO authority than Quora\'s expert Q&A format.',
     context: 'Reference and knowledge platforms serving different information needs.',
     faq: [
-      { q: 'Which gets more traffic, Wikipedia or Quora?', a: 'Wikipedia receives far more monthly visits than Quora — see the live comparison above for current figures. Wikipedia ranks in the global top 10 while Quora is significantly lower.' },
+      { q: 'Which gets more traffic, Wikipedia or Quora?', a: 'Wikipedia receives far more monthly visits than Quora - see the live comparison above for current figures. Wikipedia ranks in the global top 10 while Quora is significantly lower.' },
       { q: 'Is Wikipedia more accurate than Quora?', a: 'Wikipedia has a strict citation and notability policy enforced by thousands of volunteer editors. Quora relies on individual expertise which varies significantly. For factual reference, Wikipedia is generally more reliable.' },
       { q: 'Does Quora make money?', a: 'Quora generates revenue through advertising and its subscription product "Quora+". The company also operates Poe, an AI chatbot aggregator. Quora\'s revenue model is significantly smaller than Wikipedia\'s donation-based sustainability.' },
     ],

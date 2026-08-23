@@ -26,6 +26,25 @@
   height: 0 !important;
 }
 
+/* ── Country Picker Dropdown Scrollbar ───────────────────────────────────── */
+.country-picker-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.country-picker-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.country-picker-scroll::-webkit-scrollbar-thumb {
+  background: rgba(130, 200, 229, 0.2);
+  border-radius: 99px;
+}
+.country-picker-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(130, 200, 229, 0.45);
+}
+.country-picker-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(130, 200, 229, 0.2) transparent;
+}
+
 .scrollbar-hide,
 .no-scrollbar {
   -ms-overflow-style: none !important;

@@ -1,8 +1,8 @@
-import { getSites } from '../lib/getSites';
+﻿import { getSites } from '../lib/getSites';
 import HomeClient from './HomeClient';
 
 /**
- * Server Component — fetches initial data server-side to eliminate
+ * Server Component - fetches initial data server-side to eliminate
  * the client-side Supabase waterfall and reduce JS bundle size.
  * Uses getSites() which is the single source of truth for site data.
  */
@@ -35,7 +35,7 @@ export default async function Home() {
       if (Array.isArray(data) && data.length > 0) initialMarquee = data;
     }
   } catch (err) {
-    // Non-critical — client will re-fetch on mount
+    // Non-critical - client will re-fetch on mount
     console.warn('Server: Failed to pre-fetch radar/marquee data:', err);
   }
 

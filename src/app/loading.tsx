@@ -1,5 +1,5 @@
-/**
- * Next.js loading UI — shown while page.tsx JS bundle downloads.
+﻿/**
+ * Next.js loading UI - shown while page.tsx JS bundle downloads.
  * Only the site card grid shimmers; header renders from static HTML immediately.
  */
 export default function Loading() {
@@ -17,7 +17,7 @@ export default function Loading() {
         }}
       />
 
-      {/* Header placeholder (static — no shimmer) */}
+      {/* Header placeholder (static - no shimmer) */}
       <header className="relative z-10 flex flex-col items-center w-full max-w-[700px] text-center pt-8 pb-6 px-4">
         <div className="flex items-center gap-3 mb-2">
           <span className="pulse-dot" />
@@ -46,7 +46,7 @@ export default function Loading() {
           ))}
         </div>
 
-        {/* Card grid shimmer — 12 placeholder cards */}
+        {/* Card grid shimmer - 12 placeholder cards */}
         <div
           className="grid gap-4"
           style={{

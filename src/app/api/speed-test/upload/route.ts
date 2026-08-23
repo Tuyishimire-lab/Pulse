@@ -1,7 +1,7 @@
-export const runtime = 'edge';
+﻿export const runtime = 'edge';
 
 /**
- * Upload endpoint — accepts and discards POST data.
+ * Upload endpoint - accepts and discards POST data.
  * The client sends blobs of random data and measures upload throughput.
  * We read the entire body (forcing the transfer to happen) then discard it.
  */

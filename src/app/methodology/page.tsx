@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ export default function MethodologyPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white">1. Executive Overview</h2>
             <p>
-              Pulse metrics are powered by the <strong className="text-white">Pulse Traffic Index (PTI v1.2)</strong> — a multi-signal statistical and artificial intelligence engine designed to estimate global website visit volume, per-second visitor velocity, and market growth momentum.
+              Pulse metrics are powered by the <strong className="text-white">Pulse Traffic Index (PTI v1.2)</strong> - a multi-signal statistical and artificial intelligence engine designed to estimate global website visit volume, per-second visitor velocity, and market growth momentum.
             </p>
             <p>
               Unlike legacy platforms that rely on single-source web scrapers or intrusive browser extensions, Pulse fuses multiple independent network telemetry datasets with advanced machine learning vectors.
@@ -53,7 +53,7 @@ export default function MethodologyPage() {
                 <div className="text-xs text-white/80">Logarithmic backlink authority score (0–10) validating structural web domain presence.</div>
               </div>
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                <div className="text-xs font-bold text-[#82c8e5] uppercase mb-1">Signal 4 · Groq AI Momentum</div>
+                <div className="text-xs font-bold text-[#82c8e5] uppercase mb-1">Signal 3 · Groq AI Momentum</div>
                 <div className="text-xs text-white/80">Llama 3.3 70B AI contextual momentum classification (Surging, Growing, Stable, Cooling) across all 100+ domains.</div>
               </div>
             </div>
@@ -84,6 +84,13 @@ export default function MethodologyPage() {
             <h2 className="text-base font-bold text-white">5. Independent Telemetry Disclaimer</h2>
             <p>
               Pulse metrics are independent probabilistic estimates. No third-party platform has direct access to private internal corporate server logs. Pulse provides open, transparent comparative insights across the web ecosystem.
+            </p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-white">6. Estimated Engagement Metrics</h2>
+            <p>
+              Engagement metrics shown in site detail panels (bounce rate, avg. session duration, device split, top geographies, traffic trend) are <strong className="text-white">PTI model estimates</strong> derived from a site&apos;s global rank, category, and publicly available industry benchmarks - not sourced from real-user analytics panels, browser extensions, or ISP data. They are labeled accordingly in the UI to maintain transparency.
             </p>
           </section>
         </div>

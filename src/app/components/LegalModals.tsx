@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect } from 'react';
 
@@ -110,7 +110,7 @@ export default function LegalModals({
                 <strong>Statistical Modeling &amp; Panel Telemetry:</strong> Pulse metrics are not a direct server tap into internal corporate load balancers. No third-party platform on the internet has access to private internal server logs of third-party companies.
               </p>
               <p>
-                <strong>Industry Standard Benchmark Modeling:</strong> Similar to platforms such as Similarweb, Worldometer, and Statista, Pulse utilizes statistical physics modeling derived from public panel data, Cloudflare Radar network telemetry, and published 2026 industry research (Semrush &amp; Similarweb average estimates).
+                <strong>Industry Standard Benchmark Modeling:</strong> Similar to platforms such as Worldometer and Statista, Pulse utilizes the Pulse Traffic Index (PTI) - a multi-signal statistical engine combining Cloudflare Radar DNS telemetry, Tranco rankings, Open PageRank authority scores, and Groq AI momentum signals. The methodology is publicly documented at <a href="/methodology" className="underline">pulstraffic.com/methodology</a>.
               </p>
               <p>
                 <strong>Real-Time Ticker Physics:</strong> Live visitor counters on Pulse represent high-precision mathematical rate calculations (Rate = Monthly Visits / 2,628,000 seconds) designed to illustrate global visit velocity and platform scale in real time.

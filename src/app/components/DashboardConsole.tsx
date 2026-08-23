@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { SiteConfig, CATEGORIES } from '../data/sites';
@@ -72,9 +72,9 @@ export default function DashboardConsole({
             style={{ backgroundColor: syncLabel.stale ? '#f59e0b' : '#4ade80' }}
           />
           <span style={{ color: syncLabel.stale ? '#f59e0b' : '#4ade80' }}>
-            {syncLabel.stale ? 'Stale' : 'Live'}
+            {syncLabel.stale ? 'Index Estimated' : 'Index Live'}
           </span>
-          <span className="text-[#6d8196]">· synced {syncLabel.text}</span>
+          <span className="text-[#6d8196]">· PTI synced {syncLabel.text}</span>
         </div>
       )}
       {/* Top Row: Search & View Layout Toggling */}
@@ -119,7 +119,7 @@ export default function DashboardConsole({
             >
               <option value="global">Worldwide</option>
               {COUNTRIES.slice().sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
-                <option key={c.cfCode} value={c.cfCode}>{c.cfCode} — {c.name}</option>
+                <option key={c.cfCode} value={c.cfCode}>{c.cfCode} - {c.name}</option>
               ))}
             </select>
           </div>

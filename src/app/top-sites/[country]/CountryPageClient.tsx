@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ interface Props {
   countryData: CountryData;
   sites: SiteConfig[];
   allCountries: CountryData[];
+  dataSource?: string;
 }
 
 function FaviconImg({ url, logo, color }: { url: string; logo: string; color: string }) {
@@ -75,9 +76,184 @@ const FAQ_ITEMS = (country: CountryData, sites: SiteConfig[]) => [
   },
 ];
 
-export default function CountryPageClient({ countryData, sites, allCountries }: Props) {
+function cfCodeToFlag(code: string): string {
+  if (!code || code.length !== 2) return '🌐';
+  const offset = 127397; // Unicode regional indicator offset
+  return [...code.toUpperCase()].map((c) => String.fromCodePoint(c.charCodeAt(0) + offset)).join('');
+}
+
+function CountryPicker({ current, allCountries }: { current: CountryData; allCountries: CountryData[] }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = query.trim()
+    ? allCountries.filter(
+        (c) =>
+          c.name.toLowerCase().includes(query.toLowerCase()) ||
+          (c.flag && c.flag.includes(query))
+      )
+    : allCountries;
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
+    }
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.key === 'Escape') { setOpen(false); setQuery(''); }
+    }
+    if (open) document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open]);
+
+  // Focus search when opened
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 50);
+  }, [open]);
+
+  return (
+    <section className="mb-12">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-white">Rankings by Country</h2>
+        <span className="text-xs text-[#6d8196]">{allCountries.length} countries</span>
+      </div>
+
+      <div ref={ref} className="relative">
+        {/* Trigger button */}
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.05] hover:border-[#82c8e5]/40 transition-all text-left group"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          <span className="flex items-center gap-2.5">
+            <span className="text-xl">{cfCodeToFlag(current.cfCode)}</span>
+            <span className="text-sm font-semibold text-white">
+              {current.name}
+              <span className="ml-2 text-xs font-normal text-[#6d8196]">- currently viewing</span>
+            </span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-[#82c8e5] bg-[#82c8e5]/10 border border-[#82c8e5]/20 px-2 py-0.5 rounded-full uppercase tracking-wider">
+              Switch Country
+            </span>
+            <svg
+              className={`w-4 h-4 text-[#6d8196] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </span>
+        </button>
+
+        {/* Dropdown panel - opens UPWARD so it never overlaps the footer */}
+        {open && (
+          <div
+            className="absolute z-50 w-full rounded-2xl border border-white/10 bg-[#0a0f1a] shadow-2xl shadow-black/60 overflow-hidden"
+            style={{
+              backdropFilter: 'blur(20px)',
+              bottom: 'calc(100% + 8px)',
+            }}
+            role="listbox"
+          >
+            {/* Search */}
+            <div className="p-3 border-b border-white/[0.06]">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6d8196]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search countries…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full pl-8 pr-4 py-2 text-sm bg-white/[0.04] border border-white/[0.06] rounded-lg text-white placeholder-[#6d8196] focus:outline-none focus:border-[#82c8e5]/50 focus:bg-white/[0.06] transition-all"
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6d8196] hover:text-white"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Results - custom dark scrollbar */}
+            <div className="country-picker-scroll overflow-y-auto" style={{ maxHeight: '280px' }}>
+              {filtered.length === 0 ? (
+                <div className="py-6 text-center text-sm text-[#6d8196]">No countries match &ldquo;{query}&rdquo;</div>
+              ) : (
+                <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-0.5">
+                  {filtered.map((c) => {
+                    const isCurrent = c.slug === current.slug;
+                    return (
+                      <Link
+                        key={c.slug}
+                        href={`/top-sites/${c.slug}`}
+                        onClick={() => { setOpen(false); setQuery(''); }}
+                        role="option"
+                        aria-selected={isCurrent}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-sm ${
+                          isCurrent
+                            ? 'bg-[#82c8e5]/10 border border-[#82c8e5]/20 text-[#82c8e5] font-semibold'
+                            : 'text-[#94a3b8] hover:bg-white/[0.05] hover:text-white'
+                        }`}
+                      >
+                        <span className="text-base flex-shrink-0">{cfCodeToFlag(c.cfCode)}</span>
+                        <span className="truncate">{c.name}</span>
+                        {isCurrent && (
+                          <svg className="w-3.5 h-3.5 ml-auto flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                          </svg>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer count */}
+            <div className="px-4 py-2 border-t border-white/[0.04] text-[10px] text-[#6d8196] flex items-center justify-between">
+              <span>{filtered.length} of {allCountries.length} countries</span>
+              <span>↑↓ scroll · Esc to close</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export default function CountryPageClient({ countryData, sites, allCountries, dataSource }: Props) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const faqs = FAQ_ITEMS(countryData, sites);
+
+  const sourceLabel: Record<string, { label: string; color: string }> = {
+    'supabase-cache': { label: '📡 Radar Data (cached)', color: 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' },
+    'live-radar':    { label: '🛰️ Live Radar Data', color: 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' },
+    'regional-profile': { label: '🌍 PTI Regional Profile', color: 'text-[#82c8e5] border-[#82c8e5]/20 bg-[#82c8e5]/5' },
+    'smart-filter':  { label: '🔍 Global Filtered Estimate', color: 'text-amber-400 border-amber-400/20 bg-amber-400/5' },
+    'global-fallback': { label: '📊 Global Estimate', color: 'text-[#6d8196] border-white/10 bg-white/[0.02]' },
+  };
+  const badge = dataSource && dataSource !== 'pinned' ? sourceLabel[dataSource] : null;
+
 
   return (
     <div className="min-h-screen bg-[#02020a] text-white font-sans">
@@ -133,7 +309,7 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
         <header className="mb-10">
           {/* Top meta row */}
           <div className="flex flex-wrap items-center gap-2 mb-5">
-            {/* Country code badge — reliable across all OS/browsers */}
+            {/* Country code badge - reliable across all OS/browsers */}
             <span
               className="text-xs font-black tracking-widest px-2.5 py-1 rounded-lg border"
               style={{ color: '#82c8e5', borderColor: '#82c8e5', backgroundColor: 'rgba(130,200,229,0.08)' }}
@@ -144,10 +320,15 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
             <span className="text-xs font-semibold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
               ● Live Rankings
             </span>
+            {badge && (
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${badge.color}`}>
+                {badge.label}
+              </span>
+            )}
             <span className="text-xs text-[#6d8196]">{countryData.internetUsers} internet users · {countryData.internetPenetration} penetration</span>
           </div>
 
-          {/* Title — split so it wraps naturally */}
+          {/* Title - split so it wraps naturally */}
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug mb-5">
             <span className="text-[#94a3b8] font-semibold">Most Visited Websites in</span>{' '}
             <span className="bg-gradient-to-r from-white via-white to-[#82c8e5] bg-clip-text text-transparent">
@@ -156,7 +337,7 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
             <span className="text-[#6d8196] font-semibold text-xl"> (2026)</span>
           </h1>
 
-          {/* Description — styled as an accent blockquote */}
+          {/* Description - styled as an accent blockquote */}
           <div className="flex gap-3 items-stretch">
             <div className="w-0.5 rounded-full bg-gradient-to-b from-[#82c8e5]/60 to-transparent flex-shrink-0" />
             <p className="text-sm sm:text-base text-[#94a3b8] leading-relaxed">
@@ -226,7 +407,7 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
             </table>
           </div>
           <p className="text-xs text-[#6d8196] mt-3 text-right">
-            Data sourced from Semrush & Similarweb estimates (2026). Live counters are real-time estimates.
+            Traffic estimates powered by the Pulse Traffic Index (PTI). Rankings reflect global usage patterns adjusted for regional behavior. <a href="/methodology" className="underline hover:text-white transition-colors">Learn how →</a>
           </p>
         </section>
 
@@ -286,22 +467,8 @@ export default function CountryPageClient({ countryData, sites, allCountries }: 
           </div>
         </section>
 
-        {/* Other Countries */}
-        <section className="mb-12">
-          <h2 className="text-base font-bold text-white mb-4">Rankings by Country</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {allCountries.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/top-sites/${c.slug}`}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#82c8e5]/30 transition-all group"
-              >
-                <span className="text-xl">{c.flag}</span>
-                <span className="text-sm font-medium text-[#94a3b8] group-hover:text-white transition-colors">{c.name}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {/* Other Countries - compact searchable picker */}
+        <CountryPicker current={countryData} allCountries={allCountries} />
 
         {/* Back to main */}
         <div className="flex items-center justify-between border-t border-white/[0.06] pt-6">

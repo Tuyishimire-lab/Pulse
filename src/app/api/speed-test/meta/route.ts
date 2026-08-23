@@ -1,7 +1,7 @@
-export const runtime = 'edge';
+﻿export const runtime = 'edge';
 
 /**
- * Meta endpoint — returns connection metadata derived from Vercel/Cloudflare
+ * Meta endpoint - returns connection metadata derived from Vercel/Cloudflare
  * request headers. Used to display ISP, city, country, and server region.
  */
 export async function GET(request: Request) {

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 export const revalidate = 3600; // Cache per-site data for 1 hour
 
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   const token = process.env.CLOUDFLARE_API_TOKEN;
 
   if (!token) {
-    // No API key — caller will fall back to seeded estimates
+    // No API key - caller will fall back to seeded estimates
     return NextResponse.json({ source: 'unavailable', asn });
   }
 
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
       const json = await res.json();
       const locations = json?.result?.top_0 ?? json?.result?.topLocations ?? json?.result?.locations;
       if (Array.isArray(locations) && locations.length > 0) {
-        // Normalize percentage fields — CF may return 'value' or 'share'
+        // Normalize percentage fields - CF may return 'value' or 'share'
         const total = locations.reduce((sum: number, loc: any) => {
           const v = parseFloat(loc.value ?? loc.share ?? loc.clientCountryAlpha2 ?? '0');
           return sum + (isNaN(v) ? 0 : v);

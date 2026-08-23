@@ -1,4 +1,4 @@
-// Real country metadata for /top-sites/[country] SEO pages
+﻿// Real country metadata for /top-sites/[country] SEO pages
 // Internet user stats sourced from DataReportal / Statista 2024-2026 reports
 
 export interface CountryData {
@@ -27,7 +27,7 @@ export const COUNTRIES: CountryData[] = [
       'The United States has one of the world\'s most advanced internet ecosystems, with 311 million users generating roughly 20% of all global web traffic. Americans spend an average of 7 hours online per day, making Google, YouTube, and Amazon the dominant platforms by a large margin.',
     localNote:
       'Reddit and LinkedIn rank significantly higher in the US than globally, driven by the country\'s strong developer and professional communities.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'reddit', 'wikipedia', 'x', 'amazon', 'linkedin'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'reddit', 'wikipedia', 'x', 'amazon', 'linkedin', 'netflix', 'bing', 'tiktok', 'microsoft', 'office', 'pinterest', 'discord', 'spotify', 'twitch', 'github'],
   },
   {
     slug: 'india',
@@ -39,7 +39,7 @@ export const COUNTRIES: CountryData[] = [
       'India is the world\'s second-largest internet market with over 900 million users, driven by the explosion of affordable mobile data. YouTube is the single most-watched platform in India, with over 500 million monthly users, while WhatsApp is used by 500 million people for daily communication.',
     localNote:
       'Mobile devices account for over 78% of all internet traffic in India. Google and YouTube consistently outperform Facebook due to video consumption habits.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'x', 'amazon', 'reddit', 'linkedin'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'x', 'amazon', 'reddit', 'linkedin', 'whatsapp', 'netflix', 'bing', 'tiktok', 'flipkart', 'hotstar', 'microsoft', 'discord', 'spotify', 'github'],
   },
   {
     slug: 'brazil',
@@ -51,7 +51,7 @@ export const COUNTRIES: CountryData[] = [
       'Brazil is Latin America\'s largest internet market with 165 million connected users who average 9 hours online per day, one of the highest averages in the world. Social media dominates, with Instagram and TikTok seeing particularly high engagement relative to the global average.',
     localNote:
       'Brazilians are among the world\'s heaviest social media users. TikTok and Instagram rank substantially higher in Brazil than in global rankings.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'x', 'wikipedia', 'reddit', 'amazon'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'x', 'wikipedia', 'reddit', 'amazon', 'whatsapp', 'netflix', 'discord', 'spotify', 'mercadolivre', 'globo', 'microsoft', 'pinterest', 'linkedin', 'twitch'],
   },
   {
     slug: 'united-kingdom',
@@ -63,7 +63,7 @@ export const COUNTRIES: CountryData[] = [
       'The United Kingdom has a 97% internet penetration rate, one of the highest in the world, with 67 million active users. The BBC website is among the top 5 most visited UK-origin sites, while streaming platforms like Netflix and Twitch see above-average usage compared to the global benchmark.',
     localNote:
       'The UK has strong digital media consumption habits. BBC News drives significant traffic to news and media sites not reflected in the global top 20.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'reddit', 'x', 'netflix'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'reddit', 'x', 'netflix', 'bbc', 'microsoft', 'linkedin', 'tiktok', 'discord', 'spotify', 'twitch', 'github', 'ebay', 'pinterest'],
   },
   {
     slug: 'germany',
@@ -75,7 +75,7 @@ export const COUNTRIES: CountryData[] = [
       'Germany is Europe\'s largest internet market with 75 million users and a strong emphasis on data privacy. DuckDuckGo\'s market share in Germany is roughly 3× higher than the global average, reflecting German users\' preference for privacy-respecting alternatives to Google.',
     localNote:
       'Privacy is a cultural priority in Germany. DuckDuckGo, ProtonMail, and VPN services are disproportionately popular compared to global benchmarks.',
-    pinnedSiteIds: ['google', 'youtube', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'amazon', 'reddit', 'x', 'duckduckgo'],
+    pinnedSiteIds: ['google', 'youtube', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'amazon', 'reddit', 'x', 'duckduckgo', 'netflix', 'microsoft', 'linkedin', 'spotify', 'discord', 'ebay', 'twitch', 'github', 'tiktok', 'bing'],
   },
   {
     slug: 'france',
@@ -87,7 +87,7 @@ export const COUNTRIES: CountryData[] = [
       'France has 57 million internet users and a highly engaged social media population. TikTok\'s French user base grew by 40% between 2023 and 2026, while YouTube remains the dominant video platform with over 50 million monthly French viewers.',
     localNote:
       'French internet users spend significantly more time on YouTube and TikTok than the European average. Pinterest is also disproportionately popular in France.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'amazon', 'netflix'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'amazon', 'netflix', 'microsoft', 'reddit', 'linkedin', 'spotify', 'discord', 'pinterest', 'twitch', 'ebay', 'bbc', 'bing'],
   },
   {
     slug: 'japan',
@@ -99,7 +99,7 @@ export const COUNTRIES: CountryData[] = [
       'Japan has 100 million internet users with one of the world\'s highest average connection speeds. Yahoo Japan, a separate entity from Yahoo.com, is consistently among the top 3 most visited sites in Japan, a unique quirk not reflected in global rankings.',
     localNote:
       'Yahoo Japan operates independently and is a top-3 website in Japan. LINE (messaging) and Niconico (video) are culturally dominant platforms.',
-    pinnedSiteIds: ['google', 'youtube', 'yahoo', 'wikipedia', 'amazon', 'instagram', 'x', 'facebook', 'chatgpt', 'netflix'],
+    pinnedSiteIds: ['google', 'youtube', 'yahoo', 'wikipedia', 'amazon', 'instagram', 'x', 'facebook', 'chatgpt', 'netflix', 'microsoft', 'linkedin', 'rakuten', 'discord', 'spotify', 'tiktok', 'twitch', 'github', 'bing', 'reddit'],
   },
   {
     slug: 'canada',
@@ -111,7 +111,7 @@ export const COUNTRIES: CountryData[] = [
       'Canada ranks among the world\'s most connected nations with a 94% internet penetration rate and 36 million active users. Reddit sees above-average traffic from Canadian users, who are among the platform\'s most active demographics globally.',
     localNote:
       'Canadians are heavy Reddit users relative to population, ranking in the top 3 countries by Reddit traffic. Twitch is also above the global average.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'reddit', 'x', 'netflix'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'reddit', 'x', 'netflix', 'bbc', 'microsoft', 'linkedin', 'tiktok', 'discord', 'spotify', 'twitch', 'github', 'cnn', 'ebay'],
   },
   {
     slug: 'australia',
@@ -123,7 +123,7 @@ export const COUNTRIES: CountryData[] = [
       'Australia has 24 million internet users with a 91% penetration rate and excellent fixed broadband infrastructure. Australians are among the highest per-capita users of streaming services, with Netflix penetration among the highest in the Asia-Pacific region.',
     localNote:
       'Streaming (Netflix, YouTube, Twitch) and Reddit are disproportionately popular in Australia relative to the country\'s population size.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'reddit', 'x', 'netflix'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'reddit', 'x', 'netflix', 'microsoft', 'linkedin', 'tiktok', 'discord', 'spotify', 'twitch', 'github', 'ebay', 'bing', 'cnn'],
   },
   {
     slug: 'mexico',
@@ -135,7 +135,7 @@ export const COUNTRIES: CountryData[] = [
       'Mexico has 96 million internet users, making it Latin America\'s second-largest market after Brazil. Facebook and YouTube account for the majority of social media time, while WhatsApp is the primary messaging platform for over 88 million Mexican users.',
     localNote:
       'Mexico has a very young internet population, over 60% of users are under 35, driving strong growth in TikTok and Instagram traffic.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'x', 'wikipedia', 'amazon', 'reddit'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'x', 'wikipedia', 'amazon', 'reddit', 'whatsapp', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'pinterest', 'twitch', 'ebay', 'bing'],
   },
   {
     slug: 'south-korea',
@@ -147,7 +147,7 @@ export const COUNTRIES: CountryData[] = [
       'South Korea boasts a 97% internet penetration rate and the world\'s fastest average broadband speed at over 200 Mbps. Gaming and streaming are dominant use cases, with platforms like YouTube, Netflix, and gaming sites consistently in the top 10.',
     localNote:
       'Naver (a Korean search engine) and Kakao dominate locally but are not in the global top 100. Among global sites, YouTube and Netflix are exceptionally popular.',
-    pinnedSiteIds: ['google', 'youtube', 'instagram', 'facebook', 'netflix', 'x', 'wikipedia', 'twitch', 'chatgpt', 'reddit'],
+    pinnedSiteIds: ['google', 'youtube', 'instagram', 'facebook', 'netflix', 'x', 'wikipedia', 'twitch', 'chatgpt', 'reddit', 'naver', 'microsoft', 'linkedin', 'discord', 'spotify', 'tiktok', 'github', 'bilibili', 'bing', 'amazon'],
   },
   {
     slug: 'indonesia',
@@ -159,7 +159,7 @@ export const COUNTRIES: CountryData[] = [
       'Indonesia is Southeast Asia\'s largest internet market with 212 million users, and one of the world\'s fastest-growing digital economies. TikTok was founded with Indonesia as a primary growth market, and it remains one of the top 3 apps in the country.',
     localNote:
       'TikTok, Instagram, and Facebook are exceptionally dominant in Indonesia, reflecting the country\'s mobile-first internet culture and young population.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'amazon', 'reddit'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'amazon', 'reddit', 'whatsapp', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'shopify', 'pinterest', 'twitch', 'ebay'],
   },
   {
     slug: 'nigeria',
@@ -171,7 +171,7 @@ export const COUNTRIES: CountryData[] = [
       'Nigeria is Africa\'s largest internet market with 122 million users growing rapidly on the back of mobile connectivity. Facebook and Instagram are the dominant social platforms, while YouTube sees strong growth driven by Nigerian-produced content and entertainment.',
     localNote:
       'Nigeria has one of the world\'s fastest-growing internet user bases. Facebook, Instagram, and WhatsApp are the most-used platforms, all mobile-first.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'x', 'wikipedia', 'tiktok', 'reddit', 'amazon'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'x', 'wikipedia', 'tiktok', 'reddit', 'amazon', 'whatsapp', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'pinterest', 'twitch', 'ebay', 'bing'],
   },
   {
     slug: 'argentina',
@@ -183,7 +183,7 @@ export const COUNTRIES: CountryData[] = [
       'Argentina has 43 million internet users with a 92% penetration rate, the highest in South America alongside Chile. Argentinians are highly active on social media, spending an average of 3.5 hours per day on social platforms, which is among the highest in Latin America.',
     localNote:
       'Argentina has unusually high engagement with Twitter/X for its population size, driven by political discourse. YouTube and Instagram are also above regional averages.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'x', 'wikipedia', 'tiktok', 'reddit', 'amazon'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'x', 'wikipedia', 'tiktok', 'reddit', 'amazon', 'whatsapp', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'mercadolibre', 'pinterest', 'twitch', 'bing'],
   },
 
   // ── 10 New International Expansion Markets ─────────────────────────────
@@ -197,7 +197,7 @@ export const COUNTRIES: CountryData[] = [
       'Spain has 45 million active internet users with a 94% penetration rate. WhatsApp and Instagram lead digital messaging and social engagement across all age groups, while Amazon ES is the country\'s dominant e-commerce destination.',
     localNote:
       'Spanish internet users demonstrate extremely high mobile social adoption. Twitch enjoys higher per-capita viewership in Spain than anywhere else in Western Europe thanks to top Spanish creators.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'x', 'twitch', 'tiktok'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'x', 'twitch', 'tiktok', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'ebay', 'reddit', 'pinterest', 'bing', 'github'],
   },
   {
     slug: 'italy',
@@ -209,7 +209,7 @@ export const COUNTRIES: CountryData[] = [
       'Italy has 51 million connected users with high digital news and social media consumption. Amazon and eBay lead online retail, while news platforms drive substantial daily traffic.',
     localNote:
       'Italian users rely heavily on WhatsApp and Facebook for news distribution. E-commerce adoption has grown over 25% YoY post-2024.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'x', 'ebay', 'tiktok'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'amazon', 'x', 'ebay', 'tiktok', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'reddit', 'pinterest', 'twitch', 'bing', 'github'],
   },
   {
     slug: 'netherlands',
@@ -221,7 +221,7 @@ export const COUNTRIES: CountryData[] = [
       'The Netherlands is one of Europe\'s most digitally mature economies with a 96% penetration rate and ultra-fast fiber infrastructure. Tech adoption is exceptionally fast, with AI assistants gaining rapid traction in work and education.',
     localNote:
       'Dutch users exhibit high tech literacy. Developer platforms like GitHub and Stack Overflow receive significantly above-average per-capita visits in the Netherlands.',
-    pinnedSiteIds: ['google', 'youtube', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'linkedin', 'github', 'amazon', 'reddit'],
+    pinnedSiteIds: ['google', 'youtube', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'linkedin', 'github', 'amazon', 'reddit', 'netflix', 'microsoft', 'discord', 'spotify', 'twitch', 'bing', 'tiktok', 'ebay', 'x', 'stackoverflow'],
   },
   {
     slug: 'sweden',
@@ -233,7 +233,7 @@ export const COUNTRIES: CountryData[] = [
       'Sweden features a 97% internet penetration rate and leads Europe in digital payment adoption and SaaS tool usage. Spotify, founded in Stockholm, remains a national point of pride and key traffic driver.',
     localNote:
       'Swedish users are early adopters of modern fintech and developer tools. Spotify, Klarna, and GitHub rank higher in Sweden than global averages.',
-    pinnedSiteIds: ['google', 'youtube', 'spotify', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'linkedin', 'github', 'reddit'],
+    pinnedSiteIds: ['google', 'youtube', 'spotify', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'linkedin', 'github', 'reddit', 'netflix', 'microsoft', 'discord', 'twitch', 'bing', 'tiktok', 'x', 'stackoverflow', 'ebay', 'amazon'],
   },
   {
     slug: 'poland',
@@ -245,7 +245,7 @@ export const COUNTRIES: CountryData[] = [
       'Poland represents Central Europe\'s largest digital economy with 37 million connected users. E-commerce and news portals drive huge daily engagement alongside video streaming.',
     localNote:
       'Poland has a vibrant developer ecosystem. Tech platforms like GitHub and local e-commerce services record heavy engagement.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'allegro', 'x', 'github', 'reddit'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'wikipedia', 'allegro', 'x', 'github', 'reddit', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'twitch', 'ebay', 'tiktok', 'bing', 'amazon'],
   },
   {
     slug: 'singapore',
@@ -257,7 +257,7 @@ export const COUNTRIES: CountryData[] = [
       'Singapore is Asia\'s premier financial and tech hub, boasting near-universal gigabit broadband connectivity. Business tools, AI platforms, and global finance portals drive exceptional traffic volume.',
     localNote:
       'Singaporeans are power users of professional networks, AI tools, and fintech platforms. LinkedIn, ChatGPT, and TradingView rank among the top visited sites.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'linkedin', 'wikipedia', 'amazon', 'tradingview', 'github'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'linkedin', 'wikipedia', 'amazon', 'tradingview', 'github', 'netflix', 'microsoft', 'discord', 'spotify', 'x', 'reddit', 'twitch', 'bing', 'tiktok', 'stackoverflow'],
   },
   {
     slug: 'south-africa',
@@ -269,7 +269,7 @@ export const COUNTRIES: CountryData[] = [
       'South Africa leads the African continent in digital banking and mobile internet adoption with 43 million active users. Facebook, YouTube, and TikTok dominate online entertainment.',
     localNote:
       'Mobile internet accounts for over 82% of web traffic in South Africa. Social platforms and news outlets account for the majority of daily sessions.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'news24', 'linkedin'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'news24', 'linkedin', 'netflix', 'microsoft', 'discord', 'spotify', 'reddit', 'amazon', 'pinterest', 'twitch', 'bing', 'github'],
   },
   {
     slug: 'turkey',
@@ -281,7 +281,7 @@ export const COUNTRIES: CountryData[] = [
       'Turkey has 74 million internet users characterized by extremely high social media engagement and mobile activity. E-commerce and news portals record millions of daily visits.',
     localNote:
       'Instagram and X (Twitter) see exceptionally high daily active user engagement in Turkey relative to global averages.',
-    pinnedSiteIds: ['google', 'youtube', 'instagram', 'facebook', 'chatgpt', 'x', 'wikipedia', 'trendyol', 'tiktok', 'eksi'],
+    pinnedSiteIds: ['google', 'youtube', 'instagram', 'facebook', 'chatgpt', 'x', 'wikipedia', 'trendyol', 'tiktok', 'eksi', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'reddit', 'amazon', 'ebay', 'bing', 'github'],
   },
   {
     slug: 'philippines',
@@ -293,7 +293,7 @@ export const COUNTRIES: CountryData[] = [
       'The Philippines is known as the social media capital of the world, with 85 million users spending an average of over 3.8 hours daily on social platforms.',
     localNote:
       'Facebook and Messenger serve as the primary internet interface for millions of Filipinos. YouTube and TikTok dominate mobile video watch time.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'shopee', 'lazada'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'tiktok', 'wikipedia', 'x', 'shopee', 'lazada', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'reddit', 'amazon', 'ebay', 'bing', 'github'],
   },
   {
     slug: 'vietnam',
@@ -305,12 +305,12 @@ export const COUNTRIES: CountryData[] = [
       'Vietnam has 78 million internet users experiencing rapid digital economy expansion driven by mobile e-commerce and social video.',
     localNote:
       'Facebook, Zalo, and TikTok lead daily internet activity in Vietnam, while e-commerce platforms like Shopee see massive transaction traffic.',
-    pinnedSiteIds: ['google', 'youtube', 'facebook', 'tiktok', 'instagram', 'chatgpt', 'wikipedia', 'shopee', 'x', 'zalo'],
+    pinnedSiteIds: ['google', 'youtube', 'facebook', 'tiktok', 'instagram', 'chatgpt', 'wikipedia', 'shopee', 'x', 'zalo', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'reddit', 'amazon', 'ebay', 'bing', 'github'],
   },
 ];
 
 // Merge with auto-generated countries (generated by scripts/generate-countries.ts).
-// Hand-crafted entries above always take priority — generated ones fill the gaps.
+// Hand-crafted entries above always take priority - generated ones fill the gaps.
 // If the generated file doesn't exist yet (before running the script), this is a no-op.
 import { GENERATED_COUNTRIES } from './countries.generated';
 

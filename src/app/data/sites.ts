@@ -33,7 +33,7 @@ export const CATEGORIES = [
 ];
 
 export const SITES: SiteConfig[] = [
-  { id: 'google', name: 'Google', url: 'https://google.com', rank: 1, category: 'search', baseline: '85.0B / mo', baselineRaw: 85000000000, rate: 32343, logo: 'G', color: '#4285F4', glow: 'rgba(136, 136, 136, 0.15)', progress: 100.0 },
+  { id: 'google', name: 'Google', url: 'https://google.com', rank: 1, category: 'search', baseline: '85.0B / mo', baselineRaw: 85000000000, rate: 32787, logo: 'G', color: '#4285F4', glow: 'rgba(136, 136, 136, 0.15)', progress: 100.0 },
   { id: 'youtube', name: 'YouTube', url: 'https://youtube.com', rank: 2, category: 'entertainment', baseline: '34.8B / mo', baselineRaw: 34800000000, rate: 13242, logo: 'YT', color: '#ef4444', glow: 'rgba(136, 136, 136, 0.15)', progress: 40.9 },
   { id: 'facebook', name: 'Facebook', url: 'https://facebook.com', rank: 3, category: 'social', baseline: '15.2B / mo', baselineRaw: 15200000000, rate: 5783, logo: 'F', color: '#1877F2', glow: 'rgba(136, 136, 136, 0.15)', progress: 17.9 },
   { id: 'instagram', name: 'Instagram', url: 'https://instagram.com', rank: 4, category: 'social', baseline: '6.8B / mo', baselineRaw: 6800000000, rate: 2587, logo: 'In', color: '#E1306C', glow: 'rgba(136, 136, 136, 0.15)', progress: 8.0 },
@@ -48,7 +48,7 @@ export const SITES: SiteConfig[] = [
   { id: 'yandex', name: 'Yandex', url: 'https://yandex.com', rank: 13, category: 'search', baseline: '2.5B / mo', baselineRaw: 2500000000, rate: 951, logo: 'Yd', color: '#ffcc00', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.9 },
   { id: 'baidu', name: 'Baidu', url: 'https://baidu.com', rank: 14, category: 'search', baseline: '2.2B / mo', baselineRaw: 2200000000, rate: 837, logo: 'Ba', color: '#2319dc', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.6 },
   { id: 'netflix', name: 'Netflix', url: 'https://netflix.com', rank: 15, category: 'entertainment', baseline: '2.1B / mo', baselineRaw: 2100000000, rate: 799, logo: 'N', color: '#e50914', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.5 },
-  { id: 'openai', name: 'OpenAI', url: 'https://openai.com', rank: 16, category: 'ai', baseline: '2.0B / mo', baselineRaw: 2000000000, rate: 761, logo: 'Oa', color: '#10a37f', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.4 },
+  { id: 'openai', name: 'OpenAI', url: 'https://openai.com', rank: 16, category: 'dev', baseline: '2.0B / mo', baselineRaw: 2000000000, rate: 772, logo: 'Oa', color: '#10a37f', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.4 },
   { id: 'bing', name: 'Bing', url: 'https://bing.com', rank: 17, category: 'search', baseline: '1.8B / mo', baselineRaw: 1800000000, rate: 684, logo: 'Bi', color: '#008373', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.1 },
   { id: 'microsoft', name: 'Microsoft', url: 'https://microsoft.com', rank: 18, category: 'dev', baseline: '1.8B / mo', baselineRaw: 1800000000, rate: 684, logo: 'Ms', color: '#0078d4', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.1 },
   { id: 'linkedin', name: 'LinkedIn', url: 'https://linkedin.com', rank: 19, category: 'social', baseline: '1.8B / mo', baselineRaw: 1750000000, rate: 665, logo: 'Li', color: '#0a66c2', glow: 'rgba(136, 136, 136, 0.15)', progress: 2.1 },

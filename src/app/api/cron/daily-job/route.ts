@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parseDomain } from '../../../../utils/domain';
 import { generateAIStories } from '../../../../utils/groqAnalysis';
+import { ALL_COUNTRIES, CountryData } from '../../../top-sites/data/countries';
+import { getRegionalProfile } from '../../../top-sites/data/regionalProfiles';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
@@ -225,6 +227,100 @@ export async function GET(request: Request) {
       }
     }
 
+    // ── Country-specific rankings refresh (runs daily, after global sync) ──────
+    // For each country: call Cloudflare Radar with location=cfCode, match domains
+    // to our sites database, upsert to country_rankings table.
+    // getCountrySites.ts reads this table and falls back to live Radar if stale.
+    if (cfRadarToken) {
+      try {
+        console.log('Unified Cron: Starting country-specific rankings refresh...');
+
+        // Build domain → siteId lookup from current sites
+        const domainToSiteId = new Map<string, string>();
+        sites.forEach((site: any) => {
+          const host = site.url
+            .replace(/https?:\/\/(www\.)?/, '')
+            .split('/')[0]
+            .toLowerCase();
+          domainToSiteId.set(host, site.id);
+        });
+
+        const BATCH_SIZE = 5;
+        const BATCH_DELAY_MS = 300; // stay within Cloudflare rate limits
+        let countriesProcessed = 0;
+        let countriesWithRadarData = 0;
+        let countriesWithFallback = 0;
+
+        for (let i = 0; i < ALL_COUNTRIES.length; i += BATCH_SIZE) {
+          const batch = ALL_COUNTRIES.slice(i, i + BATCH_SIZE);
+
+          await Promise.all(batch.map(async (country: CountryData) => {
+            try {
+              const cfRes = await fetch(
+                `https://api.cloudflare.com/client/v4/radar/ranking/top?limit=100&location=${country.cfCode}&format=json`,
+                {
+                  headers: { 'Authorization': `Bearer ${cfRadarToken}`, 'Accept': 'application/json' },
+                  signal: AbortSignal.timeout(8000),
+                }
+              );
+
+              let siteIds: string[] = [];
+              let source = 'radar';
+
+              if (cfRes.ok) {
+                const cfData = await cfRes.json();
+                if (cfData.success && cfData.result?.top_0) {
+                  for (const item of cfData.result.top_0 as { domain: string }[]) {
+                    const domain = item.domain.toLowerCase().replace(/^www\./, '');
+                    const id = domainToSiteId.get(domain);
+                    if (id && !siteIds.includes(id)) siteIds.push(id);
+                    if (siteIds.length >= 20) break;
+                  }
+                }
+              }
+
+              // Fall back to regional profile if Radar returned < 10 matches
+              if (siteIds.length < 10) {
+                const regionalIds = getRegionalProfile(country.cfCode);
+                // Merge: keep radar results first, fill with regional
+                const combined = [...siteIds];
+                for (const id of regionalIds) {
+                  if (!combined.includes(id)) combined.push(id);
+                  if (combined.length >= 20) break;
+                }
+                siteIds = combined;
+                source = siteIds.length >= 10 && countriesWithRadarData > 0 ? 'regional-profile' : 'regional-profile';
+                countriesWithFallback++;
+              } else {
+                countriesWithRadarData++;
+              }
+
+              // Upsert to Supabase
+              await supabase.from('country_rankings').upsert({
+                cf_code: country.cfCode.toUpperCase(),
+                site_ids: siteIds.slice(0, 20),
+                source,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'cf_code' });
+
+              countriesProcessed++;
+            } catch (countryErr) {
+              console.warn(`Cron: Country rankings failed for ${country.cfCode}:`, countryErr);
+            }
+          }));
+
+          // Rate limit pause between batches
+          if (i + BATCH_SIZE < ALL_COUNTRIES.length) {
+            await new Promise((r) => setTimeout(r, BATCH_DELAY_MS));
+          }
+        }
+
+        console.log(`Unified Cron: Country rankings refreshed - ${countriesProcessed} countries, ${countriesWithRadarData} with Radar data, ${countriesWithFallback} with regional fallback.`);
+      } catch (countryRankErr) {
+        console.warn('Unified Cron: Country rankings refresh failed:', countryRankErr);
+      }
+    }
+
     // 3. Query Open PageRank API for all domains in one single request
     const domainsList = sites.map((s: any) => parseDomain(s.url));
     const domainsQuery = domainsList.map((d: string) => `domains[]=${d}`).join('&');
@@ -252,7 +348,7 @@ export async function GET(request: Request) {
       });
     }
 
-    // 4. Enrich keywords only (traffic is computed from rank — no external traffic APIs needed)
+    // 4. Enrich keywords only (traffic is computed from rank - no external traffic APIs needed)
     const keKeywordsMap: Record<string, string[] | null> = {};
 
     // Process keywords in parallel batches of 20 (lightweight: only keyword fetches)
@@ -277,7 +373,7 @@ export async function GET(request: Request) {
     }
 
     // 5. Compute traffic from Cloudflare Radar rank using power law model
-    // This is the primary traffic estimation — derived from rank position,
+    // This is the primary traffic estimation - derived from rank position,
     // not from external scraping or credit-burning APIs.
     let maxRate = estimateTrafficFromRank(1).rate; // Google's estimated rate
 
@@ -383,7 +479,7 @@ export async function GET(request: Request) {
       console.log(`Unified Cron: Updated rank_history for ${rankHistoryUpdates.length} sites.`);
     }
 
-    // 7c-pre. Write site_history snapshot — one row per site per run.
+    // 7c-pre. Write site_history snapshot - one row per site per run.
     // This is the PRIMARY data source for the Trending page (Strategy 1).
     // Each run stamps a consistent recorded_at so the trending page can diff
     // the two most recent distinct timestamps to get real rank deltas.
@@ -405,7 +501,7 @@ export async function GET(request: Request) {
     }
     console.log(`Unified Cron: Wrote ${siteHistoryRows.length} rows to site_history at ${siteHistoryTimestamp}.`);
 
-    // Prune site_history — keep only the last 8 days (32 snapshots at 6h cadence)
+    // Prune site_history - keep only the last 8 days (32 snapshots at 6h cadence)
     // to prevent unbounded table growth.
     try {
       const pruneDate = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);

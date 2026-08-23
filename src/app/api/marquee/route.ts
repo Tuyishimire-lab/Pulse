@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { STATIC_TRAFFIC_FACTS } from '../../../data/marquee';
 
 export const revalidate = 60;
@@ -156,11 +156,11 @@ export async function GET(req: Request) {
         }
       }
     } catch {
-      // Non-critical — skip silently
+      // Non-critical - skip silently
     }
   }
 
-  // ── 2. Live Statuspage checks — 15 major platforms ───────────────────────
+  // ── 2. Live Statuspage checks - 15 major platforms ───────────────────────
   try {
     const results = await Promise.allSettled(
       STATUS_SITES.map((site) =>
@@ -188,7 +188,7 @@ export async function GET(req: Request) {
 
       let text: string;
       if (activeIncident) {
-        text = `${label}: ${site.name} — ${sentence(clean(activeIncident.name, 90))}`;
+        text = `${label}: ${site.name} - ${sentence(clean(activeIncident.name, 90))}`;
       } else {
         const description = data.status?.description ?? 'experiencing a service disruption';
         text = `${label}: ${site.name} is currently ${description.toLowerCase()}.`;
@@ -203,7 +203,7 @@ export async function GET(req: Request) {
     console.error('[marquee] Statuspage batch failed:', e);
   }
 
-  // ── 3. HackerNews RSS — breaking internet & tech news ────────────────────
+  // ── 3. HackerNews RSS - breaking internet & tech news ────────────────────
   try {
     const res = await fetch('https://news.ycombinator.com/rss', {
       next: { revalidate: 300 },
@@ -239,7 +239,7 @@ export async function GET(req: Request) {
     console.error('[marquee] HackerNews RSS failed:', e);
   }
 
-  // ── 4. Reddit r/outages RSS — user-reported outages ──────────────────────
+  // ── 4. Reddit r/outages RSS - user-reported outages ──────────────────────
   try {
     const res = await fetch('https://www.reddit.com/r/outages.rss?limit=10', {
       headers: { 'User-Agent': 'Pulse Traffic Monitor/1.0' },
@@ -265,7 +265,7 @@ export async function GET(req: Request) {
       });
     }
   } catch {
-    // Reddit may throttle — fail silently
+    // Reddit may throttle - fail silently
   }
 
   // ── 5. Deduplicate by normalised full text ────────────────────────────────

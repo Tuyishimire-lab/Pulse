@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
@@ -500,7 +500,7 @@ export default function SitePageClient({ id }: { id: string }) {
                         className="chart-dot"
                         style={{ ['--brand-color' as any]: site.color }}
                       >
-                        <title>{`${pt.label} — Capacity: ${pt.value}%`}</title>
+                        <title>{`${pt.label} - Capacity: ${pt.value}%`}</title>
                       </circle>
                     )
                   ))}

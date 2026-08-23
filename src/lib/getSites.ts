@@ -1,5 +1,5 @@
-/**
- * getSites.ts — Unified Site Data Fetcher
+﻿/**
+ * getSites.ts - Unified Site Data Fetcher
  *
  * Single source of truth for site data across all surfaces:
  *   - Live Dashboard    (page.tsx → HomeClient.tsx)

@@ -76,6 +76,46 @@ function HealthMeter({ score }: { score: number }) {
   );
 }
 
+function ShareRow({ report }: { report: WeeklyReport }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const reportUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/report/${report.slug}`
+    : `https://www.pulstraffic.com/report/${report.slug}`;
+
+  const xText = encodeURIComponent(
+    `Week ${report.weekNumber}, ${report.year} Internet Pulse: ${report.totalTopSitesVisitsPerSec.toLocaleString()} req/s across 100 sites, health score ${report.internetHealthScore}/100. #WebTraffic #Pulse`
+  );
+  const xUrl = `https://x.com/intent/tweet?text=${xText}&url=${encodeURIComponent(reportUrl)}`;
+
+  function copyLink() {
+    navigator.clipboard.writeText(reportUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 mb-10">
+      <span className="text-xs text-[#6d8196]">Share this report:</span>
+      <button
+        onClick={copyLink}
+        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-white/[0.08] text-[#94a3b8] hover:text-white hover:border-white/20 hover:bg-white/[0.04] transition-all"
+      >
+        {copied ? '✓ Copied' : '🔗 Copy link'}
+      </button>
+      <a
+        href={xUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-white/[0.08] text-[#94a3b8] hover:text-white hover:border-white/20 hover:bg-white/[0.04] transition-all"
+      >
+        𝕏 Share on X
+      </a>
+    </div>
+  );
+}
+
 export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) {
   const publishedDate = new Date(report.publishedDate).toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -132,14 +172,18 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                 key={i}
                 className="rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3.5 flex flex-col justify-between gap-1 min-h-[100px]"
               >
-                {/* Label — fixed height so all values start at the same Y */}
+                {/* Label - fixed height so all values start at the same Y */}
                 <div className="min-h-[2.5rem] flex items-start">
                   <span className="text-[10px] font-bold text-[#82c8e5] uppercase tracking-widest leading-tight">
                     {stat.label}
                   </span>
                 </div>
-                {/* Value — never wraps */}
-                <div className="text-xl sm:text-2xl font-extrabold text-white leading-tight tabular-nums whitespace-nowrap overflow-hidden text-ellipsis">
+            {/* Value */}
+                <div
+                  className={`font-extrabold text-white leading-tight tabular-nums ${
+                    stat.value.length > 12 ? 'text-lg' : 'text-xl sm:text-2xl'
+                  }`}
+                >
                   {stat.value}
                 </div>
                 {/* Note */}
@@ -153,19 +197,28 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
         <section className="mb-10 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 flex flex-col sm:flex-row items-center gap-6">
           <HealthMeter score={report.internetHealthScore} />
           <div className="flex-1">
-            <h2 className="text-base font-bold text-white mb-2">This week's internet health</h2>
-            <p className="text-sm text-[#94a3b8] leading-relaxed">
-              The Internet Health Score is a composite metric calculated from the uptime status of all 100 monitored platforms,
-              Cloudflare Radar routing anomaly counts, and reported incident severity. A score of{' '}
-              <strong className="text-white">{report.internetHealthScore}</strong> indicates the internet is operating near optimal capacity with no major widespread disruptions this week.
+            <h2 className="text-base font-bold text-white mb-2">This week&apos;s internet health</h2>
+            <p className="text-sm text-[#94a3b8] leading-relaxed mb-3">
+              {report.internetHealthScore} / 100
+              {report.outageCount === 0
+                ? ' - No outages detected. All 100 tracked sites operated normally this week.'
+                : ` - ${report.outageCount} outage${report.outageCount > 1 ? 's' : ''} detected. All other tracked sites operated normally.`}
             </p>
-            <div className="flex items-center gap-3 mt-3">
+            <details className="group">
+              <summary className="text-xs text-[#6d8196] cursor-pointer hover:text-[#82c8e5] transition-colors list-none flex items-center gap-1 select-none">
+                <span className="group-open:hidden">▸ How is this calculated?</span>
+                <span className="hidden group-open:inline">▾ How is this calculated?</span>
+              </summary>
+              <p className="text-xs text-[#6d8196] leading-relaxed mt-2 pl-3 border-l border-white/10">
+                Score = <strong className="text-white">100 - (8 × outage count)</strong>, minimum 40.
+                An outage is any tracked site returning sustained 5xx errors during the week.
+              </p>
+            </details>
+            <div className="mt-3">
               <span className="text-xs text-[#6d8196]">
-                Combined traffic rate:{' '}
-                <strong className="text-white">
-                  {report.totalTopSitesVisitsPerSec.toLocaleString()} req/s
-                </strong>{' '}
-                across all 100 tracked sites.
+                Combined rate:{' '}
+                <strong className="text-white">{report.totalTopSitesVisitsPerSec.toLocaleString()} req/s</strong>
+                {' '}across all 100 tracked sites.
               </span>
             </div>
           </div>
@@ -173,8 +226,22 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
 
         {/* Top Movers */}
         <section className="mb-10">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-             Top Rank Movers This Week
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2 flex-wrap">
+             {report.hasRealMovers
+               ? 'Top Rank Movers This Week'
+               : report.isLive
+                 ? 'Top Sites by Traffic This Week'
+                 : 'Top Sites This Week'}
+             {!report.hasRealMovers && report.isLive && (
+               <span className="text-[10px] font-normal text-[#6d8196] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
+                 No significant rank changes in the top 30 this week
+               </span>
+             )}
+             {!report.isLive && (
+               <span className="text-[10px] font-normal text-[#6d8196] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
+                 No comparison data available
+               </span>
+             )}
           </h2>
 
           <div className="space-y-3">
@@ -215,15 +282,16 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                   <p className="text-xs text-[#6d8196] mt-0.5 leading-relaxed line-clamp-2">{mover.highlight}</p>
                 </div>
 
-                {/* Rate + Traffic Delta */}
+                {/* Rate + Traffic Delta - only show delta when live data exists */}
                 <div className="text-right flex-shrink-0 hidden sm:block">
                   <div className="text-xs font-mono font-bold text-emerald-400">{mover.site.rate.toLocaleString()}/s</div>
-                  {mover.trafficDelta !== 0 ? (
-                    <div className={`text-[10px] font-bold ${mover.trafficDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {mover.trafficDelta > 0 ? '+' : ''}{mover.trafficDelta.toFixed(1)}%
+                  {report.isLive && mover.trafficDelta !== 0 && (
+                    <div
+                      className="text-[10px] font-semibold mt-0.5"
+                      style={{ color: mover.trafficDelta >= 0 ? '#4ade80' : '#f87171' }}
+                    >
+                      {mover.trafficDelta >= 0 ? '+' : ''}{mover.trafficDelta.toFixed(1)}%
                     </div>
-                  ) : (
-                    <div className="text-[10px] text-[#6d8196]">req/sec</div>
                   )}
                 </div>
               </Link>
@@ -270,7 +338,8 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                 <tr className="border-b border-white/[0.06]">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Category</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Sites</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Est. Monthly</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden sm:table-cell">Est. Monthly</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden md:table-cell">Share</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">vs Last Wk</th>
                 </tr>
               </thead>
@@ -284,7 +353,20 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
                       </div>
                     </td>
                     <td className="px-5 py-3 text-right text-xs text-[#94a3b8]">{cat.count}</td>
-                    <td className="px-5 py-3 text-right text-xs font-semibold text-white">{cat.totalBaseline}</td>
+                    <td className="px-5 py-3 text-right text-xs font-semibold text-white hidden sm:table-cell">{cat.totalBaseline}</td>
+                    <td className="px-5 py-3 hidden md:table-cell">
+                      {cat.sharePercent !== undefined && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${Math.min(100, cat.sharePercent)}%`, backgroundColor: cat.color }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-[#6d8196] tabular-nums w-8 text-right">{cat.sharePercent.toFixed(0)}%</span>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-right text-xs font-bold">
                       {cat.weekOverWeekChange !== undefined ? (
                         <span className={cat.weekOverWeekChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
@@ -302,13 +384,13 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
         </section>
 
         {/* Week Navigation */}
-        <div className="flex items-center justify-between gap-4 mb-10">
+        <div className="flex items-center justify-between gap-4 mb-6">
           {prevSlug ? (
             <Link
               href={`/report/${prevSlug}`}
               className="flex items-center gap-2 text-sm text-[#6d8196] hover:text-white transition-colors px-4 py-2 rounded-xl border border-white/[0.06] hover:border-white/10"
             >
-              ← Previous week
+              &larr; Previous week
             </Link>
           ) : <span />}
           {nextSlug ? (
@@ -316,12 +398,15 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
               href={`/report/${nextSlug}`}
               className="flex items-center gap-2 text-sm text-[#6d8196] hover:text-white transition-colors px-4 py-2 rounded-xl border border-white/[0.06] hover:border-white/10"
             >
-              Next week →
+              Next week &rarr;
             </Link>
           ) : (
             <span className="text-xs text-[#6d8196]">This is the latest report.</span>
           )}
         </div>
+
+        {/* Share row */}
+        <ShareRow report={report} />
 
 
       </div>

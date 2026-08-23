@@ -1,4 +1,4 @@
-/**
+﻿/**
  * generateDynamicPair.ts
  *
  * Generates a ComparePair for any two valid site IDs not already in pairs.ts.
@@ -123,7 +123,7 @@ async function fetchSitePair(
 /**
  * Main entry point. Returns a ComparePair or null if either site ID is invalid.
  *
- * Cache hit:  Supabase read only — no Groq call.
+ * Cache hit:  Supabase read only - no Groq call.
  * Cache miss: Supabase read + 1 Groq call + Supabase write.
  */
 export async function generateDynamicPair(
@@ -153,7 +153,7 @@ export async function generateDynamicPair(
         };
       }
     } catch {
-      // Cache miss — continue to generation
+      // Cache miss - continue to generation
     }
   }
 
@@ -197,7 +197,7 @@ export async function generateDynamicPair(
         { onConflict: 'pair_slug' },
       );
     } catch {
-      // Non-fatal — page still renders even if cache write fails
+      // Non-fatal - page still renders even if cache write fails
     }
   }
 

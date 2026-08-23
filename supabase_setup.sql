@@ -68,6 +68,17 @@ CREATE TABLE IF NOT EXISTS public.compare_cache (
   generated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Country Rankings Cache: stores Cloudflare Radar per-country site rankings
+-- Written by the daily cron job; read by top-sites country pages.
+-- If updated_at is > 25 hours ago (stale), pages fall back to live Radar lookup.
+-- source: 'radar' | 'regional_profile' | 'smart_filter'
+CREATE TABLE IF NOT EXISTS public.country_rankings (
+  cf_code     TEXT PRIMARY KEY,           -- ISO 3166-1 alpha-2, e.g. 'RW', 'US'
+  site_ids    TEXT[] NOT NULL DEFAULT '{}', -- ordered array of site IDs (max 20)
+  source      TEXT NOT NULL DEFAULT 'radar', -- data provenance label
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.traffic_history ENABLE ROW LEVEL SECURITY;

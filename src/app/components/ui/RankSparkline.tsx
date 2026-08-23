@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useMemo } from 'react';
 
@@ -24,8 +24,8 @@ export default function RankSparkline({ history, color }: RankSparklineProps) {
     const delta = first - last; // positive = improved (rank decreased)
 
     let sc = '#6d8196'; // neutral gray
-    if (delta > 0) sc = '#10b981'; // improved — green
-    else if (delta < 0) sc = '#ef4444'; // declined — red
+    if (delta > 0) sc = '#10b981'; // improved - green
+    else if (delta < 0) sc = '#ef4444'; // declined - red
 
     const W = 60;
     const H = 20;

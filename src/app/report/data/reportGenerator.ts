@@ -51,11 +51,13 @@ export interface WeeklyReport {
     count: number;
     totalBaseline: string;
     color: string;
-    weekOverWeekChange?: number; // percentage
+    weekOverWeekChange?: number;
+    sharePercent?: number;
   }[];
   stories: { title: string; summary: string; tag: string; tagColor: string }[];
   quickStats: { label: string; value: string; note: string }[];
-  isLive: boolean; // true if generated from real snapshot data
+  isLive: boolean;
+  hasRealMovers: boolean; // true when at least one top-30 site moved >= 2 positions
 }
 
 interface WeeklySnapshot {
@@ -175,48 +177,69 @@ async function fetchSnapshot(slug: string): Promise<WeeklySnapshot | null> {
 function computeTopMovers(
   current: SiteSummary[],
   previous: SiteSummary[] | null,
-): TopMover[] {
+): { movers: TopMover[]; hasRealMovers: boolean } {
+  // Filter to top-30 sites only - lower-ranked sites are low-signal noise
+  const top30 = current.filter((s) => s.rank <= 30);
+
   if (!previous) {
-    // No previous week — sort current sites by rank ascending and return top 5
-    const sortedByRank = [...current].sort((a, b) => a.rank - b.rank);
-    return sortedByRank.slice(0, 5).map((site) => ({
-      site,
-      highlight: `Currently ranked #${site.rank} with ${site.baseline} monthly visits.`,
-      rankChange: 0,
-      trafficDelta: 0,
-    }));
+    // No previous week - show top 5 by rank
+    return {
+      movers: top30.slice(0, 5).map((site) => ({
+        site,
+        highlight: `Ranked #${site.rank} with ${site.baseline} monthly visits.`,
+        rankChange: 0,
+        trafficDelta: 0,
+      })),
+      hasRealMovers: false,
+    };
   }
 
   const prevMap = new Map(previous.map((s) => [s.id, s]));
 
-  // Score each site by rank improvement + traffic growth
-  const scored = current.map((site) => {
-    const prev = prevMap.get(site.id);
-    const rankChange = prev ? prev.rank - site.rank : 0; // positive = improved
-    const trafficDelta = prev && prev.rate > 0
-      ? ((site.rate - prev.rate) / prev.rate) * 100
-      : 0;
+  // Score each top-30 site, require |rankChange| >= 2 to be a meaningful mover
+  const qualifiedMovers = top30
+    .map((site) => {
+      const prev = prevMap.get(site.id);
+      const rankChange = prev ? prev.rank - site.rank : 0;
+      const trafficDelta = prev && prev.rate > 0
+        ? ((site.rate - prev.rate) / prev.rate) * 100
+        : 0;
+      return { site, rankChange, trafficDelta };
+    })
+    .filter((s) => Math.abs(s.rankChange) >= 2)
+    .sort((a, b) => {
+      if (Math.abs(b.rankChange) !== Math.abs(a.rankChange))
+        return Math.abs(b.rankChange) - Math.abs(a.rankChange);
+      return b.trafficDelta - a.trafficDelta;
+    });
 
-    return { site, rankChange, trafficDelta };
-  });
+  const hasRealMovers = qualifiedMovers.length > 0;
 
-  // Sort by rank improvement first, then traffic growth
-  scored.sort((a, b) => {
-    if (b.rankChange !== a.rankChange) return b.rankChange - a.rankChange;
-    return b.trafficDelta - a.trafficDelta;
-  });
+  // If fewer than 3 qualify, fill with top sites by traffic rate (no 'held steady' filler)
+  const result = qualifiedMovers.slice(0, 5);
+  if (result.length < 3) {
+    const used = new Set(result.map((r) => r.site.id));
+    const filler = top30
+      .filter((s) => !used.has(s.id))
+      .sort((a, b) => b.rate - a.rate)
+      .slice(0, 5 - result.length)
+      .map((site) => ({ site, rankChange: 0, trafficDelta: 0 }));
+    result.push(...filler);
+  }
 
-  return scored.slice(0, 5).map(({ site, rankChange, trafficDelta }) => {
+  const mappedMovers = result.map(({ site, rankChange, trafficDelta }) => {
     let highlight: string;
     if (rankChange > 0) {
       highlight = `Climbed ${rankChange} position${rankChange > 1 ? 's' : ''} to #${site.rank}. Traffic ${trafficDelta >= 0 ? 'up' : 'down'} ${Math.abs(trafficDelta).toFixed(1)}% at ${site.baseline}/mo.`;
     } else if (rankChange < 0) {
       highlight = `Dropped ${Math.abs(rankChange)} position${Math.abs(rankChange) > 1 ? 's' : ''} to #${site.rank}. Traffic shifted ${trafficDelta >= 0 ? '+' : ''}${trafficDelta.toFixed(1)}%.`;
     } else {
-      highlight = `Held steady at #${site.rank} with ${site.baseline} monthly visits.`;
+      highlight = `Currently #${site.rank} - ${site.baseline} monthly visits.`;
     }
     return { site, highlight, rankChange, trafficDelta: Math.round(trafficDelta * 10) / 10 };
   });
+
+  return { movers: mappedMovers, hasRealMovers };
 }
 
 function generateDynamicStories(
@@ -323,7 +346,7 @@ function computeHealthScore(outageCount: number): number {
   return Math.max(40, 100 - outageCount * 8);
 }
 
-/* ── Main generator (async — fetches from Supabase) ─────────────────────── */
+/* ── Main generator (async - fetches from Supabase) ─────────────────────── */
 
 export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<WeeklyReport> {
   let slug: string;
@@ -357,7 +380,7 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
   const previousSites = previousSnapshot?.sites_data ?? null;
 
   // Compute deltas
-  const topMovers = computeTopMovers(currentSites, previousSites);
+  const { movers: topMovers, hasRealMovers } = computeTopMovers(currentSites, previousSites);
 
   const trafficChangePercent = previousSnapshot && previousSnapshot.total_rate > 0
     ? ((currentSnapshot.total_rate - previousSnapshot.total_rate) / previousSnapshot.total_rate) * 100
@@ -375,7 +398,10 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
 
   const healthScore = computeHealthScore(currentSnapshot.outage_count);
 
-  // Category breakdown with week-over-week change
+  // Category breakdown with week-over-week change + traffic share bar
+  const totalCatRateForBreakdown = Object.values(currentSnapshot.category_totals)
+    .reduce((sum, c) => sum + c.totalRate, 0);
+
   const categoryBreakdown = Object.entries(currentSnapshot.category_totals)
     .sort((a, b) => b[1].totalRate - a[1].totalRate)
     .map(([cat, cur]) => {
@@ -383,6 +409,9 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
       const wowChange = prev && prev.totalRate > 0
         ? ((cur.totalRate - prev.totalRate) / prev.totalRate) * 100
         : undefined;
+      const sharePercent = totalCatRateForBreakdown > 0
+        ? Math.round((cur.totalRate / totalCatRateForBreakdown) * 1000) / 10
+        : 0;
 
       return {
         category: cat,
@@ -391,6 +420,7 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
         totalBaseline: `${((cur.totalRate * 2592000) / 1e9).toFixed(1)}B / mo`,
         color: CATEGORY_META[cat]?.color ?? '#888',
         weekOverWeekChange: wowChange !== undefined ? Math.round(wowChange * 10) / 10 : undefined,
+        sharePercent,
       };
     });
 
@@ -401,13 +431,27 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
     categoryBreakdown[0],
   );
 
+  // Traffic delta context suffix
+  function trafficDeltaNote(delta: number): string {
+    if (delta === 0) return 'Across all monitored sites';
+    const arrow = delta >= 0 ? '▲' : '▼';
+    const abs = Math.abs(delta).toFixed(1);
+    let context = '';
+    if (Math.abs(delta) < 1.5) context = ' (normal variance)';
+    else if (delta <= -3) context = ' (notable drop)';
+    else if (delta >= 3) context = ' (strong week)';
+    return `${arrow} ${abs}% vs last week${context}`;
+  }
+
+  // Total rate for share percent calculation
+  const totalCatRate = Object.values(currentSnapshot.category_totals)
+    .reduce((sum, c) => sum + c.totalRate, 0);
+
   const quickStats = [
     {
       label: 'Total Tracked Traffic',
       value: `${currentSnapshot.total_rate.toLocaleString()}/s`,
-      note: trafficChangePercent !== 0
-        ? `${trafficChangePercent >= 0 ? '▲' : '▼'} ${Math.abs(trafficChangePercent).toFixed(1)}% vs last week`
-        : 'Across all monitored sites',
+      note: trafficDeltaNote(trafficChangePercent),
     },
     {
       label: 'Most Visited Site',
@@ -446,6 +490,7 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
     stories,
     quickStats,
     isLive: true,
+    hasRealMovers,
   };
 }
 
@@ -531,6 +576,7 @@ async function generateStaticReport(monday: Date, week: number, year: number, sl
       { label: 'Internet Health', value: '94 / 100', note: 'All systems operational' },
     ],
     isLive: false,
+    hasRealMovers: false,
   };
 }
 

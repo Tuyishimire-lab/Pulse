@@ -1,7 +1,7 @@
-export const runtime = 'edge';
+﻿export const runtime = 'edge';
 
 /**
- * Ping endpoint — returns the smallest possible response as fast as possible.
+ * Ping endpoint - returns the smallest possible response as fast as possible.
  * Used for latency measurement. Cache-busting is handled by the client via
  * a random query param (?cb=...).
  */

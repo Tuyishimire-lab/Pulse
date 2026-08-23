@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 export const revalidate = 300; // Revalidate at most once every 5 minutes
 
@@ -177,7 +177,7 @@ export async function GET(req: Request) {
 
     // 4. Fetch IQI Summary (Network Health Quality Metrics)
     // Real API shape: each metric needs a separate request with ?metric=bandwidth|latency|dns
-    // Response: result.summary_0.{ p25, p50, p75 } — we use p50 (median)
+    // Response: result.summary_0.{ p25, p50, p75 } - we use p50 (median)
     let qualityData = mockQuality;
     try {
       const iqiBase = `https://api.cloudflare.com/client/v4/radar/quality/iqi/summary?dateRange=7d&format=json${locationQuery}`;

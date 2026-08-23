@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -49,10 +49,10 @@ export default function Footer() {
               <span className="footer-logo-text">Pulse</span>
             </Link>
             <p className="footer-tagline">
-              Real-time global web traffic intelligence. Visualizing the top 100 most visited websites with live data streams.
+              The transparent, model-driven index of global web traffic. Visualizing the top 100+ most visited websites with statistical estimates.
             </p>
             <p className="footer-source">
-              Data sourced from Semrush &amp; Similarweb {year} estimates, Cloudflare Radar telemetry, and public panel benchmarks.
+              Powered by the Pulse Traffic Index (PTI): Cloudflare Radar DNS telemetry, Tranco rankings, Open PageRank, and Groq AI momentum signals.
             </p>
           </div>
 
@@ -73,6 +73,7 @@ export default function Footer() {
             <h4 className="footer-col-title">Resources</h4>
             <ul className="footer-links">
               <li><Link href="/methodology">Data &amp; Methodology</Link></li>
+              <li><Link href="/about">About Pulse</Link></li>
               <li><Link href="/privacy">Privacy Policy</Link></li>
               <li><Link href="/terms">Terms of Service</Link></li>
             </ul>
@@ -94,7 +95,7 @@ export default function Footer() {
         {/* ── Methodology disclaimer ───────────────────────────────── */}
         <div className="footer-disclaimer">
           <p>
-            <strong>Methodology:</strong> Pulse metrics are statistical models derived from public panel benchmarks, Cloudflare Radar network telemetry, and published industry estimates. Pulse is not a direct server tap like Similarweb, Worldometer, or Statista, it uses statistical modeling to visualize global web traffic at scale.
+            <strong>Methodology:</strong> Pulse metrics are produced by the Pulse Traffic Index (PTI) - a statistical model combining Cloudflare Radar DNS telemetry, Tranco global rankings, Open PageRank authority scores, and Groq AI momentum signals. Pulse is not a real-time server tap; it is an independent probabilistic estimate. Mean error margin: ~34.6%. <Link href="/methodology" className="underline hover:text-white transition-colors">Full methodology →</Link>
           </p>
         </div>
 

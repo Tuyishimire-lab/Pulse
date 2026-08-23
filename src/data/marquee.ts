@@ -1,18 +1,18 @@
-/**
+﻿/**
  * Static real-world traffic facts used as marquee fallback content
  * when no live outage or news data is available.
  *
  * All figures are sourced from public 2024-2026 industry reports
- * (Semrush, Similarweb, Cloudflare Radar, Statista).
+ * (Cloudflare Radar, Tranco, Wikipedia Foundation, corporate press releases).
  * No fake or randomly generated data.
  */
 export const STATIC_TRAFFIC_FACTS: { text: string; type: string }[] = [
-  { text: "TRAFFIC INSIGHT: Google processes approximately 8.5 billion searches per day — roughly 99,000 every second.", type: "insight" },
+  { text: "TRAFFIC INSIGHT: Google processes approximately 8.5 billion searches per day - roughly 99,000 every second.", type: "insight" },
   { text: "TRAFFIC INSIGHT: YouTube serves over 1 billion hours of video per day across its global user base.", type: "insight" },
   { text: "TRAFFIC INSIGHT: Facebook has over 3 billion monthly active users, making it the world's largest social network.", type: "insight" },
   { text: "TRAFFIC INSIGHT: Wikipedia hosts over 60 million articles across 300+ languages and serves 18 billion page views per month.", type: "insight" },
   { text: "TRAFFIC INSIGHT: Amazon processes over 66,000 orders per hour on average, with peaks exceeding 300,000 during Prime Day.", type: "insight" },
-  { text: "TRAFFIC INSIGHT: ChatGPT reached 100 million users in just 2 months — the fastest consumer app to do so in history.", type: "insight" },
+  { text: "TRAFFIC INSIGHT: ChatGPT reached 100 million users in just 2 months - the fastest consumer app to do so in history.", type: "insight" },
   { text: "TRAFFIC INSIGHT: Reddit has 1.2 billion monthly active users and over 100,000 active communities.", type: "insight" },
   { text: "TRAFFIC INSIGHT: TikTok users spend an average of 95 minutes per day on the platform globally.", type: "insight" },
   { text: "TRAFFIC INSIGHT: Netflix accounts for approximately 15% of global internet downstream traffic during peak hours.", type: "insight" },
