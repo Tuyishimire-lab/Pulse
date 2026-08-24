@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { SiteConfig, CATEGORIES } from '../data/sites';
 import { ComparePair } from './data/pairs';
 import NavHeader from '../components/NavHeader';
+import { CURRENT_YEAR } from '../../lib/currentYear';
 
 interface Props {
   sites: SiteConfig[];
@@ -106,8 +107,13 @@ export default function CompareHubClient({ sites, pairs }: Props) {
           <span className="text-white font-medium">Traffic Engine</span>
         </nav>
 
-        {/* Horizontal comparison pairs pill strip */}
-        <div className="mb-8 -mx-4 sm:-mx-6">
+        {/*
+          Pill strip: purely decorative scroll-bar navigation aid.
+          The same pairs appear in the searchable grid below, so this element
+          is aria-hidden to prevent screen readers from traversing duplicate links.
+          Keyboard users can reach all pairs via the main grid.
+        */}
+        <div className="mb-8 -mx-4 sm:-mx-6" aria-hidden="true">
           <div
             className="flex gap-2 overflow-x-auto px-4 sm:px-6 pb-2"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -118,8 +124,9 @@ export default function CompareHubClient({ sites, pairs }: Props) {
               return (
                 <Link
                   key={p.slug}
-                  href={`/compare/${p.slug}`}
+                  href={'/compare/' + p.slug}
                   className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/[0.08] text-[#6d8196] hover:text-white hover:border-white/20 hover:bg-white/[0.04] transition-all whitespace-nowrap"
+                  tabIndex={-1}
                 >
                   <span>{sA?.name ?? p.siteAId} vs {sB?.name ?? p.siteBId}</span>
                 </Link>
@@ -151,7 +158,7 @@ export default function CompareHubClient({ sites, pairs }: Props) {
             <span className="bg-gradient-to-r from-white via-white to-[#82c8e5] bg-clip-text text-transparent">
               Real-Time
             </span>
-            <span className="text-[#6d8196] font-semibold text-xl"> (2026)</span>
+            <span className="text-[#6d8196] font-semibold text-xl"> ({CURRENT_YEAR})</span>
           </h1>
 
           {/* Description Blockquote Accent */}

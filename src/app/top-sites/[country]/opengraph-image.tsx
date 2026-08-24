@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { SITES } from '../../data/sites';
 import { getCountryBySlug } from '../data/countries';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 
 export const runtime = 'edge';
 export const alt = 'Most Visited Websites by Country Analytics';
@@ -84,7 +85,7 @@ export default async function Image({ params }: Props) {
                   Most Visited Websites in {name}
                 </div>
                 <div style={{ fontSize: '18px', color: '#82c8e5', fontWeight: 600, marginTop: '4px' }}>
-                  {internetUsers} Internet Users · {penetration} Penetration (2026)
+                  {internetUsers} Internet Users · {penetration} Penetration ({CURRENT_YEAR})
                 </div>
               </div>
             </div>

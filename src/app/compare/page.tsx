@@ -1,18 +1,19 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import { getSites } from '../../lib/getSites';
 import { COMPARE_PAIRS } from './data/pairs';
 import CompareHubWrapper from './CompareHubWrapper';
 import Link from 'next/link';
+import { CURRENT_YEAR } from '../../lib/currentYear';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
 export const metadata: Metadata = {
-  title: 'Compare Website Traffic, Ranks & Visitor Metrics (2026) | Pulse',
+  title: `Compare Website Traffic, Ranks & Visitor Metrics (${CURRENT_YEAR}) | Pulse`,
   description:
     'Compare web traffic, global rankings, and statistical visitor metrics between any two top websites. Powered by the Pulse Traffic Index (PTI).',
   alternates: { canonical: `${BASE_URL}/compare` },
   openGraph: {
-    title: 'Compare Website Traffic, Ranks & Visitor Metrics (2026) | Pulse',
+    title: `Compare Website Traffic, Ranks & Visitor Metrics (${CURRENT_YEAR}) | Pulse`,
     description:
       'Compare web traffic, global rankings, and statistical visitor metrics between any two top websites. Powered by the Pulse Traffic Index (PTI).',
     url: `${BASE_URL}/compare`,
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Compare Website Traffic, Ranks & Visitor Metrics (2026) | Pulse',
+    title: `Compare Website Traffic, Ranks & Visitor Metrics (${CURRENT_YEAR}) | Pulse`,
     description:
       'Compare web traffic, global rankings, and statistical visitor metrics between any two top websites.',
     images: [`${BASE_URL}/opengraph-image`],

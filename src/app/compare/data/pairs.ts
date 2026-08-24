@@ -1,4 +1,4 @@
-﻿// Pre-defined compare pairs for /compare/[pair] SSG pages
+// Pre-defined compare pairs for /compare/[pair] SSG pages
 // Each pair targets a high-search-volume query
 import { SITES } from '../../data/sites';
 
@@ -206,9 +206,9 @@ export const COMPARE_PAIRS: ComparePair[] = [
   },
   {
     slug: 'openai-vs-google',
-    siteAId: 'chatgpt',
+    siteAId: 'openai',
     siteBId: 'google',
-    verdict: 'Google\'s monthly traffic dwarfs OpenAI\'s, but ChatGPT remains the fastest-growing consumer internet product ever. The real battle is for the future of how people find information online.',
+    verdict: 'Google\'s monthly traffic dwarfs OpenAI\'s, but the ChatGPT product remains the fastest-growing consumer internet product ever. The real battle is for the future of how people find information online.',
     context: 'The defining AI rivalry, large language models vs. traditional search.',
     faq: [
       { q: 'Is OpenAI/ChatGPT taking over from Google?', a: 'Not yet. Google receives far more monthly traffic than ChatGPT. However, ChatGPT\'s 100M user milestone in 2 months and continued growth signal a meaningful shift in how some users approach information discovery.' },
@@ -277,18 +277,8 @@ export const COMPARE_PAIRS: ComparePair[] = [
       { q: 'Does Threads have ads?', a: 'Meta began rolling out ads on Threads in 2024. X has had ads throughout its existence as a primary revenue stream. Both platforms are competing for the same digital advertising budgets.' },
     ],
   },
-  {
-    slug: 'google-vs-chatgpt',
-    siteAId: 'google',
-    siteBId: 'chatgpt',
-    verdict: 'Google receives 92.5B monthly visits vs ChatGPT\'s 7.2B. However, ChatGPT is growing at a historic pace and represents the first credible challenge to Google\'s search dominance in two decades.',
-    context: 'Traditional search engine dominance versus the rise of AI-powered conversational search.',
-    faq: [
-      { q: 'Is ChatGPT replacing Google?', a: 'Not yet. Google processes over 8.5 billion searches per day while ChatGPT handles an estimated 10 million queries per day. However, ChatGPT\'s growth from zero to 7.2B monthly web visits in under 3 years is historically unprecedented.' },
-      { q: 'Which is better for research, Google or ChatGPT?', a: 'Google excels for finding current, sourced web content and recent news. ChatGPT excels at synthesising, explaining, and reasoning through information. Many users now use both: ChatGPT to understand, Google to verify.' },
-      { q: 'Will AI replace search engines?', a: 'Most analysts expect AI to transform rather than replace search. Google itself has integrated AI Overviews into search results. The future is likely hybrid: AI-generated answers with cited source links.' },
-    ],
-  },
+  // NOTE: google-vs-chatgpt removed — covered by chatgpt-vs-google (line 88).
+  //       Reverse-order requests are 308-redirected to the canonical slug by proxy.ts.
   {
     slug: 'shopify-vs-amazon',
     siteAId: 'shopify',
@@ -385,18 +375,8 @@ export const COMPARE_PAIRS: ComparePair[] = [
       { q: 'Which has lower fees, Binance or Coinbase?', a: 'Binance has significantly lower trading fees, starting at 0.1% and reducing further with BNB token usage. Coinbase\'s standard fees are higher but Coinbase Pro (now Advanced Trade) offers competitive maker/taker fees for active traders.' },
     ],
   },
-  {
-    slug: 'tiktok-vs-instagram',
-    siteAId: 'tiktok',
-    siteBId: 'instagram',
-    verdict: 'Instagram receives roughly 3× more web traffic than TikTok (10.4B vs 2.8B monthly visits). TikTok leads in time-in-app and engagement rate per post, particularly among Gen Z users under 25.',
-    context: 'Short-form video platforms competing for the attention of the next generation of social media users.',
-    faq: [
-      { q: 'Which is more popular, TikTok or Instagram?', a: 'Instagram has more total users at 2.4 billion vs TikTok\'s 1.7 billion monthly active users. However, TikTok\'s average session time is significantly higher, with users spending an average of 95 minutes per day on TikTok vs 30 minutes on Instagram.' },
-      { q: 'Which platform pays creators more?', a: 'Instagram\'s Reels Play bonus and brand deal ecosystem typically generate higher earnings for mid-to-large creators. TikTok\'s Creator Fund pays very low CPMs but TikTok Shop\'s affiliate commissions are increasingly lucrative for product-focused creators.' },
-      { q: 'Is TikTok getting banned?', a: 'TikTok has faced potential bans in the US, with legislation passed in 2024 requiring ByteDance to divest its US operations. The situation remains evolving. India already permanently banned TikTok in 2020.' },
-    ],
-  },
+  // NOTE: tiktok-vs-instagram removed — covered by instagram-vs-tiktok (line 124).
+  //       Reverse-order requests are 308-redirected to the canonical slug by proxy.ts.
   {
     slug: 'microsoft-vs-google',
     siteAId: 'bing',
@@ -433,18 +413,8 @@ export const COMPARE_PAIRS: ComparePair[] = [
       { q: 'Is Walmart Plus worth it vs Amazon Prime?', a: 'Amazon Prime ($139/year) offers broader benefits including Prime Video, Prime Music, and 2-day shipping on millions of items. Walmart Plus ($98/year) focuses on grocery delivery, fuel discounts, and Paramount+ streaming. For grocery-focused shoppers near a Walmart, Walmart Plus can be better value.' },
     ],
   },
-  {
-    slug: 'youtube-vs-spotify',
-    siteAId: 'youtube',
-    siteBId: 'spotify',
-    verdict: 'YouTube receives 34.8B monthly visits vs Spotify\'s estimated 3B. YouTube Music is growing rapidly but Spotify remains the world\'s most popular dedicated audio streaming service with 620M monthly active users.',
-    context: 'Video and audio streaming platforms competing for music and podcast listener share.',
-    faq: [
-      { q: 'Which is more popular, YouTube or Spotify?', a: 'YouTube has more total monthly visitors but serves a much broader purpose (video, music, education, news). Spotify is the dominant dedicated music streaming platform with 620M monthly active users and 240M paid subscribers.' },
-      { q: 'Is YouTube Music better than Spotify?', a: 'Spotify has a better algorithm for music discovery, better podcast integration, and broader catalogue. YouTube Music has the advantage of including music videos and live performances. Most audiophiles prefer Spotify while casual listeners often stay on YouTube.' },
-      { q: 'Can I use YouTube Premium and Spotify together?', a: 'Yes. Many users subscribe to both. YouTube Premium removes ads from YouTube across all content, while Spotify Premium offers ad-free music listening offline. They serve overlapping but distinct use cases.' },
-    ],
-  },
+  // NOTE: youtube-vs-spotify removed — covered by spotify-vs-youtube (line 160).
+  //       Reverse-order requests are 308-redirected to the canonical slug by proxy.ts.
   {
     slug: 'google-docs-vs-microsoft-word',
     siteAId: 'google',
@@ -506,21 +476,39 @@ export const PAIR_SLUGS = COMPARE_PAIRS.map((p) => p.slug);
  * PLUS top same-category competitors across all categories.
  * Used identically in generateStaticParams and sitemap.ts.
  */
+/**
+ * Returns the canonical slug for a pair: the one where the lexicographically
+ * smaller site ID comes first. This is the source of truth for redirects and
+ * the sitemap — only the canonical ordering is ever indexed.
+ */
+export function canonicalPairSlug(idA: string, idB: string): string {
+  return idA <= idB ? `${idA}-vs-${idB}` : `${idB}-vs-${idA}`;
+}
+
 export function getAllCompareSlugs(): string[] {
-  const knownSlugs = new Set(PAIR_SLUGS);
+  // Seed with hand-crafted slugs exactly as authored (they have editorial content)
+  const handCraftedSlugs = new Set(PAIR_SLUGS);
   const allSlugs: string[] = [...PAIR_SLUGS];
+
+  // Track all pairs we've emitted (in either order) to avoid duplicates
+  const emittedPairs = new Set<string>();
+  for (const slug of PAIR_SLUGS) {
+    const m = slug.match(/^(.+)-vs-(.+)$/);
+    if (m) emittedPairs.add(canonicalPairSlug(m[1], m[2]));
+  }
 
   const addPair = (idA: string, idB: string) => {
     if (idA === idB) return;
-    const slug = `${idA}-vs-${idB}`;
-    const reverseSlug = `${idB}-vs-${idA}`;
-    if (!knownSlugs.has(slug) && !knownSlugs.has(reverseSlug)) {
-      knownSlugs.add(slug);
-      allSlugs.push(slug);
-    }
+    const canonical = canonicalPairSlug(idA, idB);
+    // Skip if we already have this pair (in either order) or a hand-crafted slug covers it
+    if (emittedPairs.has(canonical)) return;
+    const reverseSlug = idA <= idB ? `${idB}-vs-${idA}` : `${idA}-vs-${idB}`;
+    if (handCraftedSlugs.has(canonical) || handCraftedSlugs.has(reverseSlug)) return;
+    emittedPairs.add(canonical);
+    allSlugs.push(canonical);
   };
 
-  // 1. Top 20 Global x Top 20 Global
+  // 1. Top 20 Global × Top 20 Global
   const top20 = SITES.slice(0, 20);
   for (const siteA of top20) {
     for (const siteB of top20) {

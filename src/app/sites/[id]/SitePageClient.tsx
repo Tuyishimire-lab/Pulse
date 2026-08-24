@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
@@ -564,11 +564,17 @@ export default function SitePageClient({ id }: { id: string }) {
               </div>
             </div>
 
-            {/* Most Searched Topics Badges Card */}
+            {/* Related Topics Badges Card */}
             {displayedKeywords.length > 0 && (
               <div className="geo-section mt-6">
-                <h4 className="geo-title">Most Searched Topics</h4>
-                <div className="flex flex-wrap gap-2.5 mt-4">
+                <h4 className="geo-title flex items-center gap-2">
+                  Related Topics
+                  <span className="text-[10px] font-semibold text-[#82c8e5]/70 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full">Editorial</span>
+                </h4>
+                <p className="text-[10px] text-white/30 mt-1 mb-3">
+                  Category-derived topic associations — not real search-query data.
+                </p>
+                <div className="flex flex-wrap gap-2.5 mt-2">
                   {displayedKeywords.map((kw, index) => (
                     <div 
                       key={index}
@@ -623,6 +629,7 @@ export default function SitePageClient({ id }: { id: string }) {
             </div>
             <SocialShareBar
               title={`📈 ${site.name} Real-Time Traffic & Analytics`}
+              url={`https://www.pulstraffic.com/sites/${site.id}`}
               summary={`Ranked #${liveRank ?? site.rank} globally with ${liveBaseline ?? site.baseline} visits/mo and ${site.rate.toLocaleString()} req/s.`}
               hashtags={['WebTraffic', site.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}
               onOpenEmbed={() => setIsEmbedOpen(true)}

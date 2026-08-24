@@ -1,10 +1,11 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SITES } from '../../data/sites';
 import { getSites } from '../../../lib/getSites';
 import { COMPARE_PAIRS, getPairBySlug, getAllCompareSlugs, parsePairSlug } from '../data/pairs';
 import { generateDynamicPair } from './generateDynamicPair';
 import ComparePageClient from './ComparePageClient';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!siteA || !siteB) return { title: 'Comparison Not Found | Pulse' };
 
-  const title = `${siteA.name} vs ${siteB.name}: Traffic Comparison (2026) | Pulse`;
+  const title = `${siteA.name} vs ${siteB.name}: Traffic Comparison (${CURRENT_YEAR}) | Pulse`;
   const description = `See a real-time traffic comparison between ${siteA.name} and ${siteB.name}. Compare monthly visits, global rank, visit rate, and more. ${siteA.name} receives ${siteA.baseline} vs ${siteB.baseline} for ${siteB.name}.`;
   const url = `${BASE_URL}/compare/${slug}`;
 
@@ -91,7 +92,7 @@ export default async function ComparePage({ params }: PageProps) {
     '@graph': [
       {
         '@type': 'WebPage',
-        name: `${siteA.name} vs ${siteB.name}: Traffic Comparison (2026)`,
+        name: `${siteA.name} vs ${siteB.name}: Traffic Comparison (${CURRENT_YEAR})`,
         description: `Real-time traffic comparison between ${siteA.name} and ${siteB.name}.`,
         url: `${BASE_URL}/compare/${slug}`,
       },

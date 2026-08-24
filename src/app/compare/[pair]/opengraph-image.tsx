@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { SITES } from '../../data/sites';
 import { getPairBySlug, parsePairSlug } from '../data/pairs';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 
 export const runtime = 'edge';
 export const alt = 'Pulse Platform VS Traffic Comparison';
@@ -73,7 +74,7 @@ export default async function Image({ params }: Props) {
               textTransform: 'uppercase',
             }}
           >
-            REAL-TIME TRAFFIC BATTLE (2026)
+            REAL-TIME TRAFFIC BATTLE ({CURRENT_YEAR})
           </div>
         </div>
 

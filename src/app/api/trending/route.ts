@@ -4,6 +4,25 @@ import { SITES, SITE_META, CATEGORIES } from '../../data/sites';
 
 export const revalidate = 3600; // re-compute at most once per hour
 
+// ── In-memory sliding-window rate limiter ────────────────────────────────────
+// 60 requests per IP per 60-second window.
+// Module-level map persists across requests within the same serverless instance.
+const RL_WINDOW_MS = 60_000;
+const RL_MAX = 60;
+const _rl = new Map<string, { count: number; windowStart: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = _rl.get(ip);
+  if (!entry || now - entry.windowStart > RL_WINDOW_MS) {
+    _rl.set(ip, { count: 1, windowStart: now });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RL_MAX;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const key =
@@ -102,6 +121,18 @@ function generateSparkline(delta: number, volatility: number): number[] {
 }
 
 export async function GET(req: Request) {
+  // Rate limit: 60 req / IP / minute
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': '60' } },
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const timeframe = (searchParams.get('timeframe') || '7d') as '24h' | '7d' | '30d';
 

@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { CATEGORIES, SITES } from '../../data/sites';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 import { getSites } from '../../../lib/getSites';
 
 export const runtime = 'edge';
@@ -86,7 +87,7 @@ export default async function Image({ params }: Props) {
                   Pulse
                 </span>
                 <span style={{ fontSize: '13px', color: '#6d8196', letterSpacing: '0.5px' }}>
-                  TRAFFIC INDEX 2026
+                  TRAFFIC INDEX {CURRENT_YEAR}
                 </span>
               </div>
             </div>

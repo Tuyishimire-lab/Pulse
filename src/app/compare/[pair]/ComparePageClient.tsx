@@ -8,6 +8,7 @@ import { ComparePair } from '../data/pairs';
 import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 
 
 interface Props {
@@ -220,7 +221,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-center tracking-tight bg-gradient-to-r from-white to-[#82c8e5] bg-clip-text text-transparent">
-            {siteA.name} vs {siteB.name}: Traffic Comparison (2026)
+            {siteA.name} vs {siteB.name}: Traffic Comparison ({CURRENT_YEAR})
           </h1>
           {pairData?.context && (
             <p className="text-center text-[#94a3b8] text-sm mt-2">{pairData.context}</p>
@@ -294,7 +295,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
             </p>
           </div>
           <SocialShareBar
-            title={`📊 ${siteA.name} vs ${siteB.name} Traffic Comparison (2026)`}
+            title={`📊 ${siteA.name} vs ${siteB.name} Traffic Comparison (${CURRENT_YEAR})`}
             summary={`${aWinsRank ? siteA.name : siteB.name} leads with ${aWinsRank ? siteA.baseline : siteB.baseline}/mo vs ${aWinsRank ? siteB.baseline : siteA.baseline}/mo.`}
             hashtags={['WebTraffic', siteA.name.replace(/[^a-zA-Z0-9]/g, ''), siteB.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}
             onOpenEmbed={() => setEmbedSite(aWinsRank ? siteA : siteB)}

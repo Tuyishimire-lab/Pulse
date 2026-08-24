@@ -21,7 +21,9 @@ export default function SocialShareBar({
 }: SocialShareBarProps) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = typeof window !== 'undefined' ? (url || window.location.href) : (url || 'https://www.pulstraffic.com');
+  // url prop is required for correct sharing; window.location.href is only a
+  // last-resort client-side fallback if the caller omits the prop entirely.
+  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedText = encodeURIComponent(`${title}${summary ? `\n\n${summary}` : ''}`);
   const encodedHashtags = encodeURIComponent(hashtags.join(','));
@@ -49,7 +51,7 @@ export default function SocialShareBar({
       <a
         href={twitterUrl}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="nofollow noopener noreferrer"
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 hover:bg-black border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-300 hover:text-white transition-all shadow-sm"
         title="Share on X (Twitter)"
       >
@@ -63,7 +65,7 @@ export default function SocialShareBar({
       <a
         href={redditUrl}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="nofollow noopener noreferrer"
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF4500]/10 hover:bg-[#FF4500]/20 border border-[#FF4500]/30 hover:border-[#FF4500]/50 text-xs font-medium text-[#FF4500] transition-all shadow-sm"
         title="Share on Reddit"
       >
@@ -77,7 +79,7 @@ export default function SocialShareBar({
       <a
         href={linkedInUrl}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="nofollow noopener noreferrer"
         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0a66c2]/10 hover:bg-[#0a66c2]/20 border border-[#0a66c2]/30 hover:border-[#0a66c2]/50 text-xs font-medium text-[#0a66c2] transition-all shadow-sm"
         title="Share on LinkedIn"
       >

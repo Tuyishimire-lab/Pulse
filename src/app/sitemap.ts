@@ -41,6 +41,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
+  // Hub page that links to every country — high priority since it provides
+  // internal link equity to all the individual country pages.
+  const topSitesHub = {
+    url: `${baseUrl}/top-sites`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.92,
+  };
+
   // Pre-rendered and hand-crafted comparisons
   const compareSlugs = getAllCompareSlugs();
   const compareUrls = compareSlugs.map((slug) => ({
@@ -125,6 +134,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     ...categoryUrls,
     ...reportUrls,
+    topSitesHub,
     ...countryUrls,
     ...compareUrls,
     ...siteUrls,

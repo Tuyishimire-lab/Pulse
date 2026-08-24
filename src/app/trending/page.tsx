@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { SITES, SITE_META, CATEGORIES } from '../data/sites';
+import { CURRENT_YEAR } from '../../lib/currentYear';
 import TrendingPageClient, {
   TrendingSite,
   CategoryMomentum,
@@ -10,12 +11,12 @@ import TrendingPageClient, {
 const BASE_URL = 'https://www.pulstraffic.com';
 
 export const metadata: Metadata = {
-  title: 'Trending Websites - Biggest Rank Movers (2026) | Pulse',
+  title: `Trending Websites - Biggest Rank Movers (${CURRENT_YEAR}) | Pulse`,
   description:
     'Real-time web traffic momentum, biggest global rank climbers, and sector velocity tracking. Updated every 6 hours by the Pulse Traffic Index engine.',
   alternates: { canonical: `${BASE_URL}/trending` },
   openGraph: {
-    title: 'Trending Websites - Biggest Rank Movers (2026) | Pulse',
+    title: `Trending Websites - Biggest Rank Movers (${CURRENT_YEAR}) | Pulse`,
     description:
       'Real-time web traffic momentum, biggest global rank climbers, and sector velocity tracking. Updated every 6 hours.',
     url: `${BASE_URL}/trending`,
@@ -356,7 +357,7 @@ export default async function TrendingPage() {
     '@graph': [
       {
         '@type': 'WebPage',
-        name: 'Trending Websites - Biggest Rank Movers (2026)',
+        name: `Trending Websites - Biggest Rank Movers (${CURRENT_YEAR})`,
         description:
           'Real-time web traffic momentum, biggest global rank climbers, and sector velocity tracking.',
         url: `${BASE_URL}/trending`,

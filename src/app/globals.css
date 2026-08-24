@@ -1624,6 +1624,21 @@ body {
   100% { transform: translate3d(-50%, 0, 0); }
 }
 
+/* Pause animation for users who prefer reduced motion — CSS-layer safety net
+   that works even before JS hydrates or when JS is disabled. */
+@media (prefers-reduced-motion: reduce) {
+  .news-marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+/* Belt-and-suspenders: React also sets animationPlayState via inline style,
+   but this class-based approach means pure-CSS hover works too. */
+.news-marquee-container:hover .news-marquee-track,
+.news-marquee-container:focus-within .news-marquee-track {
+  animation-play-state: paused;
+}
+
 /* Compare Mode Trigger / Stars Styles */
 .watchlist-tab-container {
   display: flex;

@@ -2,16 +2,17 @@ import { Metadata } from 'next';
 import { ALL_COUNTRIES } from '../top-sites/data/countries';
 import { getSites } from '../../lib/getSites';
 import MapClientWrapper from './MapClientWrapper';
+import { CURRENT_YEAR } from '../../lib/currentYear';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
 export const metadata: Metadata = {
-  title: 'Global Web Traffic Map 2026 | Pulse',
+  title: `Global Web Traffic Map ${CURRENT_YEAR} | Pulse`,
   description:
     'Interactive 3D world map visualizing internet penetration, dominant platform ecosystems, and connected online population volume across 115+ countries.',
   alternates: { canonical: `${BASE_URL}/map` },
   openGraph: {
-    title: 'Global Web Traffic Map 2026 | Pulse',
+    title: `Global Web Traffic Map ${CURRENT_YEAR} | Pulse`,
     description:
       'Interactive 3D world map visualizing internet penetration, dominant platform ecosystems, and connected online population volume across 115+ countries.',
     url: `${BASE_URL}/map`,
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Global Web Traffic Map 2026 | Pulse',
+    title: `Global Web Traffic Map ${CURRENT_YEAR} | Pulse`,
     description:
       'Interactive 3D world map visualizing internet penetration, dominant platform ecosystems, and connected online population volume across 115+ countries.',
     images: [`${BASE_URL}/opengraph-image`],

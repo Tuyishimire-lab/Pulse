@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "pulstraffic.com" }],
+      "destination": "https://www.pulstraffic.com/:path*",
+      "permanent": true
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/daily-job",
@@ -11,3 +19,4 @@
     }
   }
 }
+

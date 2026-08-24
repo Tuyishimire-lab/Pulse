@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useMemo, useState } from 'react';
 import { SiteConfig } from '../data/sites';
@@ -325,11 +325,11 @@ export default function SiteDetailModal({
           {/* Stat boxes */}
           <div className="modal-stats-grid text-left">
             <div className="modal-stat-box">
-              <span className="modal-stat-label">Bounce Rate <span className="text-[8px] font-semibold text-[#82c8e5]/60 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full ml-1">PTI estimate</span></span>
+              <span className="modal-stat-label">Bounce Rate <span className="text-[10px] font-semibold text-[#82c8e5]/70 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full ml-1">PTI model</span></span>
               <span className="modal-stat-value">{details.bounceRate}</span>
             </div>
             <div className="modal-stat-box">
-              <span className="modal-stat-label">Avg Visit Duration <span className="text-[8px] font-semibold text-[#82c8e5]/60 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full ml-1">PTI estimate</span></span>
+              <span className="modal-stat-label">Avg Visit Duration <span className="text-[10px] font-semibold text-[#82c8e5]/70 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full ml-1">PTI model</span></span>
               <span className="modal-stat-value">{details.visitDuration}</span>
             </div>
             <div className="modal-stat-box">
@@ -378,7 +378,7 @@ export default function SiteDetailModal({
             <h4 className="geo-title flex items-center gap-2">
               Top Traffic Geographies
               {details.radarSource === 'cloudflare' ? <LiveBadge /> : (
-                <span className="text-[8px] font-semibold text-[#82c8e5]/60 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full">PTI estimate</span>
+                <span className="text-[10px] font-semibold text-[#82c8e5]/70 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full">PTI model</span>
               )}
             </h4>
             <div className="geo-grid">
@@ -401,10 +401,16 @@ export default function SiteDetailModal({
             </div>
           </div>
 
-          {/* Most Searched Topics */}
+          {/* Related Topics */}
           <div className="geo-section text-left mt-6 animate-fadeIn">
-            <h4 className="geo-title">Most Searched Topics</h4>
-            <div className="flex flex-wrap gap-2 mt-3">
+            <h4 className="geo-title flex items-center gap-2">
+              Related Topics
+              <span className="text-[10px] font-semibold text-[#82c8e5]/70 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full">Editorial</span>
+            </h4>
+            <p className="text-[10px] text-white/30 mt-1 mb-3">
+              Category-derived topic associations — not real search-query data.
+            </p>
+            <div className="flex flex-wrap gap-2">
               {displayedKeywords.map((kw, index) => (
                 <div
                   key={index}

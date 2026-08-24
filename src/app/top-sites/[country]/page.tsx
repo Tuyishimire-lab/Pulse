@@ -1,9 +1,10 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import { getSites } from '../../../lib/getSites';
 import { ALL_COUNTRIES, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
 import { resolveCountrySites } from '../../../lib/getCountrySites';
 import CountryPageClient from './CountryPageClient';
 import { notFound } from 'next/navigation';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { country: slug } = await params;
   const countryData = getCountryBySlug(slug);
   if (!countryData) return { title: 'Country Not Found | Pulse' };
-  const title = `Most Visited Websites in ${countryData.name} (2026) | Pulse`;
+  const title = `Most Visited Websites in ${countryData.name} (${CURRENT_YEAR}) | Pulse`;
   const description = `Discover the top 20 most visited websites in ${countryData.name} with live real-time visitor counters. See monthly traffic estimates, rankings, and internet statistics for ${countryData.internetUsers} users.`;
   const url = `${BASE_URL}/top-sites/${slug}`;
   return {
@@ -67,7 +68,7 @@ export default async function CountryPage({ params }: PageProps) {
     '@graph': [
       {
         '@type': 'ItemList',
-        name: `Top 20 Most Visited Websites in ${countryData.name} (2026)`,
+        name: `Top 20 Most Visited Websites in ${countryData.name} (${CURRENT_YEAR})`,
         description: `Ranked list of the most visited websites in ${countryData.name} by monthly traffic.`,
         url: `${BASE_URL}/top-sites/${slug}`,
         numberOfItems: orderedSites.length,

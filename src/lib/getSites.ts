@@ -1,4 +1,4 @@
-﻿/**
+/**
  * getSites.ts - Unified Site Data Fetcher
  *
  * Single source of truth for site data across all surfaces:
@@ -44,6 +44,13 @@ function rowToSiteConfig(row: any): SiteConfig {
   } as SiteConfig;
 }
 
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 /**
  * Fetch all sites from Supabase, merged with static metadata.
  * Falls back to SITES from sites.ts if Supabase is unreachable.
@@ -55,21 +62,25 @@ export async function getSites(revalidate = 60): Promise<SiteConfig[]> {
 
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from('sites')
-        .select(
-          // Only select columns that the engine actually writes to Supabase.
-          // Static metadata (logo, color, glow, asn, keywords) comes from
-          // SITE_META merge in rowToSiteConfig() below.
-          'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
-        )
-        .order('rank', { ascending: true });
+      const { data, error } = await withTimeout(
+        supabase
+          .from('sites')
+          .select(
+            // Only select columns that the engine actually writes to Supabase.
+            // Static metadata (logo, color, glow, asn, keywords) comes from
+            // SITE_META merge in rowToSiteConfig() below.
+            'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
+          )
+          .order('rank', { ascending: true }),
+        4000,
+        { data: null, error: { message: 'Timed out' } } as any
+      );
 
       if (!error && data && data.length > 0) {
         return data.map(rowToSiteConfig);
       }
       if (error) {
-        console.warn('[getSites] Supabase error:', error.message);
+        console.warn('[getSites] Supabase error/timeout:', error.message);
       }
     } catch (err) {
       console.warn('[getSites] Supabase unreachable:', err);
@@ -77,7 +88,6 @@ export async function getSites(revalidate = 60): Promise<SiteConfig[]> {
   }
 
   // Graceful fallback: static data (pre-populated at build time)
-  console.warn('[getSites] Falling back to static SITES data');
   return SITES;
 }
 
@@ -90,13 +100,17 @@ export async function getSiteById(id: string): Promise<SiteConfig | null> {
 
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from('sites')
-        .select(
-          'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
-        )
-        .eq('id', id)
-        .single();
+      const { data, error } = await withTimeout(
+        supabase
+          .from('sites')
+          .select(
+            'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
+          )
+          .eq('id', id)
+          .single(),
+        4000,
+        { data: null, error: { message: 'Timed out' } } as any
+      );
 
       if (!error && data) {
         return rowToSiteConfig(data);

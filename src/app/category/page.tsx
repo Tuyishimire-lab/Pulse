@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { getSites } from '../../lib/getSites';
 import { CATEGORIES } from '../data/sites';
 import CategoryIndexClient, { CategorySummary } from './CategoryIndexClient';
+import { CURRENT_YEAR } from '../../lib/currentYear';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -54,14 +55,14 @@ const CATEGORY_DETAILS: Record<string, { description: string; tag: string; color
 };
 
 export const metadata: Metadata = {
-  title: 'Website Categories - Global Web Traffic Rankings (2026) | Pulse',
+  title: `Website Categories - Global Web Traffic Rankings (${CURRENT_YEAR}) | Pulse`,
   description:
     'Explore website traffic rankings, visitor velocity, and market share across 9 major industries including Search, AI, Social Media, E-Commerce, Dev Tools, and Streaming.',
   alternates: {
     canonical: `${BASE_URL}/category`,
   },
   openGraph: {
-    title: 'Website Categories - Global Web Traffic Rankings (2026) | Pulse',
+    title: `Website Categories - Global Web Traffic Rankings (${CURRENT_YEAR}) | Pulse`,
     description:
       'Explore website traffic rankings, visitor velocity, and market share across 9 major industries. Powered by the Pulse Traffic Index.',
     url: `${BASE_URL}/category`,
@@ -72,7 +73,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Website Categories - Global Web Traffic Rankings (2026) | Pulse',
+    title: `Website Categories - Global Web Traffic Rankings (${CURRENT_YEAR}) | Pulse`,
     description:
       'Explore website traffic rankings, visitor velocity, and market share across 9 major industries.',
     images: [`${BASE_URL}/opengraph-image`],
@@ -141,7 +142,7 @@ export default async function CategoryIndexPage() {
     '@graph': [
       {
         '@type': 'ItemList',
-        name: 'Website Traffic Rankings by Category (2026)',
+        name: `Website Traffic Rankings by Category (${CURRENT_YEAR})`,
         description: 'Explore global web traffic share, audience momentum, and real-time visitor flow segmented across 9 major industry sectors.',
         url: `${BASE_URL}/category`,
         numberOfItems: categorySummaries.length,

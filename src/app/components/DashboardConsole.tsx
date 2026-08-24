@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
-import { SiteConfig, CATEGORIES } from '../data/sites';
+import { SiteConfig, CATEGORIES, SITE_COUNT } from '../data/sites';
 import { COUNTRIES } from '../top-sites/data/countries';
 import { exportSitesToCsv } from '../../utils/exportCsv';
 
@@ -52,14 +52,23 @@ export default function DashboardConsole({
   lastSynced,
 }: DashboardConsoleProps) {
   // Derive human-readable sync label
+  // Cron interval = 6h. Stale = >13h (2× interval + 1h buffer).
+  // Frozen = >12h: show exact timestamp, not a vague relative time.
   const syncLabel = React.useMemo(() => {
     if (!lastSynced) return null;
-    const diffMs = Date.now() - new Date(lastSynced).getTime();
+    const syncDate = new Date(lastSynced);
+    const diffMs  = Date.now() - syncDate.getTime();
     const diffMin = Math.round(diffMs / 60_000);
-    if (diffMin < 2) return { text: 'just now', stale: false };
-    if (diffMin < 60) return { text: `${diffMin}m ago`, stale: false };
-    const diffHr = Math.round(diffMin / 60);
-    return { text: `${diffHr}h ago`, stale: diffHr >= 2 };
+    const diffHr  = Math.round(diffMin / 60);
+
+    if (diffMin < 2)   return { text: 'just now',     state: 'live'    as const };
+    if (diffMin < 60)  return { text: `${diffMin}m ago`, state: 'live' as const };
+    if (diffHr  < 13)  return { text: `${diffHr}h ago`,  state: 'live' as const };
+
+    // >12h — cron is likely dead; show frozen timestamp in UTC
+    const utcH = String(syncDate.getUTCHours()).padStart(2, '0');
+    const utcM = String(syncDate.getUTCMinutes()).padStart(2, '0');
+    return { text: `${utcH}:${utcM} UTC`, state: 'frozen' as const };
   }, [lastSynced]);
 
   return (
@@ -69,12 +78,26 @@ export default function DashboardConsole({
         <div className="flex items-center gap-1.5 mb-2 text-[10px] font-semibold">
           <span
             className="inline-block w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: syncLabel.stale ? '#f59e0b' : '#4ade80' }}
+            style={{
+              backgroundColor:
+                syncLabel.state === 'frozen' ? '#ef4444'
+                : '#4ade80',
+            }}
           />
-          <span style={{ color: syncLabel.stale ? '#f59e0b' : '#4ade80' }}>
-            {syncLabel.stale ? 'Index Estimated' : 'Index Live'}
+          <span
+            style={{
+              color:
+                syncLabel.state === 'frozen' ? '#ef4444'
+                : '#4ade80',
+            }}
+          >
+            {syncLabel.state === 'frozen' ? 'Estimates Frozen' : 'Index Live'}
           </span>
-          <span className="text-[#6d8196]">· PTI synced {syncLabel.text}</span>
+          <span className="text-[#6d8196]">
+            {syncLabel.state === 'frozen'
+              ? `· last sync ${syncLabel.text}`
+              : `· PTI synced ${syncLabel.text}`}
+          </span>
         </div>
       )}
       {/* Top Row: Search & View Layout Toggling */}
@@ -82,7 +105,7 @@ export default function DashboardConsole({
         <div className="search-wrapper">
           <input
             type="text"
-            placeholder="Search top 100 domains..."
+            placeholder={`Search ${SITE_COUNT} domains…`}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="search-input"

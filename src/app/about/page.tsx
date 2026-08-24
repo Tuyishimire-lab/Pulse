@@ -1,5 +1,6 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
 import Link from 'next/link';
+import { SITE_COUNT } from '../data/sites';
 
 export const metadata: Metadata = {
   title: 'About Pulse - Transparent Web Traffic Index | Pulse',
@@ -25,7 +26,7 @@ export default function AboutPage() {
     name: 'About Pulse Traffic Index',
     url: 'https://www.pulstraffic.com/about',
     description:
-      'Pulse is a transparent statistical model estimating global web traffic for the top 100+ websites.',
+      'Pulse is a transparent statistical model estimating global web traffic for the top websites. Covering ' + SITE_COUNT + ' domains including Google, YouTube, Meta, Amazon and more.',
     mainEntity: {
       '@type': 'Organization',
       name: 'Pulse',
@@ -69,7 +70,7 @@ export default function AboutPage() {
               <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">About Pulse</h1>
               <p className="text-[#94a3b8] text-base leading-relaxed max-w-2xl">
                 Pulse is a <strong className="text-white">transparent, model-driven index</strong> of global web traffic.
-                We estimate monthly visits, per-second visitor velocity, and momentum trends for the world&apos;s top 100+ websites
+                We estimate monthly visits, per-second visitor velocity, and momentum trends for the world&apos;s top {SITE_COUNT}+ websites
                 &mdash; and we publish exactly how we do it.
               </p>
             </div>
@@ -97,7 +98,7 @@ export default function AboutPage() {
                 {([
                   { label: 'Cloudflare Radar + Tranco', desc: 'Real-time DNS query mass analytics combined with the Tranco global ranking list (Cisco Umbrella, Majestic, Farsight, Google CrUX).', color: '#f59e0b' },
                   { label: 'Open PageRank', desc: 'A logarithmic backlink authority score (0-10) used to weight traffic estimates by domain authority.', color: '#4285F4' },
-                  { label: 'Groq AI Momentum', desc: 'Llama 3.3 70B assigns momentum labels (Surging, Growing, Stable, Cooling) across all 100+ tracked domains weekly.', color: '#10a37f' },
+                  { label: 'Groq AI Momentum', desc: `Llama 3.3 70B assigns momentum labels (Surging, Growing, Stable, Cooling) across all ${SITE_COUNT}+ tracked domains weekly.`, color: '#10a37f' },
                 ] as const).map((s) => (
                   <div key={s.label} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
                     <div className="text-xs font-bold uppercase tracking-wider" style={{ color: s.color }}>{s.label}</div>

@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/todos'],
+      disallow: ['/api/'],
     },
     sitemap: 'https://www.pulstraffic.com/sitemap.xml',
   };

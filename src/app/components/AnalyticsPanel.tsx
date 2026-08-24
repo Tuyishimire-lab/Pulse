@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { getCategoryColor } from '../../utils/categories';
+import { CATEGORIES } from '../data/sites';
 
 interface AnalyticsStats {
   totalRate: number;
-  avgRank: number;
+  enterpriseShare: number;
   categoryCounts: Record<string, number>;
 }
 
@@ -78,11 +79,11 @@ export default function AnalyticsPanel({
             </div>
 
             <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
-              <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Median Global Rank</span>
-              <div className="text-2xl font-extrabold text-[#a78bfa] mt-1">
-                #{analyticsStats.avgRank.toLocaleString('en-US')}
+              <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Enterprise Traffic Share</span>
+              <div className="text-2xl font-extrabold text-[#f59e0b] mt-1">
+                {analyticsStats.enterpriseShare}%
               </div>
-              <p className="text-[10px] text-white/40 mt-1">Median rank position across all filtered sites in our active catalog.</p>
+              <p className="text-[10px] text-white/40 mt-1">Est. monthly visits from platforms &gt;500M/mo (Enterprise tier).</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
@@ -97,27 +98,57 @@ export default function AnalyticsPanel({
           {/* Category Mix Breakdown bar */}
           <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5">
             <span className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Category Distribution Mix</span>
-            <div className="flex gap-1.5 h-3 rounded-full overflow-hidden mt-3 bg-white/5">
-              {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => {
-                const pct = Math.max(5, Math.round((count / filteredCount) * 100));
-                return (
-                  <div
-                    key={cat}
-                    style={{ width: `${pct}%`, backgroundColor: getCategoryColor(cat) }}
-                    title={`${cat.toUpperCase()}: ${count} (${pct}%)`}
-                  />
-                );
-              })}
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-[10px] font-bold text-white/70">
-              {Object.entries(analyticsStats.categoryCounts).map(([cat, count]) => (
-                <div key={cat} className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryColor(cat) }} />
-                  <span className="uppercase">{cat}:</span>
-                  <span className="text-white">{count} ({Math.round((count / filteredCount) * 100)}%)</span>
-                </div>
-              ))}
-            </div>
+            {(() => {
+              // Build label lookup from the canonical CATEGORIES list
+              const labelOf: Record<string, string> = {};
+              CATEGORIES.forEach(({ id, label }) => { labelOf[id] = label; });
+
+              // Compute raw (fractional) percentages
+              const entries = Object.entries(analyticsStats.categoryCounts);
+              const total = entries.reduce((s, [, n]) => s + n, 0);
+              if (total === 0) return null;
+
+              // Largest Remainder Method (Hamilton) — guarantees percentages sum
+              // to exactly 100, eliminating the ~102% rounding accumulation.
+              const raw = entries.map(([cat, count]) => ({
+                cat,
+                count,
+                exact: (count / total) * 100,
+                floor: Math.floor((count / total) * 100),
+                remainder: ((count / total) * 100) % 1,
+              }));
+              const remainder = 100 - raw.reduce((s, r) => s + r.floor, 0);
+              const sorted = [...raw].sort((a, b) => b.remainder - a.remainder);
+              sorted.slice(0, remainder).forEach((r) => { r.floor += 1; });
+              // Re-index back to original order
+              const pctMap: Record<string, number> = {};
+              raw.forEach((r) => { pctMap[r.cat] = r.floor; });
+
+              return (
+                <>
+                  {/* Bar: widths use exact fractions, not rounded, so bar never overflows */}
+                  <div className="flex h-3 rounded-full overflow-hidden mt-3 bg-white/5">
+                    {raw.map(({ cat, exact }) => (
+                      <div
+                        key={cat}
+                        style={{ width: `${exact}%`, backgroundColor: getCategoryColor(cat) }}
+                        title={`${labelOf[cat] ?? cat}: ${pctMap[cat]}%`}
+                      />
+                    ))}
+                  </div>
+                  {/* Legend: human labels + LRM-rounded percentages */}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-[10px] font-bold text-white/70">
+                    {raw.map(({ cat, count }) => (
+                      <div key={cat} className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryColor(cat) }} />
+                        <span>{labelOf[cat] ?? cat}:</span>
+                        <span className="text-white">{count} ({pctMap[cat]}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Filtering controls */}
@@ -184,7 +215,7 @@ export default function AnalyticsPanel({
           {loadingRadar ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 text-white/50">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/40" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Syncing Cloudflare Radar...</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Fetching Radar data…</span>
             </div>
           ) : (
             <>

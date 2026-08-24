@@ -1,34 +1,20 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
+import { getPlatformLinks, RESOURCE_LINKS } from '../../lib/navLinks';
 
-/** Returns the current ISO week slug, e.g. "2026-w31" */
-function getCurrentWeekSlug(): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-w${String(week).padStart(2, '0')}`;
-}
-
-const COUNTRY_LINKS = [
-  { slug: 'united-states', name: 'United States' },
-  { slug: 'india', name: 'India' },
-  { slug: 'brazil', name: 'Brazil' },
+// Featured countries shown in the footer — covers major traffic regions.
+// All other countries are reachable via /top-sites hub.
+const FEATURED_COUNTRIES = [
+  { slug: 'united-states',  name: 'United States' },
+  { slug: 'india',          name: 'India' },
+  { slug: 'brazil',         name: 'Brazil' },
   { slug: 'united-kingdom', name: 'United Kingdom' },
-  { slug: 'germany', name: 'Germany' },
-  { slug: 'france', name: 'France' },
-  { slug: 'japan', name: 'Japan' },
-  { slug: 'canada', name: 'Canada' },
-  { slug: 'australia', name: 'Australia' },
-  { slug: 'mexico', name: 'Mexico' },
-  { slug: 'south-korea', name: 'South Korea' },
-  { slug: 'indonesia', name: 'Indonesia' },
-  { slug: 'nigeria', name: 'Nigeria' },
-  { slug: 'argentina', name: 'Argentina' },
+  { slug: 'japan',          name: 'Japan' },
+  { slug: 'germany',        name: 'Germany' },
+  { slug: 'indonesia',      name: 'Indonesia' },
+  { slug: 'nigeria',        name: 'Nigeria' },
 ];
 
 export default function Footer() {
@@ -60,11 +46,9 @@ export default function Footer() {
           <div className="footer-nav-col">
             <h4 className="footer-col-title">Platform</h4>
             <ul className="footer-links">
-              <li><Link href="/">Live Dashboard</Link></li>
-              <li><Link href={`/report/${getCurrentWeekSlug()}`}>Weekly Report</Link></li>
-              <li><Link href="/compare">Compare Sites</Link></li>
-              <li><Link href="/speed-test">Speed Test</Link></li>
-              <li><Link href="/top-sites/united-states">Top Sites</Link></li>
+              {getPlatformLinks().map(({ href, label }) => (
+                <li key={href}><Link href={href}>{label}</Link></li>
+              ))}
             </ul>
           </div>
 
@@ -72,10 +56,9 @@ export default function Footer() {
           <div className="footer-nav-col">
             <h4 className="footer-col-title">Resources</h4>
             <ul className="footer-links">
-              <li><Link href="/methodology">Data &amp; Methodology</Link></li>
-              <li><Link href="/about">About Pulse</Link></li>
-              <li><Link href="/privacy">Privacy Policy</Link></li>
-              <li><Link href="/terms">Terms of Service</Link></li>
+              {RESOURCE_LINKS.map(({ href, label }) => (
+                <li key={href}><Link href={href}>{label}</Link></li>
+              ))}
             </ul>
           </div>
 
@@ -83,12 +66,19 @@ export default function Footer() {
           <div className="footer-nav-col footer-countries-col">
             <h4 className="footer-col-title">Top Sites by Country</h4>
             <div className="footer-country-grid">
-              {COUNTRY_LINKS.map(({ slug, name }) => (
-                <Link key={slug} href={`/top-sites/${slug}`} className="footer-country-link">
+              {FEATURED_COUNTRIES.map(({ slug, name }) => (
+                <Link key={slug} href={'/top-sites/' + slug} className="footer-country-link">
                   {name}
                 </Link>
               ))}
             </div>
+            {/* Hub link — ensures every country page has an internal link path */}
+            <Link
+              href="/top-sites"
+              className="mt-2 inline-flex items-center gap-1 text-xs text-[#82c8e5] hover:text-white transition-colors font-medium"
+            >
+              Browse all countries →
+            </Link>
           </div>
         </div>
 

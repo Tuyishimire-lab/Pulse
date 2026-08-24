@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SearchModal from './SearchModal';
+import { getPlatformLinks, RESOURCE_LINKS } from '../../lib/navLinks';
 
 /**
  * Shared navigation header for all pages with global search button & modal.
@@ -13,16 +14,7 @@ export default function NavHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const navLinks = [
-    { href: '/', label: 'Live Dashboard' },
-    { href: '/top-sites/united-states', label: 'Top Sites' },
-    { href: '/trending', label: 'Trending' },
-    { href: '/compare', label: 'Compare' },
-    { href: '/category/ai', label: 'Categories' },
-    { href: '/map', label: 'Traffic Map' },
-    { href: '/speed-test', label: 'Speed Test' },
-    { href: `/report/${getCurrentWeekSlug()}`, label: 'Weekly Report' },
-  ];
+  const navLinks = getPlatformLinks();
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -108,6 +100,19 @@ export default function NavHeader() {
                 {label}
               </Link>
             ))}
+            {/* Secondary resource links — ensures /about and /methodology are always reachable on mobile */}
+            <div className="mt-2 pt-2 border-t border-white/[0.06] flex flex-col gap-1">
+              {RESOURCE_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="px-3 py-2 rounded-lg text-xs text-[#6d8196] hover:text-white hover:bg-white/[0.04] transition-all"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
           </nav>
         )}
       </header>
@@ -118,13 +123,3 @@ export default function NavHeader() {
   );
 }
 
-/** Returns the current ISO week slug, e.g. "2026-w31" */
-function getCurrentWeekSlug(): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-w${String(week).padStart(2, '0')}`;
-}

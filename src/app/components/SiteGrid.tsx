@@ -26,6 +26,13 @@ interface SiteGridProps {
   visibleCount: number;
   loadMoreRef: React.RefObject<HTMLDivElement | null>;
   onResetFilters: () => void;
+  /**
+   * When a non-global filter is active (category, search, tier, watchlist),
+   * this map contains the 1-based position of each site within the filtered
+   * list. Cards show this position instead of site.rank so there are no gaps.
+   * Omit (undefined) when the full unfiltered catalog is shown.
+   */
+  displayRankMap?: Record<string, number>;
 }
 
 /**
@@ -51,7 +58,12 @@ export default function SiteGrid({
   visibleCount,
   loadMoreRef,
   onResetFilters,
+  displayRankMap,
 }: SiteGridProps) {
+  // When a filter narrows the list we show position-within-view, not global rank,
+  // so there are no confusing gaps (e.g. "RANK #15" jumps to "RANK #18").
+  const getDisplayRank = (site: SiteConfig) => displayRankMap?.[site.id] ?? site.rank;
+  const rankLabel = displayRankMap ? 'IN VIEW' : 'RANK';
   return (
     <>
       {viewLayout === 'grid' ? (
@@ -70,7 +82,7 @@ export default function SiteGrid({
             >
               <div className="card-header">
                 <div className="flex items-center gap-1.5">
-                  <span className="rank-badge">RANK #{site.rank}</span>
+                  <span className="rank-badge">{rankLabel} #{getDisplayRank(site)}</span>
                   {(() => {
                     const change = getRankChange(site);
                     if (change === null || change === 0) return null;
@@ -202,7 +214,7 @@ export default function SiteGrid({
                   ★
                 </button>
                 <div className="list-rank text-left flex items-center gap-1.5">
-                  <span>#{site.rank}</span>
+                  <span>#{getDisplayRank(site)}</span>
                   {(() => {
                     const change = getRankChange(site);
                     if (change === null || change === 0) return null;

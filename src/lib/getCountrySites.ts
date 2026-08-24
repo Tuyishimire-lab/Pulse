@@ -1,4 +1,4 @@
-﻿// Unified country site resolver - 4-tier fallback strategy:
+// Unified country site resolver - 4-tier fallback strategy:
 //
 //  Tier 1  Hand-crafted pinnedSiteIds (in countries.ts) - highest confidence, skip this lib
 //  Tier 2  Supabase country_rankings cache (written daily by cron) - stale if > 25h old
@@ -60,6 +60,13 @@ export interface CountrySitesResult {
   cronLastRan: string | null; // ISO timestamp or null if never
 }
 
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export async function resolveCountrySites(
   cfCode: string,
   allSites: SiteConfig[]
@@ -70,11 +77,15 @@ export async function resolveCountrySites(
   if (supabaseUrl && supabaseKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data } = await supabase
-        .from('country_rankings')
-        .select('site_ids, source, updated_at')
-        .eq('cf_code', cfCode.toUpperCase())
-        .single();
+      const { data } = await withTimeout(
+        supabase
+          .from('country_rankings')
+          .select('site_ids, source, updated_at')
+          .eq('cf_code', cfCode.toUpperCase())
+          .single(),
+        3000,
+        { data: null, error: null } as any
+      );
 
       if (data) {
         cronLastRan = data.updated_at;
@@ -90,18 +101,18 @@ export async function resolveCountrySites(
   }
 
   // ── Tier 3: Live Cloudflare Radar lookup (cron missed or data stale) ─────
-  const radarIds = await fetchRadarForCountry(cfCode, allSites);
+  const radarIds = await withTimeout(fetchRadarForCountry(cfCode, allSites), 3000, []);
   if (radarIds.length >= 10) {
-    // Write result back to Supabase cache so future renders use it
+    // Write result back to Supabase cache asynchronously so future renders use it
     if (supabaseUrl && supabaseKey) {
       try {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        await supabase.from('country_rankings').upsert({
+        supabase.from('country_rankings').upsert({
           cf_code: cfCode.toUpperCase(),
           site_ids: radarIds,
           source: 'radar',
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'cf_code' });
+        }, { onConflict: 'cf_code' }).then(() => {}, () => {});
       } catch { /* non-critical */ }
     }
     return { siteIds: radarIds, source: 'live-radar', cronLastRan };
@@ -122,3 +133,4 @@ export async function resolveCountrySites(
 
   return { siteIds: filtered, source: 'smart-filter', cronLastRan };
 }
+

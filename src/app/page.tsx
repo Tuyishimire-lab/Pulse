@@ -1,5 +1,12 @@
-﻿import { getSites } from '../lib/getSites';
+import type { Metadata } from 'next';
+import { getSites } from '../lib/getSites';
 import HomeClient from './HomeClient';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://www.pulstraffic.com',
+  },
+};
 
 /**
  * Server Component - fetches initial data server-side to eliminate

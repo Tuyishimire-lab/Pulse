@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { SiteConfig } from '../../data/sites';
 import { CountryData } from '../data/countries';
 import NavHeader from '../../components/NavHeader';
+import { CURRENT_YEAR } from '../../../lib/currentYear';
 
 interface Props {
   countryData: CountryData;
@@ -334,7 +335,7 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
             <span className="bg-gradient-to-r from-white via-white to-[#82c8e5] bg-clip-text text-transparent">
               {countryData.name}
             </span>
-            <span className="text-[#6d8196] font-semibold text-xl"> (2026)</span>
+            <span className="text-[#6d8196] font-semibold text-xl"> ({CURRENT_YEAR})</span>
           </h1>
 
           {/* Description - styled as an accent blockquote */}

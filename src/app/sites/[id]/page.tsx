@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { SITES } from '../../data/sites';
 import { getSiteById } from '../../../lib/getSites';
 import SitePageClient from './SitePageClient';
@@ -58,10 +59,13 @@ export default async function Page({ params }: PageProps) {
   // Fetch live data so JSON-LD schema reflects engine-authoritative rank/baseline
   const site = await getSiteById(id);
 
-  const siteName = site ? site.name : 'Domain';
-  const siteUrl = site ? site.url : '';
-  const baseline = site ? site.baseline : '';
-  const rank = site ? site.rank : '';
+  // Unknown slug → hard 404 (not a soft-200 "Domain Not Found" shell)
+  if (!site) notFound();
+
+  const siteName = site.name;
+  const siteUrl = site.url;
+  const baseline = site.baseline;
+  const rank = site.rank;
 
   const jsonLd = {
     '@context': 'https://schema.org',

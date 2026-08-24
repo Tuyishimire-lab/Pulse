@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parseDomain } from '../../../../utils/domain';
 import { generateAIStories } from '../../../../utils/groqAnalysis';
@@ -129,12 +129,17 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
 
 
 export async function GET(request: Request) {
-  // 1. Authorize Cron trigger in production
+  // 1. Authorize Cron trigger — CRON_SECRET must be set and must match.
+  //    Old logic: `if (CRON_SECRET && header !== expected)` silently skips auth
+  //    when the env var is absent, leaving Groq calls unprotected.
+  //    New logic: fail closed — missing secret = misconfigured, reject loudly.
+  const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
-  if (
-    process.env.CRON_SECRET &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!cronSecret) {
+    console.error('[cron/daily-job] CRON_SECRET env var is not set — refusing to run unprotected.');
+    return new Response('Service Unavailable: CRON_SECRET not configured', { status: 503 });
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -701,6 +706,33 @@ export async function GET(request: Request) {
       console.error('Unified Cron: Failed to clean up database history:', deleteError);
     }
 
+    // ── Write sync_log (used by /api/health) ────────────────────────────────
+    // This is the ONLY authoritative last-sync timestamp. Written last so the
+    // timestamp reflects when ALL data was successfully committed.
+    try {
+      await supabase.from('sync_log').insert({
+        completed_at:  new Date().toISOString(),
+        sites_count:   sites.length,
+        status:        'success',
+        error_message: null,
+      });
+      // Prune: keep only the last 48 entries (~12 days at 6h cadence)
+      const { data: logRows } = await supabase
+        .from('sync_log')
+        .select('id')
+        .order('completed_at', { ascending: false })
+        .range(48, 9999);
+      if (logRows && logRows.length > 0) {
+        await supabase
+          .from('sync_log')
+          .delete()
+          .in('id', logRows.map((r: any) => r.id));
+      }
+    } catch (logErr) {
+      // Non-fatal: don't fail the cron just because logging failed
+      console.error('Unified Cron: Failed to write sync_log:', logErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: `Pro cron completed: enriched ${sites.length} sites, ${historyInsertions.length} history points (${HISTORY_HOURS}h cadence)`,
@@ -711,6 +743,17 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     console.error('Unified Cron Ingestion Exception:', error);
+    // Log the failure so /api/health can surface it
+    try {
+      if (isSupabaseConfigured) {
+        await supabase.from('sync_log').insert({
+          completed_at:  new Date().toISOString(),
+          sites_count:   null,
+          status:        'error',
+          error_message: String(error?.message ?? error).slice(0, 500),
+        });
+      }
+    } catch { /* swallow — we're already in the error path */ }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

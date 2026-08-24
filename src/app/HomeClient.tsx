@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CATEGORIES, SITE_META, SiteConfig } from './data/sites';
+import { CATEGORIES, SITE_META, SiteConfig, SITE_COUNT } from './data/sites';
 
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -47,9 +47,9 @@ export default function HomeClient({
 
   // ── Supabase - seed with server-fetched data ──────────────────────────────
   const [dbSites, setDbSites] = useState<SiteConfig[]>(initialSites);
-  const [lastSynced, setLastSynced] = useState<string | null>(
-    (initialSites[0] as any)?.updated_at ?? null
-  );
+  // lastSynced is authoritative only from /api/health (reads sync_log written by cron).
+  // Do NOT use sites[0].updated_at — that column changes on any Supabase write.
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
 
   // ── Watchlist ─────────────────────────────────────────────────────────────
   const [watchlistIds, setWatchlistIds] = useState<string[]>([]);
@@ -147,6 +147,14 @@ export default function HomeClient({
     if (storedCustom) {
       try { setCustomSites(JSON.parse(storedCustom)); } catch {}
     }
+
+    // Fetch authoritative last-sync timestamp from /api/health
+    fetch('/api/health')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.lastSyncedAt) setLastSynced(data.lastSyncedAt);
+      })
+      .catch(() => { /* non-fatal: badge stays hidden */ });
   }, []);
 
   // ── Supabase realtime subscription (incremental updates only) ─────────────
@@ -173,8 +181,7 @@ export default function HomeClient({
             baselineRaw: row.baseline_raw ?? 0,
           })) as SiteConfig[];
           setDbSites(enriched);
-          const firstUpdated = (data[0] as any).updated_at;
-          if (firstUpdated) setLastSynced(firstUpdated);
+          // lastSynced intentionally NOT set here — use /api/health for that
         }
       } catch (err) {
         console.error('Failed to connect to Supabase:', err);
@@ -443,32 +450,55 @@ export default function HomeClient({
 
   const analyticsStats = useMemo(() => {
     const count = filteredSites.length;
-    if (count === 0) return { totalRate: 0, avgRank: 0, categoryCounts: {} as Record<string, number> };
+    if (count === 0) return { totalRate: 0, enterpriseShare: 0, categoryCounts: {} as Record<string, number> };
+
     let totalRate = 0;
+    let enterpriseVolume = 0;
+    let totalVolume = 0;
     const categoryCounts: Record<string, number> = {};
 
-    // Collect valid ranks only (exclude sentinel fallback values like 999/9999)
-    const validRanks: number[] = [];
+    // Enterprise threshold matches the Traffic Tier Filter dropdown: > 500M/mo.
+    // Enterprise share = what fraction of aggregate estimated monthly visits
+    // comes from top-tier platforms. Always changes when filters are applied.
+    const ENTERPRISE_THRESHOLD = 500_000_000;
+
     filteredSites.forEach((s) => {
       totalRate += s.rate;
       categoryCounts[s.category] = (categoryCounts[s.category] || 0) + 1;
-      if (s.rank > 0 && s.rank <= 500) validRanks.push(s.rank);
+      totalVolume += s.baselineRaw;
+      if (s.baselineRaw > ENTERPRISE_THRESHOLD) enterpriseVolume += s.baselineRaw;
     });
 
-    // Use median rank - meaningful for a ranked list and immune to outliers
-    let medianRank = 0;
-    if (validRanks.length > 0) {
-      const sorted = [...validRanks].sort((a, b) => a - b);
-      const mid = Math.floor(sorted.length / 2);
-      medianRank = sorted.length % 2 !== 0
-        ? sorted[mid]
-        : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
-    }
+    const enterpriseShare = totalVolume > 0
+      ? Math.round((enterpriseVolume / totalVolume) * 100)
+      : 0;
 
-    return { totalRate, avgRank: medianRank, categoryCounts };
+    return { totalRate, enterpriseShare, categoryCounts };
   }, [filteredSites]);
 
   const displayedSites = useMemo(() => filteredSites.slice(0, visibleCount), [filteredSites, visibleCount]);
+
+  /**
+   * displayRankMap: maps siteId -> 1-based position within filteredSites.
+   * Only computed when a filter is actually active so the global catalog view
+   * keeps showing global ranks (RANK #1, #2, …) unchanged.
+   * When a filter is active, SiteGrid uses these positions instead of site.rank
+   * to eliminate rank gaps (e.g. "#15 → #18" when #16 and #17 are filtered out).
+   */
+  const isFiltered = useMemo(
+    () =>
+      activeCategory !== 'all' ||
+      searchQuery !== '' ||
+      trafficTierFilter !== 'all' ||
+      watchlistFilter ||
+      selectedCountry !== 'global',
+    [activeCategory, searchQuery, trafficTierFilter, watchlistFilter, selectedCountry],
+  );
+
+  const displayRankMap = useMemo<Record<string, number> | undefined>(() => {
+    if (!isFiltered) return undefined; // global view: use site.rank directly
+    return Object.fromEntries(filteredSites.map((site, idx) => [site.id, idx + 1]));
+  }, [isFiltered, filteredSites]);
 
   const compareSiteA = useMemo(() => allSites.find((s) => s.id === selectedCompareIds[0]) || null, [selectedCompareIds, allSites]);
   const compareSiteB = useMemo(() => allSites.find((s) => s.id === selectedCompareIds[1]) || null, [selectedCompareIds, allSites]);
@@ -556,6 +586,7 @@ export default function HomeClient({
           visibleCount={visibleCount}
           loadMoreRef={loadMoreRef}
           onResetFilters={() => { setSearchQuery(''); setActiveCategory('all'); setWatchlistFilter(false); setVisibleCount(30); }}
+          displayRankMap={displayRankMap}
         />
 
         <section className="insights-section mt-12 w-full">

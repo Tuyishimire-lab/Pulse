@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import Footer from "./components/Footer";
+import { CURRENT_YEAR } from "../lib/currentYear";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.pulstraffic.com"),
-  title: "Pulse - Global Web Traffic Rankings & Index (2026)",
+  title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
   description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates, monthly visits, and rankings for 100+ top websites worldwide, powered by the Pulse Traffic Index (PTI).",
   applicationName: "Pulse",
   authors: [{ name: "Pulse", url: "https://www.pulstraffic.com" }],
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
     "website traffic",
     "web traffic visualizer",
     "real-time website visits",
-    "most visited websites 2026",
+    `most visited websites ${CURRENT_YEAR}`,
     "top websites by country",
     "website traffic comparison",
     "internet speed test",
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
     canonical: "https://www.pulstraffic.com",
   },
   openGraph: {
-    title: "Pulse - Global Web Traffic Rankings & Index (2026)",
+    title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
     description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates and monthly visits for 100+ top websites worldwide.",
     url: "https://www.pulstraffic.com",
     siteName: "Pulse",
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pulse - Global Web Traffic Rankings & Index (2026)",
+    title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
     description: "A real-time ticker visualizing estimated visitors across the world's most popular websites.",
     images: ["/opengraph-image"],
     creator: "@pulstraffic",
