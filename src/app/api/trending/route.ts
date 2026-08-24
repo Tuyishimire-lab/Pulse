@@ -170,12 +170,13 @@ export async function GET(req: Request) {
               for (const s of (sitesData.data ?? []) as any[]) siteMetaMap.set(s.id, s);
 
               for (const row of newest.data as any[]) {
-                const prev = olderMap.get(row.site_id) ?? row.rank;
-                const delta = prev - row.rank;
+                const rawDelta = olderMap.has(row.site_id) ? (olderMap.get(row.site_id)! - row.rank) : 0;
+                const delta = rawDelta !== 0 ? rawDelta : (row.rank % 2 === 0 ? 1 : -1);
                 const meta = SITE_META[row.site_id] ?? {};
                 const live = siteMetaMap.get(row.site_id) ?? {};
                 const vol = row.volatility || live.volatility || 5;
-                const pct = delta !== 0 ? Math.round((delta / Math.max(1, prev)) * 1000) / 10 : (vol > 0 ? +(vol * 0.8).toFixed(1) : 0.5);
+                const rawPct = Math.round((Math.abs(delta) / Math.max(1, row.rank)) * 1000) / 10 || +(vol * 0.8).toFixed(1);
+                const pct = delta > 0 ? Math.abs(rawPct) : -Math.abs(rawPct);
 
                 const rival = RIVALS[row.site_id];
                 rawMovers.push({
@@ -187,14 +188,14 @@ export async function GET(req: Request) {
                   glow: meta.glow ?? 'rgba(130,200,229,0.15)',
                   category: live.category ?? meta.category ?? 'general',
                   currentRank: row.rank,
-                  previousRank: prev,
-                  delta: delta !== 0 ? delta : (row.rank % 2 === 0 ? 1 : -1),
+                  previousRank: row.rank + delta,
+                  delta,
                   rate: live.rate ?? row.rate ?? 0,
                   baseline: live.baseline ?? '',
                   percentageChange: pct,
-                  volatility: vol,
-                  catalyst: assignCatalyst(live.category ?? meta.category ?? '', delta, vol),
-                  sparkline: generateSparkline(delta, vol),
+                  volatility: Math.abs(pct),
+                  catalyst: assignCatalyst(live.category ?? meta.category ?? '', delta, Math.abs(pct)),
+                  sparkline: generateSparkline(delta, Math.abs(pct)),
                   topRivalId: rival?.id,
                   topRivalName: rival?.name,
                 });
@@ -222,10 +223,11 @@ export async function GET(req: Request) {
 
           for (const curr of (currentSnap.sites_data ?? []) as any[]) {
             const prev = compareMap.get(curr.id);
-            const prevRank = prev?.rank ?? curr.rank;
-            const delta = prevRank - curr.rank;
+            const rawDelta = prev ? prev.rank - curr.rank : 0;
+            const delta = rawDelta !== 0 ? rawDelta : (curr.rank % 2 === 0 ? 1 : -1);
             const rateDiff = prev ? curr.rate - prev.rate : 0;
-            const pct = prev && prev.rate > 0 ? Math.round((rateDiff / prev.rate) * 1000) / 10 : +(delta * 1.5).toFixed(1);
+            const rawPct = prev && prev.rate > 0 ? Math.abs(Math.round((rateDiff / prev.rate) * 1000) / 10) : +(Math.abs(delta) * 1.5).toFixed(1);
+            const pct = delta > 0 ? (rawPct || 0.8) : -(rawPct || 0.8);
             const meta = SITE_META[curr.id] ?? {};
             const rival = RIVALS[curr.id];
 
@@ -238,14 +240,14 @@ export async function GET(req: Request) {
               glow: meta.glow ?? 'rgba(130,200,229,0.15)',
               category: curr.category ?? meta.category ?? 'general',
               currentRank: curr.rank,
-              previousRank: prevRank,
-              delta: delta !== 0 ? delta : (curr.rank % 3 === 0 ? 1 : (curr.rank % 3 === 1 ? -1 : 0)),
+              previousRank: curr.rank + delta,
+              delta,
               rate: curr.rate,
               baseline: curr.baseline,
               percentageChange: pct,
               volatility: Math.abs(pct),
               catalyst: assignCatalyst(curr.category ?? meta.category ?? '', delta, Math.abs(pct)),
-              sparkline: generateSparkline(delta || pct, Math.abs(pct)),
+              sparkline: generateSparkline(delta, Math.abs(pct)),
               topRivalId: rival?.id,
               topRivalName: rival?.name,
             });
@@ -264,7 +266,8 @@ export async function GET(req: Request) {
       const sign = i % 2 === 0 ? 1 : -1;
       const step = (i % 4) + 1;
       const delta = sign * step;
-      const pct = +(delta * 1.8).toFixed(1);
+      const rawPct = +(Math.abs(delta) * 1.8).toFixed(1);
+      const pct = delta > 0 ? rawPct : -rawPct;
       const rival = RIVALS[s.id];
 
       rawMovers.push({
