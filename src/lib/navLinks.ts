@@ -14,7 +14,7 @@ export interface NavLink {
 }
 
 /**
- * Primary platform nav — shown in the NavHeader tab bar and the Footer
+ * Primary platform nav - shown in the NavHeader tab bar and the Footer
  * "Platform" column. Keep this list in the same order you want the tabs.
  */
 export function getPlatformLinks(): NavLink[] {
@@ -31,7 +31,7 @@ export function getPlatformLinks(): NavLink[] {
 }
 
 /**
- * Resource / legal links — shown in the Footer "Resources" column.
+ * Resource / legal links - shown in the Footer "Resources" column.
  * Also added as secondary links in the NavHeader mobile menu.
  */
 export const RESOURCE_LINKS: NavLink[] = [

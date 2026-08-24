@@ -1,4 +1,4 @@
-# Pulse — Project Documentation
+# Pulse - Project Documentation
 
 > **Living document.** Updated after every significant change to the codebase.
 > Last updated: 2026-08-15
@@ -110,7 +110,7 @@ Core site data. Updated by the PTI engine every 6 hours.
 
 | Route | Type | Description |
 |---|---|---|
-| `/` | Server + Client | Main dashboard — live site grid |
+| `/` | Server + Client | Main dashboard - live site grid |
 | `/sites/[id]` | Dynamic (ISR) | Individual site detail page with live metrics & share/embed bar |
 | `/compare/[pair]` | Dynamic (SSG / ISR 1h) | Two-site traffic comparison with AI FAQs & share bar (400+ static pairs) |
 | `/embed/[id]` | Dynamic | Standalone iframe embeddable live traffic card / compact badge |
@@ -139,7 +139,7 @@ Core site data. Updated by the PTI engine every 6 hours.
 | `GET /api/outages` | 60s | Detected site outages |
 | `GET /api/speed-test` | no-cache | Latency measurement endpoint |
 | `GET /api/sync-rankings` | no-cache | Manual trigger for rank sync |
-| `POST /api/cron` | — | GitHub Actions webhook entry point |
+| `POST /api/cron` | - | GitHub Actions webhook entry point |
 
 ---
 
@@ -148,7 +148,7 @@ Core site data. Updated by the PTI engine every 6 hours.
 ### Core UI
 | Component | Description |
 |---|---|
-| `DashboardConsole` | Top control bar — search, filters, category tabs, sync status pill |
+| `DashboardConsole` | Top control bar - search, filters, category tabs, sync status pill |
 | `SiteGrid` | Responsive grid/list of site cards with live counters |
 | `AnalyticsPanel` | Expandable panel with Cloudflare Radar stats, traffic tiers, sort |
 | `MarqueeBanner` | Auto-scrolling traffic facts ticker |
@@ -163,7 +163,7 @@ Core site data. Updated by the PTI engine every 6 hours.
 
 ## 12. Feature Changelog
 
-### 2026-08-15 — Traffic Growth Engine Release
+### 2026-08-15 - Traffic Growth Engine Release
 - **Embeddable Live Widgets (`/embed/[id]`):** Created isolated, lightweight `<iframe />` widget route supporting both card and compact badge formats with real-time velocity counters.
 - **Dynamic SVG Badge Generator (`/api/badge/[id]`):** Created shields.io-compatible live SVG badges for GitHub READMEs and blogs with 1-hour CDN caching.
 - **Programmatic SEO (pSEO) Multiplier:** Expanded competitor combinations across categories (AI, dev tools, social, search, streaming) in `pairs.ts` and `sitemap.ts`, growing static comparisons to 400+ landing pages.

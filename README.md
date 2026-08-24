@@ -1,4 +1,4 @@
-# ⚡ Pulse — Live Global Web Traffic Intelligence Platform
+# ⚡ Pulse - Live Global Web Traffic Intelligence Platform
 
 **Pulse** is a proprietary, real-time web traffic visualizer, analytics platform, and intelligence engine. Powered by the **Pulse Traffic Index™ (PTI v1.2)**, Pulse fuses network DNS telemetry, link authority, search intent, and AI sentiment analysis to track visitor velocity across top global domains.
 

@@ -65,7 +65,7 @@ export default function DashboardConsole({
     if (diffMin < 60)  return { text: `${diffMin}m ago`, state: 'live' as const };
     if (diffHr  < 13)  return { text: `${diffHr}h ago`,  state: 'live' as const };
 
-    // >12h — cron is likely dead; show frozen timestamp in UTC
+    // >12h - cron is likely dead; show frozen timestamp in UTC
     const utcH = String(syncDate.getUTCHours()).padStart(2, '0');
     const utcM = String(syncDate.getUTCMinutes()).padStart(2, '0');
     return { text: `${utcH}:${utcM} UTC`, state: 'frozen' as const };

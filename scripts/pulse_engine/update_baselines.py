@@ -1,5 +1,5 @@
 """
-update_baselines.py — Automated Monthly Baseline Updater
+update_baselines.py - Automated Monthly Baseline Updater
 
 Fetches fresh traffic estimates from Cloudflare Radar public rankings
 and updates STATIC_BASELINES in static_baselines.py.
@@ -21,7 +21,7 @@ Real-world anchor points (from SimilarWeb public data):
   Rank #100 (Docker)  ≈ 70M/mo
 
 We use these as calibration anchors for a log-linear interpolation.
-This is NOT the old Zipf model — it's bounded by real observed data.
+This is NOT the old Zipf model - it's bounded by real observed data.
 """
 
 import os
@@ -56,7 +56,7 @@ except ImportError:
 
 
 # ── Calibration anchors (rank → monthly visits) ───────────────────────────────
-# Derived from SimilarWeb public data — updated when we do a manual review.
+# Derived from SimilarWeb public data - updated when we do a manual review.
 ANCHOR_POINTS = [
     (1,   85_000_000_000),
     (2,   34_800_000_000),
@@ -156,7 +156,7 @@ def fetch_cf_radar_ranks() -> dict[str, int]:
     """Fetch Cloudflare Radar top-100 global domain ranks."""
     cf_token = os.environ.get("CLOUDFLARE_API_TOKEN")
     if not cf_token:
-        print("  [CF Radar] No CLOUDFLARE_API_TOKEN — skipping rank fetch.")
+        print("  [CF Radar] No CLOUDFLARE_API_TOKEN - skipping rank fetch.")
         return {}
 
     data = get_url(
@@ -239,7 +239,7 @@ def run_baseline_update():
     cf_ranks = fetch_cf_radar_ranks()
 
     if not cf_ranks:
-        print("[2/3] No CF Radar data — nothing to update. Exiting.")
+        print("[2/3] No CF Radar data - nothing to update. Exiting.")
         return
 
     # 3. Compute new estimates and apply if >5% change
@@ -252,7 +252,7 @@ def run_baseline_update():
         cf_rank = cf_ranks.get(domain)
 
         if cf_rank is None:
-            # Site not in CF Radar top-100 — keep current value
+            # Site not in CF Radar top-100 - keep current value
             continue
 
         new_estimate = estimate_monthly_from_rank(cf_rank)
@@ -270,7 +270,7 @@ def run_baseline_update():
                   f"(change {change_pct:.1f}% < 5% threshold, kept)")
 
     if changes == 0:
-        print("\nNo baselines changed by more than 5% — file unchanged.")
+        print("\nNo baselines changed by more than 5% - file unchanged.")
     else:
         rewrite_baselines(updated)
         print(f"\nUpdated {changes} baselines in static_baselines.py.")

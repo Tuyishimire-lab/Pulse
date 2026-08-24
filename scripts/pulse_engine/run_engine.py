@@ -1,5 +1,5 @@
 """
-run_engine.py — Pulse Traffic Index Engine v2.0 (Static-First)
+run_engine.py - Pulse Traffic Index Engine v2.0 (Static-First)
 
 Architecture change from v1.x:
   - rank, baseline, rate  → derived from STATIC_BASELINES (not computed)
@@ -43,7 +43,7 @@ from scripts.pulse_engine.validation import run_validation, print_validation_rep
 # ─────────────────────────────────────────────────────────────────────────────
 # RATE NOISE BAND
 # Adds ±NOISE_PCT variation to the static rate for visual realism on the
-# live counter. Purely cosmetic — does not affect rank or baseline.
+# live counter. Purely cosmetic - does not affect rank or baseline.
 # ─────────────────────────────────────────────────────────────────────────────
 NOISE_PCT = 0.04  # ±4% band
 
@@ -56,7 +56,7 @@ def apply_noise(base_rate: int) -> int:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TREND CLASSIFIER
-# Based only on Cloudflare Radar DNS rank delta — not Groq AI or OPR.
+# Based only on Cloudflare Radar DNS rank delta - not Groq AI or OPR.
 # ─────────────────────────────────────────────────────────────────────────────
 def classify_trend_from_rank_delta(old_rank: int, new_rank: int) -> str:
     """Classify trend from CF Radar rank movement."""
@@ -201,7 +201,7 @@ def run_pulse_engine(run_validation_report: bool = True):
                 "pti_score": 0.0,
             }).execute()
         except Exception as e:
-            pass  # site_history is optional telemetry — don't block on schema mismatches
+            pass  # site_history is optional telemetry - don't block on schema mismatches
 
 
     print()

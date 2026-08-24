@@ -23,5 +23,5 @@ export function getRelatedTopics(site: { name: string; category: string }) {
   }
 }
 
-/** @deprecated Use getRelatedTopics — avoids misleading "searched" connotation */
+/** @deprecated Use getRelatedTopics - avoids misleading "searched" connotation */
 export const getMostSearchedTopics = getRelatedTopics;

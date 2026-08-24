@@ -71,7 +71,7 @@ export default function AboutPage() {
               <p className="text-[#94a3b8] text-base leading-relaxed max-w-2xl">
                 Pulse is a <strong className="text-white">transparent, model-driven index</strong> of global web traffic.
                 We estimate monthly visits, per-second visitor velocity, and momentum trends for the world&apos;s top {SITE_COUNT}+ websites
-                &mdash; and we publish exactly how we do it.
+                - and we publish exactly how we do it.
               </p>
             </div>
             <section className="space-y-4">
@@ -86,7 +86,7 @@ export default function AboutPage() {
                 </Link>.
               </p>
               <p className="text-sm text-[#cbd5e1] leading-relaxed">
-                Platforms like Similarweb and SemRush provide traffic estimates too &mdash; they just don&apos;t tell you how. Pulse does.
+                Platforms like Similarweb and SemRush provide traffic estimates too - they just don&apos;t tell you how. Pulse does.
               </p>
             </section>
             <section className="space-y-4">
@@ -119,7 +119,7 @@ export default function AboutPage() {
               <p className="text-sm text-[#cbd5e1] leading-relaxed">
                 Across benchmark sites where public ground-truth exists (Wikimedia Foundation server logs, SEC quarterly filings,
                 corporate press releases), PTI maintains a{' '}
-                <strong className="text-white">mean error margin of ~34.6%</strong>. That sounds large &mdash; but commercial
+                <strong className="text-white">mean error margin of ~34.6%</strong>. That sounds large - but commercial
                 platforms like Similarweb report their own margin in the 30&ndash;40% range for most domains.
                 Traffic estimation without server access is inherently approximate.
               </p>

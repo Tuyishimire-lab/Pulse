@@ -155,7 +155,7 @@ export const SITE_META: Record<string, SiteMeta> = Object.fromEntries(
 );
 
 /**
- * Authoritative catalog size — always equals SITES.length.
+ * Authoritative catalog size - always equals SITES.length.
  * Import this everywhere a count is needed in UI copy or metadata
  * instead of hardcoding "100" or "103". Updates automatically when
  * sites are added or removed from the catalog.

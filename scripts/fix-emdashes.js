@@ -13,12 +13,12 @@ const files = [
 // Replacements: [pattern, replacement]
 // Order matters - most specific first
 const replacements = [
-  // Page titles: "X — Pulse" => "X | Pulse"
-  [/ — Pulse/g, ' | Pulse'],
-  // JSON-LD description: "site.name — site.baseline" => "site.name: site.baseline"
-  [/\$\{site\.name\} — \$\{site\.baseline\}/g, '${site.name}: ${site.baseline}'],
+  // Page titles: "X - Pulse" => "X | Pulse"
+  [/ - Pulse/g, ' | Pulse'],
+  // JSON-LD description: "site.name - site.baseline" => "site.name: site.baseline"
+  [/\$\{site\.name\} - \$\{site\.baseline\}/g, '${site.name}: ${site.baseline}'],
   // All remaining em-dashes in prose (between spaces) => comma+space
-  [/ — /g, ', '],
+  [/ - /g, ', '],
 ];
 
 for (const rel of files) {

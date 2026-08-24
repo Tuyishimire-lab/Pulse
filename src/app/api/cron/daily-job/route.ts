@@ -129,14 +129,14 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
 
 
 export async function GET(request: Request) {
-  // 1. Authorize Cron trigger — CRON_SECRET must be set and must match.
+  // 1. Authorize Cron trigger - CRON_SECRET must be set and must match.
   //    Old logic: `if (CRON_SECRET && header !== expected)` silently skips auth
   //    when the env var is absent, leaving Groq calls unprotected.
-  //    New logic: fail closed — missing secret = misconfigured, reject loudly.
+  //    New logic: fail closed - missing secret = misconfigured, reject loudly.
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
   if (!cronSecret) {
-    console.error('[cron/daily-job] CRON_SECRET env var is not set — refusing to run unprotected.');
+    console.error('[cron/daily-job] CRON_SECRET env var is not set - refusing to run unprotected.');
     return new Response('Service Unavailable: CRON_SECRET not configured', { status: 503 });
   }
   if (authHeader !== `Bearer ${cronSecret}`) {
@@ -753,7 +753,7 @@ export async function GET(request: Request) {
           error_message: String(error?.message ?? error).slice(0, 500),
         });
       }
-    } catch { /* swallow — we're already in the error path */ }
+    } catch { /* swallow - we're already in the error path */ }
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

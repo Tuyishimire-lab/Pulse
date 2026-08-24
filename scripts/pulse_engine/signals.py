@@ -61,7 +61,7 @@ def fetch_cloudflare_radar_ranks() -> Dict[str, int]:
 # ─────────────────────────────────────────────────────────────────────────────
 def fetch_tranco_ranks(top_n: int = 5000) -> Dict[str, int]:
     """
-    Fetch Tranco rank list — an aggregated ranking combining Cloudflare Radar,
+    Fetch Tranco rank list - an aggregated ranking combining Cloudflare Radar,
     Cisco Umbrella, Majestic, Farsight, and Google CrUX. Updated daily.
     No API key required.
     top_n: How many top domains to download.
@@ -196,7 +196,7 @@ def fetch_open_pagerank(domains: List[str]) -> Dict[str, Dict[str, Any]]:
     return {}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SIGNAL 4: Groq AI Momentum — ALL 100 sites in batches of 30
+# SIGNAL 4: Groq AI Momentum - ALL 100 sites in batches of 30
 # ─────────────────────────────────────────────────────────────────────────────
 def _call_groq_batch(batch: List[Dict], client: httpx.Client) -> Dict[str, Dict[str, Any]]:
     """Call Groq AI for a single batch of sites. Returns momentum map."""
@@ -220,7 +220,7 @@ Consider current global trends:
 - Social media platforms face varying regulatory and user-engagement pressures  
 - Streaming wars continue with Disney+, Netflix, Max, Hulu, Twitch competing
 - E-commerce shifts with Amazon, Etsy, AliExpress, eBay seeing different trajectories
-- Crypto is volatile — Binance, Coinbase facing regulatory pressure
+- Crypto is volatile - Binance, Coinbase facing regulatory pressure
 - Developer tools (GitHub, GitLab, Docker, npm, Vercel, Netlify) growing steadily
 - News sites facing declining ad revenue and subscriber pressure
 

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { getPlatformLinks, RESOURCE_LINKS } from '../../lib/navLinks';
 
-// Featured countries shown in the footer — covers major traffic regions.
+// Featured countries shown in the footer - covers major traffic regions.
 // All other countries are reachable via /top-sites hub.
 const FEATURED_COUNTRIES = [
   { slug: 'united-states',  name: 'United States' },
@@ -72,7 +72,7 @@ export default function Footer() {
                 </Link>
               ))}
             </div>
-            {/* Hub link — ensures every country page has an internal link path */}
+            {/* Hub link - ensures every country page has an internal link path */}
             <Link
               href="/top-sites"
               className="mt-2 inline-flex items-center gap-1 text-xs text-[#82c8e5] hover:text-white transition-colors font-medium"

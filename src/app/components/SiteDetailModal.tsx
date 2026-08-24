@@ -408,7 +408,7 @@ export default function SiteDetailModal({
               <span className="text-[10px] font-semibold text-[#82c8e5]/70 bg-[#82c8e5]/10 px-1.5 py-0.5 rounded-full">Editorial</span>
             </h4>
             <p className="text-[10px] text-white/30 mt-1 mb-3">
-              Category-derived topic associations — not real search-query data.
+              Category-derived topic associations - not real search-query data.
             </p>
             <div className="flex flex-wrap gap-2">
               {displayedKeywords.map((kw, index) => (

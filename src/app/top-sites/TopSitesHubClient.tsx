@@ -64,7 +64,7 @@ export default function TopSitesHubClient({ countries }: Props) {
             {countries.length} Countries Tracked
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-3">
-            Top Websites by Country — {CURRENT_YEAR}
+            Top Websites by Country - {CURRENT_YEAR}
           </h1>
           <p className="text-[#94a3b8] text-base leading-relaxed max-w-2xl">
             Discover the most visited websites in every country, ranked by the Pulse Traffic Index (PTI).

@@ -277,7 +277,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
       { q: 'Does Threads have ads?', a: 'Meta began rolling out ads on Threads in 2024. X has had ads throughout its existence as a primary revenue stream. Both platforms are competing for the same digital advertising budgets.' },
     ],
   },
-  // NOTE: google-vs-chatgpt removed — covered by chatgpt-vs-google (line 88).
+  // NOTE: google-vs-chatgpt removed - covered by chatgpt-vs-google (line 88).
   //       Reverse-order requests are 308-redirected to the canonical slug by proxy.ts.
   {
     slug: 'shopify-vs-amazon',
@@ -375,7 +375,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
       { q: 'Which has lower fees, Binance or Coinbase?', a: 'Binance has significantly lower trading fees, starting at 0.1% and reducing further with BNB token usage. Coinbase\'s standard fees are higher but Coinbase Pro (now Advanced Trade) offers competitive maker/taker fees for active traders.' },
     ],
   },
-  // NOTE: tiktok-vs-instagram removed — covered by instagram-vs-tiktok (line 124).
+  // NOTE: tiktok-vs-instagram removed - covered by instagram-vs-tiktok (line 124).
   //       Reverse-order requests are 308-redirected to the canonical slug by proxy.ts.
   {
     slug: 'microsoft-vs-google',
@@ -413,7 +413,7 @@ export const COMPARE_PAIRS: ComparePair[] = [
       { q: 'Is Walmart Plus worth it vs Amazon Prime?', a: 'Amazon Prime ($139/year) offers broader benefits including Prime Video, Prime Music, and 2-day shipping on millions of items. Walmart Plus ($98/year) focuses on grocery delivery, fuel discounts, and Paramount+ streaming. For grocery-focused shoppers near a Walmart, Walmart Plus can be better value.' },
     ],
   },
-  // NOTE: youtube-vs-spotify removed — covered by spotify-vs-youtube (line 160).
+  // NOTE: youtube-vs-spotify removed - covered by spotify-vs-youtube (line 160).
   //       Reverse-order requests are 308-redirected to the canonical slug by proxy.ts.
   {
     slug: 'google-docs-vs-microsoft-word',
@@ -479,7 +479,7 @@ export const PAIR_SLUGS = COMPARE_PAIRS.map((p) => p.slug);
 /**
  * Returns the canonical slug for a pair: the one where the lexicographically
  * smaller site ID comes first. This is the source of truth for redirects and
- * the sitemap — only the canonical ordering is ever indexed.
+ * the sitemap - only the canonical ordering is ever indexed.
  */
 export function canonicalPairSlug(idA: string, idB: string): string {
   return idA <= idB ? `${idA}-vs-${idB}` : `${idB}-vs-${idA}`;

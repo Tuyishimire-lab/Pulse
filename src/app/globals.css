@@ -412,7 +412,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Footer Section — Modern multi-column layout
+   Footer Section - Modern multi-column layout
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .site-footer {
@@ -1595,25 +1595,25 @@ body {
   transition: color 0.2s;
 }
 
-/* Outage — red, pulsing urgency */
+/* Outage - red, pulsing urgency */
 .marquee-item-outage {
   color: #fca5a5;
   font-weight: 600;
 }
 
-/* Breaking news — orange */
+/* Breaking news - orange */
 .marquee-item-news {
   color: #fdba74;
   font-weight: 600;
 }
 
-/* Minor degradation / surge — amber */
+/* Minor degradation / surge - amber */
 .marquee-item-surge {
   color: #fcd34d;
   font-weight: 500;
 }
 
-/* Cloudflare Radar events / static facts — cyan */
+/* Cloudflare Radar events / static facts - cyan */
 .marquee-item-insight {
   color: #67e8f9;
   font-weight: 500;
@@ -1624,7 +1624,7 @@ body {
   100% { transform: translate3d(-50%, 0, 0); }
 }
 
-/* Pause animation for users who prefer reduced motion — CSS-layer safety net
+/* Pause animation for users who prefer reduced motion - CSS-layer safety net
    that works even before JS hydrates or when JS is disabled. */
 @media (prefers-reduced-motion: reduce) {
   .news-marquee-track {

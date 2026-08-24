@@ -9,7 +9,7 @@ dumps, official investor decks, and audited publisher statistics.
 
 from typing import Dict, List, Any
 
-# Ground truth benchmarks — monthly visits in billions (or fractions of billion)
+# Ground truth benchmarks - monthly visits in billions (or fractions of billion)
 # Conservative estimates from public disclosures, SEC filings, or widely cited industry benchmarks.
 KNOWN_BENCHMARKS: Dict[str, Dict[str, Any]] = {
     # ── Search & Portals ───────────────────────────────────────────────────────

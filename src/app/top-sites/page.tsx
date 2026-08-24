@@ -6,7 +6,7 @@ import { CURRENT_YEAR } from '../../lib/currentYear';
 const BASE_URL = 'https://www.pulstraffic.com';
 
 export const metadata: Metadata = {
-  title: `Top Websites by Country (${CURRENT_YEAR}) — Browse ${ALL_COUNTRIES.length} Countries | Pulse`,
+  title: `Top Websites by Country (${CURRENT_YEAR}) - Browse ${ALL_COUNTRIES.length} Countries | Pulse`,
   description:
     `Discover the most visited websites in ${ALL_COUNTRIES.length} countries worldwide. ` +
     `Compare internet penetration, local platform preferences, and real-time traffic estimates ` +

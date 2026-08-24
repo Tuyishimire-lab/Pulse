@@ -48,7 +48,7 @@ export default function HomeClient({
   // ── Supabase - seed with server-fetched data ──────────────────────────────
   const [dbSites, setDbSites] = useState<SiteConfig[]>(initialSites);
   // lastSynced is authoritative only from /api/health (reads sync_log written by cron).
-  // Do NOT use sites[0].updated_at — that column changes on any Supabase write.
+  // Do NOT use sites[0].updated_at - that column changes on any Supabase write.
   const [lastSynced, setLastSynced] = useState<string | null>(null);
 
   // ── Watchlist ─────────────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ export default function HomeClient({
             baselineRaw: row.baseline_raw ?? 0,
           })) as SiteConfig[];
           setDbSites(enriched);
-          // lastSynced intentionally NOT set here — use /api/health for that
+          // lastSynced intentionally NOT set here - use /api/health for that
         }
       } catch (err) {
         console.error('Failed to connect to Supabase:', err);

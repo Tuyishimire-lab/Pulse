@@ -1,8 +1,8 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * /api/health — Sync-job health endpoint.
+ * /api/health - Sync-job health endpoint.
  *
  * Returns the last successful cron run timestamp so external uptime monitors
  * (e.g. BetterUptime, UptimeRobot) can alert when data goes stale.
@@ -19,8 +19,8 @@ import { createClient } from '@supabase/supabase-js';
  * }
  *
  * HTTP codes:
- *   200 — healthy or degraded (check `degraded` field)
- *   503 — no sync log at all (never ran / table missing)
+ *   200 - healthy or degraded (check `degraded` field)
+ *   503 - no sync log at all (never ran / table missing)
  */
 
 export const dynamic = 'force-dynamic';
@@ -59,7 +59,7 @@ export async function GET() {
       .single();
 
     if (error || !data) {
-      // Table exists but is empty, or query failed — treat as never-synced
+      // Table exists but is empty, or query failed - treat as never-synced
       return NextResponse.json(
         { ok: false, degraded: true, message: 'No sync records found' },
         { status: 503 },
@@ -78,7 +78,7 @@ export async function GET() {
       sitesCount:    data.sites_count ?? null,
       status:        data.status      ?? 'success',
       message:       degraded
-        ? `Data frozen — last sync was ${Math.round(ageSeconds / 3600)}h ago`
+        ? `Data frozen - last sync was ${Math.round(ageSeconds / 3600)}h ago`
         : 'Sync healthy',
     });
   } catch (err: any) {

@@ -2,7 +2,7 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 
 /**
- * Standalone Vercel Function — WebSocket endpoint for Pulse Speed Test latency.
+ * Standalone Vercel Function - WebSocket endpoint for Pulse Speed Test latency.
  *
  * Deployed as a root-level API function (not a Next.js route handler) because
  * Next.js route handlers don't support WebSocket upgrade. Vercel deploys files
@@ -13,7 +13,7 @@ import { WebSocketServer, WebSocket } from 'ws';
  * - `ping-loaded`: Same as ping but tagged for bufferbloat tracking during download
  *
  * Auto-closes after 30s to prevent leaked connections.
- * Runs on Vercel Fluid Compute — each WS connection is pinned to one instance.
+ * Runs on Vercel Fluid Compute - each WS connection is pinned to one instance.
  */
 const server = http.createServer();
 const wss = new WebSocketServer({ server });

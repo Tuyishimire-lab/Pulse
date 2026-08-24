@@ -1,14 +1,14 @@
 """
-static_baselines.py — Single Source of Truth for Site Traffic
+static_baselines.py - Single Source of Truth for Site Traffic
 
 These values are manually verified against SimilarWeb & Semrush monthly reports.
 Update this file monthly. NEVER let the engine overwrite these with computed values.
 
-Source: SimilarWeb Global Rankings — June 2026
+Source: SimilarWeb Global Rankings - June 2026
 Last updated: 2026-08-11
 
 Format: { site_id: monthly_visits (integer) }
-Rank is derived by sorting on monthly_visits descending — no separate rank field needed.
+Rank is derived by sorting on monthly_visits descending - no separate rank field needed.
 Rate (visits/sec) = monthly_visits // 2_628_000  (pure math, no model)
 """
 
@@ -160,7 +160,7 @@ def get_rate(monthly: int) -> int:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SITE_META — Static metadata that doesn't change (mirrors sites.ts SITE_META)
+# SITE_META - Static metadata that doesn't change (mirrors sites.ts SITE_META)
 # Only includes fields NOT written by the engine: name, category, color, logo.
 # Used by run_engine.py to build the weekly snapshot with correct categories.
 # ─────────────────────────────────────────────────────────────────────────────

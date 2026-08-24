@@ -41,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // Hub page that links to every country — high priority since it provides
+  // Hub page that links to every country - high priority since it provides
   // internal link equity to all the individual country pages.
   const topSitesHub = {
     url: `${baseUrl}/top-sites`,

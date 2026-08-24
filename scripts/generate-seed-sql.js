@@ -7,7 +7,7 @@
  * Usage: node --experimental-vm-modules scripts/generate-seed-sql.js
  *   or:  npx tsx scripts/generate-seed-sql.js
  *
- * Output goes to stdout — pipe to a file:
+ * Output goes to stdout - pipe to a file:
  *   npx tsx scripts/generate-seed-sql.js > supabase_seed_generated.sql
  */
 

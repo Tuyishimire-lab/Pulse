@@ -1,5 +1,5 @@
 """
-rank_arbiter.py — Collision-Free Rank Arbitration
+rank_arbiter.py - Collision-Free Rank Arbitration
 
 Produces a guaranteed-unique {site_id: rank} mapping for all sites by:
   1. Scoring each site's best available rank by source priority
@@ -10,11 +10,11 @@ This means two sites can NEVER share a rank after arbitration, regardless of
 what Cloudflare Radar, Tranco, or existing DB values say.
 
 Source priority ladder (lower = higher priority):
-  0  RANK_OVERRIDES  — human-curated; corrects structural DNS bias
-  1  Cloudflare Radar — real-time DNS query volume, highest precision
-  2  Tranco           — multi-source aggregated, very reliable
-  3  OPR-adjusted     — Open PageRank used to break ties / fill gaps
-  4  DB existing      — preserve last known good value as last resort
+  0  RANK_OVERRIDES  - human-curated; corrects structural DNS bias
+  1  Cloudflare Radar - real-time DNS query volume, highest precision
+  2  Tranco           - multi-source aggregated, very reliable
+  3  OPR-adjusted     - Open PageRank used to break ties / fill gaps
+  4  DB existing      - preserve last known good value as last resort
 """
 
 from __future__ import annotations
@@ -64,7 +64,7 @@ def arbitrate_ranks(
         domain_for:  {site_id: domain} pre-computed domain map.
 
     Returns:
-        {site_id: int} — sequential ranks 1..N, no duplicates, no gaps.
+        {site_id: int} - sequential ranks 1..N, no duplicates, no gaps.
     """
     # ── Step 1: collect best candidate rank + priority for each site ──────────
     candidates: list[tuple[int, int, str]] = []  # (priority, raw_rank, site_id)
@@ -121,7 +121,7 @@ def arbitrate_ranks(
         sample = {sid: result[sid] for sid in override_sites[:8]}
         print(f"[Arbiter] Override placements: {sample}")
 
-    # Sanity check — should always pass
+    # Sanity check - should always pass
     assert len(set(result.values())) == len(result), \
         "[Arbiter] BUG: duplicate ranks in output!"
 

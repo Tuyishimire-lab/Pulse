@@ -81,7 +81,7 @@ export default function LegalModals({
             </div>
             <div className="text-sm text-[#cbd5e1] leading-relaxed mt-4 flex flex-col gap-3 max-h-[350px] overflow-y-auto pr-2">
               <p><strong>1. Agreement to Terms:</strong> By accessing Pulse, you agree to comply with and be bound by these terms.</p>
-              <p><strong>2. Data Methodology:</strong> Pulse data is not a direct server tap into internal corporate engineering load balancers (as no third-party website on the internet has access to private internal server logs of third-party companies). Like Similarweb, Worldometer, or Statista, Pulse utilizes statistical modeling — specifically, Cloudflare Radar DNS telemetry, Tranco multi-source rankings, Open PageRank authority scores, and Groq AI momentum signals.</p>
+              <p><strong>2. Data Methodology:</strong> Pulse data is not a direct server tap into internal corporate engineering load balancers (as no third-party website on the internet has access to private internal server logs of third-party companies). Like Similarweb, Worldometer, or Statista, Pulse utilizes statistical modeling - specifically, Cloudflare Radar DNS telemetry, Tranco multi-source rankings, Open PageRank authority scores, and Groq AI momentum signals.</p>
               <p><strong>3. Intellectual Property:</strong> Company brand names, domain URLs, and registered trademarks belong to their respective owners. Brand colors and logo assets are used strictly for informational identification purposes.</p>
               <p><strong>4. Limitations of Liability:</strong> Under no circumstances shall Pulse be liable for any direct or indirect business decisions made based on the estimations shown on this dashboard.</p>
             </div>

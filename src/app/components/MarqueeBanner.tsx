@@ -75,7 +75,7 @@ export default function MarqueeBanner({ items }: MarqueeBannerProps) {
     /*
      * role="marquee" is the implicit ARIA landmark for auto-scrolling content.
      * aria-label gives it a human-readable name.
-     * aria-live="off" suppresses live-region chatter — the items don't need to
+     * aria-live="off" suppresses live-region chatter - the items don't need to
      * be announced as they scroll; they're navigable as static content.
      */
     <div
@@ -107,16 +107,16 @@ export default function MarqueeBanner({ items }: MarqueeBannerProps) {
         {/*
           aria-hidden on the outer container means the track text is hidden
           from the AT tree. Instead we render a visually-hidden <ul> below
-          that screen readers CAN navigate — proper list semantics, no duplication.
+          that screen readers CAN navigate - proper list semantics, no duplication.
         */}
         <div
           className="news-marquee-track"
           ref={trackRef}
           style={animationStyle}
         >
-          {/* First set — visible, animated */}
+          {/* First set - visible, animated */}
           {renderItems(false)}
-          {/* Second set — purely visual clone for seamless CSS loop */}
+          {/* Second set - purely visual clone for seamless CSS loop */}
           {renderItems(true)}
         </div>
       </div>

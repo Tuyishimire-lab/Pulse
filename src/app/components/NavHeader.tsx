@@ -100,7 +100,7 @@ export default function NavHeader() {
                 {label}
               </Link>
             ))}
-            {/* Secondary resource links — ensures /about and /methodology are always reachable on mobile */}
+            {/* Secondary resource links - ensures /about and /methodology are always reachable on mobile */}
             <div className="mt-2 pt-2 border-t border-white/[0.06] flex flex-col gap-1">
               {RESOURCE_LINKS.map(({ href, label }) => (
                 <Link

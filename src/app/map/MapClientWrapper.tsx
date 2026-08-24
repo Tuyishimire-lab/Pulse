@@ -50,7 +50,7 @@ function MapSkeleton({ countryMap }: Props) {
         </Link>
       </nav>
 
-      {/* Hero text — the only part Googlebot will index */}
+      {/* Hero text - the only part Googlebot will index */}
       <div
         style={{
           maxWidth: 860,
@@ -87,7 +87,7 @@ function MapSkeleton({ countryMap }: Props) {
           Click any country to explore its top websites and traffic data.
         </p>
 
-        {/* Visual map placeholder — animated shimmer while WebGL loads */}
+        {/* Visual map placeholder - animated shimmer while WebGL loads */}
         <div
           aria-hidden="true"
           style={{
@@ -174,7 +174,7 @@ function MapSkeleton({ countryMap }: Props) {
         </ul>
       </div>
 
-      {/* No-JS fallback — hidden from regular users, visible to non-JS scrapers */}
+      {/* No-JS fallback - hidden from regular users, visible to non-JS scrapers */}
       <noscript>
         <div
           style={{
@@ -198,7 +198,7 @@ function MapSkeleton({ countryMap }: Props) {
   );
 }
 
-// ─── Dynamic import — ssr: false because react-simple-maps uses browser APIs ─
+// ─── Dynamic import - ssr: false because react-simple-maps uses browser APIs ─
 // We provide a loading: skeleton so the server ships real HTML rather than
 // an empty body, keeping crawlers and no-JS users happy.
 const MapPageClient = dynamic(() => import('./MapPageClient'), {
@@ -212,7 +212,7 @@ const MapPageClient = dynamic(() => import('./MapPageClient'), {
         </div>
       );
     }
-    // Return null here — the skeleton is rendered server-side via the wrapper
+    // Return null here - the skeleton is rendered server-side via the wrapper
     return null;
   },
 });
@@ -233,14 +233,14 @@ interface Props {
 export default function MapClientWrapper({ countryMap }: Props) {
   // After JS hydrates, hide the SSR skeleton so the interactive map shows cleanly.
   // We use a simple inline style toggle rather than a class to avoid needing a
-  // global CSS rule — this way the skeleton is visible in the SSR HTML but
+  // global CSS rule - this way the skeleton is visible in the SSR HTML but
   // disappears immediately once the client component tree mounts.
   const [hydrated, setHydrated] = React.useState(false);
   React.useEffect(() => { setHydrated(true); }, []);
 
   return (
     <>
-      {/* SSR skeleton — visible to crawlers, first paint, and no-JS users.
+      {/* SSR skeleton - visible to crawlers, first paint, and no-JS users.
           Hidden client-side as soon as React hydrates (via visibility: hidden
           so it still occupies layout space, avoiding CLS during the swap). */}
       <div
@@ -252,7 +252,7 @@ export default function MapClientWrapper({ countryMap }: Props) {
         <MapSkeleton countryMap={countryMap} />
       </div>
 
-      {/* Client-only interactive map — rendered only after hydration.
+      {/* Client-only interactive map - rendered only after hydration.
           Absent from SSR HTML, so crawlers never see a duplicate. */}
       {hydrated && <MapPageClient countryMap={countryMap} />}
     </>

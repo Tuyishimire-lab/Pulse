@@ -108,7 +108,7 @@ export default function AnalyticsPanel({
               const total = entries.reduce((s, [, n]) => s + n, 0);
               if (total === 0) return null;
 
-              // Largest Remainder Method (Hamilton) — guarantees percentages sum
+              // Largest Remainder Method (Hamilton) - guarantees percentages sum
               // to exactly 100, eliminating the ~102% rounding accumulation.
               const raw = entries.map(([cat, count]) => ({
                 cat,
