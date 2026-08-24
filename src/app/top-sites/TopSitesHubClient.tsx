@@ -5,6 +5,7 @@ import Link from 'next/link';
 import NavHeader from '../components/NavHeader';
 import { CountryData } from './data/countries';
 import { CURRENT_YEAR } from '../../lib/currentYear';
+import { getCountryFlagColors } from './data/flagColors';
 
 interface Props {
   countries: CountryData[];
@@ -134,31 +135,78 @@ export default function TopSitesHubClient({ countries }: Props) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {filtered.map((country) => (
-              <Link
-                key={country.slug}
-                href={'/top-sites/' + country.slug}
-                className="group flex flex-col gap-1.5 p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
-              >
-                <div className="flex items-center gap-2">
-                  {country.flag && (
-                    <span className="text-xl leading-none flex-shrink-0">{country.flag}</span>
-                  )}
-                  <span className="font-semibold text-sm text-white group-hover:text-[#82c8e5] transition-colors leading-snug">
-                    {country.name}
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#6d8196] flex items-center gap-1.5">
-                  <span>{country.internetUsers} users</span>
-                  <span className="opacity-50">·</span>
-                  <span>{country.internetPenetration}</span>
-                </div>
-                <div className="mt-1 text-[10px] font-medium text-[#82c8e5]/60 group-hover:text-[#82c8e5] transition-colors">
-                  View top sites →
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {filtered.map((country) => {
+              const colors = getCountryFlagColors(country.cfCode);
+              return (
+                <Link
+                  key={country.slug}
+                  href={'/top-sites/' + country.slug}
+                  className="group relative flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300 overflow-hidden hover:-translate-y-1"
+                  style={{
+                    background: colors.bgGradient,
+                    borderColor: colors.borderColor,
+                    boxShadow: '0 4px 20px -5px rgba(0,0,0,0.4)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = colors.primary;
+                    e.currentTarget.style.boxShadow = `0 10px 30px -5px ${colors.glowColor}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = colors.borderColor;
+                    e.currentTarget.style.boxShadow = '0 4px 20px -5px rgba(0,0,0,0.4)';
+                  }}
+                >
+                  {/* Subtle top flag accent stripe */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-[2px] opacity-70 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})`,
+                    }}
+                  />
+
+                  <div>
+                    {/* Header: Country Name + Flag Emoji / CF Tag */}
+                    <div className="flex items-center justify-between gap-2 mb-2.5">
+                      <span className="font-bold text-base text-white group-hover:text-white transition-colors leading-snug">
+                        {country.name}
+                      </span>
+                      {country.flag ? (
+                        <span className="text-2xl leading-none flex-shrink-0 drop-shadow">
+                          {country.flag}
+                        </span>
+                      ) : (
+                        <span
+                          className="px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wider uppercase flex-shrink-0 border border-white/10"
+                          style={{
+                            backgroundColor: colors.tagBg,
+                            color: colors.tagText,
+                          }}
+                        >
+                          {country.cfCode}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Stats: Users & Penetration */}
+                    <div className="text-xs text-[#94a3b8] flex items-center gap-1.5 font-medium">
+                      <span>{country.internetUsers} users</span>
+                      <span className="opacity-40">·</span>
+                      <span style={{ color: colors.primary }}>{country.internetPenetration}</span>
+                    </div>
+                  </div>
+
+                  {/* Call to action arrow */}
+                  <div
+                    className="mt-3.5 pt-2.5 border-t border-white/[0.06] flex items-center justify-between text-xs font-semibold transition-colors"
+                    style={{ color: colors.primary }}
+                  >
+                    <span>View top sites</span>
+                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
 
