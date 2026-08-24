@@ -116,7 +116,6 @@ Core site data. Updated by the PTI engine every 6 hours.
 | `/embed/[id]` | Dynamic | Standalone iframe embeddable live traffic card / compact badge |
 | `/top-sites/[country]` | Static + ISR | Country-specific rankings (115 countries) |
 | `/report/[week]` | Dynamic | Weekly traffic report (from weekly_snapshots) |
-| `/speed-test` | Client | Browser-based speed test |
 | `/methodology` | Static | PTI scoring methodology explained |
 | `/privacy` | Static | Privacy policy |
 | `/terms` | Static | Terms of service |
@@ -124,7 +123,7 @@ Core site data. Updated by the PTI engine every 6 hours.
 ### Static Params Coverage
 - **Compare pairs:** 400+ programmatic category and global competitor pairings
 - **Country pages:** 24 hand-crafted + 91 generated = **115 total**
-- **Total Static / SSG Pre-rendered Pages:** **660+ routes**
+- **Total Static / SSG Pre-rendered Pages:** **650+ routes**
 
 ---
 
@@ -137,7 +136,6 @@ Core site data. Updated by the PTI engine every 6 hours.
 | `GET /api/radar-site?asn=` | 1h | Per-ASN geo + device + traffic data |
 | `GET /api/marquee?location=` | 60s | Scrolling traffic facts banner |
 | `GET /api/outages` | 60s | Detected site outages |
-| `GET /api/speed-test` | no-cache | Latency measurement endpoint |
 | `GET /api/sync-rankings` | no-cache | Manual trigger for rank sync |
 | `POST /api/cron` | - | GitHub Actions webhook entry point |
 

@@ -15,7 +15,6 @@
 - 🏷️ **Dynamic SVG Badges (`/api/badge/[id]`):** High-DPI Shields.io-style SVG badges for startup landing pages, documentation, and GitHub READMEs.
 - 🌍 **Geographic Rankings (`/top-sites/[country]`):** Country-specific traffic rankings across 115+ countries.
 - 📊 **AI-Powered Weekly Reports (`/report/[week]`):** Weekly digests synthesizing market shifts and rank volatility using Groq AI.
-- ⚡ **Interactive Speed Tester (`/speed-test`):** Hybrid HTTP + WebSocket download/upload bandwidth and latency tester.
 - 📢 **Social Sharing & Virality (`SocialShareBar`):** Instant pre-formatted statistical hooks for X/Twitter, Reddit, and LinkedIn.
 - 🤖 **Automated Social Digest Bot (`scripts/social_bot.py`):** Automated weekly X/Twitter traffic shift posts.
 
