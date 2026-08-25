@@ -4,6 +4,7 @@ import { parseDomain } from '../../../../utils/domain';
 import { generateAIStories } from '../../../../utils/groqAnalysis';
 import { ALL_COUNTRIES, CountryData } from '../../../top-sites/data/countries';
 import { getRegionalProfile } from '../../../top-sites/data/regionalProfiles';
+import { submitToIndexNow } from '../../../../lib/indexnow';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
@@ -732,6 +733,19 @@ export async function GET(request: Request) {
       // Non-fatal: don't fail the cron just because logging failed
       console.error('Unified Cron: Failed to write sync_log:', logErr);
     }
+
+    // ── Notify Search Engines via IndexNow ───────────────────────────────────
+    try {
+      const pingUrls = [
+        'https://www.pulstraffic.com',
+        'https://www.pulstraffic.com/trending',
+        'https://www.pulstraffic.com/top-sites',
+        ...sites.slice(0, 50).map((s: any) => `https://www.pulstraffic.com/sites/${s.id}`),
+      ];
+      submitToIndexNow(pingUrls).catch((err) =>
+        console.warn('IndexNow auto-ping error in cron:', err)
+      );
+    } catch { /* non-critical */ }
 
     return NextResponse.json({
       success: true,
