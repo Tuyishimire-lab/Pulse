@@ -120,7 +120,12 @@ export default function RootLayout({
             gtag('config', 'G-PL277Z4KW6');
           `}
         </Script>
-        <Script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com"></Script>
+        {/* OmniRoute Tag - AI Crawler Detection */}
+        <Script
+          id="omni-route"
+          src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com"
+          strategy="afterInteractive"
+        />
         {children}
         <Footer />
         <Analytics />
