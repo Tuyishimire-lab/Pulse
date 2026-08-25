@@ -99,6 +99,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/* OmniRoute Tag - AI Crawler Detection (native tag required for server-rendered HTML detection) */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com" />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <script
           type="application/ld+json"
@@ -120,12 +125,7 @@ export default function RootLayout({
             gtag('config', 'G-PL277Z4KW6');
           `}
         </Script>
-        {/* OmniRoute Tag - AI Crawler Detection */}
-        <Script
-          id="omni-route"
-          src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com"
-          strategy="afterInteractive"
-        />
+
         {children}
         <Footer />
         <Analytics />
