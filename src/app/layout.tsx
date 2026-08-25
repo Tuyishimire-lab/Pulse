@@ -102,7 +102,7 @@ export default function RootLayout({
       <head>
         {/* OmniRoute Tag - AI Crawler Detection (native tag required for server-rendered HTML detection) */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com" />
+        <script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com"></script>
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <script
