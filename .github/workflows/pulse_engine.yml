@@ -21,8 +21,6 @@ on:
   schedule:
     # JOB 1: Run engine every day at 06:00 UTC (pushes signals + weekly snapshot)
     - cron: '0 6 * * *'
-    # JOB 2: Update baselines on the 1st of every month at 05:00 UTC
-    - cron: '0 5 1 * *'
   workflow_dispatch:
     inputs:
       job:
@@ -40,10 +38,8 @@ jobs:
   run-engine:
     name: Run Pulse Engine (signals + snapshot)
     runs-on: ubuntu-latest
-    # Skip this job on the 1st of the month (baselines job runs instead, then calls engine)
-    # Also run if manually triggered with job=engine or job=both
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '0 6 * * *') ||
+      github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'engine' || inputs.job == 'both'))
 
     steps:
@@ -74,8 +70,7 @@ jobs:
     name: Update Monthly Baselines
     runs-on: ubuntu-latest
     if: |
-      (github.event_name == 'schedule' && github.event.schedule == '0 5 1 * *') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'baselines' || inputs.job == 'both'))
+      github.event_name == 'workflow_dispatch' && (inputs.job == 'baselines' || inputs.job == 'both')
 
     steps:
       - name: Checkout repository

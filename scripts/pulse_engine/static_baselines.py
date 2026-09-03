@@ -19,26 +19,26 @@ Rate (visits/sec) = monthly_visits // 2_628_000  (pure math, no model)
 STATIC_BASELINES: dict[str, int] = {
     # ── Global Top 10 ─────────────────────────────────────────────────────────
     "google":       85_000_000_000,   # #1  Alphabet SEC consensus
-    "youtube":      2_018_319_363,   # #2  SimilarWeb 2026
-    "facebook":     3_694_970_449,   # #3  Meta 2026 IR
-    "instagram":     2_265_506_461,   # #4  Meta Q2 report
-    "chatgpt":       610_000_000,   # #5  Similarweb 2026 (chatgpt.com)
-    "wikipedia":     140_358_110,   # #6  Wikimedia Foundation
-    "amazon":        2_416_744_075,   # #7  Amazon SEC 10-Q
+    "youtube":      34_800_000_000,   # #2  SimilarWeb 2026
+    "facebook":     15_200_000_000,   # #3  Meta 2026 IR
+    "instagram":     6_800_000_000,   # #4  Meta Q2 report
+    "chatgpt":       5_500_000_000,   # #5  Similarweb 2026 (chatgpt.com)
+    "wikipedia":     4_500_000_000,   # #6  Wikimedia Foundation
+    "amazon":        4_200_000_000,   # #7  Amazon SEC 10-Q
     "x":             4_200_000_000,   # #8  X Corp disclosures
-    "whatsapp":      202_472_318,   # #9  Meta messaging
+    "whatsapp":      2_900_000_000,   # #9  Meta messaging
     "reddit":        2_800_000_000,   # #10 Reddit S-1 IPO & 10-Q
     # ── 11–20 ─────────────────────────────────────────────────────────────────
-    "tiktok":        84_680_351,   # #11 ByteDance Web
-    "yahoo":         412_657_762,   # #12
+    "tiktok":        2_800_000_000,   # #11 ByteDance Web
+    "yahoo":         2_800_000_000,   # #12
     "yandex":        2_500_000_000,   # #13
-    "baidu":         312_518_636,   # #14
-    "netflix":       1_424_709_757,   # #15 Netflix Shareholder report
-    "openai":        554_084_292,   # #16 openai.com portal
-    "bing":          1_915_846_715,   # #17 Microsoft Search
-    "microsoft":     4_165_520_732,   # #18
-    "linkedin":      210_748_423,   # #19 Microsoft Q3 IR
-    "office":        428_938_652,   # #20
+    "baidu":         2_200_000_000,   # #14
+    "netflix":       2_100_000_000,   # #15 Netflix Shareholder report
+    "openai":        2_000_000_000,   # #16 openai.com portal
+    "bing":          1_800_000_000,   # #17 Microsoft Search
+    "microsoft":     1_800_000_000,   # #18
+    "linkedin":      1_750_000_000,   # #19 Microsoft Q3 IR
+    "office":        1_600_000_000,   # #20
     # ── 21–40 ─────────────────────────────────────────────────────────────────
     "twitch":        1_150_000_000,   # #21 Twitch Media Kit
     "weather":       1_100_000_000,   # #22
@@ -55,14 +55,14 @@ STATIC_BASELINES: dict[str, int] = {
     "nytimes":         650_000_000,   # #33 NY Times SEC 10-Q
     "discord":         580_000_000,   # #34 Discord transparency
     "bbc":             580_000_000,   # #35 Similarweb (bbc.co.uk + bbc.com)
-    "spotify":         397_383_974,   # #36 Spotify shareholder deck
-    "roblox":          293_707_646,   # #37
+    "spotify":         560_000_000,   # #36 Spotify shareholder deck
+    "roblox":          545_000_000,   # #37
     "booking":         520_000_000,   # #38 Booking Holdings
     "walmart":         510_000_000,   # #39 Walmart Digital Commerce
     "disneyplus":      350_000_000,   # #40 Disney Direct-to-Consumer Web
     # ── 41–60 ─────────────────────────────────────────────────────────────────
     "cnn":             520_000_000,   # #41 Warner Bros Discovery
-    "apple":           4_800_000_000,   # #42
+    "apple":           520_000_000,   # #42
     "imgur":           450_000_000,   # #43
     "paypal":          440_000_000,   # #44 PayPal IR
     "etsy":            420_000_000,   # #45 Etsy IR
@@ -74,7 +74,7 @@ STATIC_BASELINES: dict[str, int] = {
     "theguardian":     340_000_000,   # #51 Guardian Media Group
     "target":          340_000_000,   # #52 Target Corp IR
     "mailru":          330_000_000,   # #53
-    "adobe":           72_349_000,   # #54
+    "adobe":           310_000_000,   # #54
     "steam":           305_000_000,   # #55
     "globo":           295_000_000,   # #56
     "tradingview":     220_000_000,   # #57 TradingView stats

@@ -31,6 +31,12 @@ import math
 import json
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load .env.local from project root
+env_path = Path(__file__).resolve().parent.parent.parent / '.env.local'
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
 
 # ─── Try to import httpx, fall back to urllib ────────────────────────────────
 try:
@@ -71,6 +77,18 @@ ANCHOR_POINTS = [
     (100,     70_000_000),
     (200,     20_000_000),
 ]
+
+# Sites anchored to official SEC 10-K/10-Q filings, investor reports, or
+# verified publisher statistics. These must NEVER be overwritten by raw DNS rankings
+# (e.g. video platforms routing via CDN subdomains or OS devices sending telemetry).
+PROTECTED_ANCHORS = {
+    "google", "youtube", "facebook", "instagram", "chatgpt", "wikipedia",
+    "amazon", "x", "whatsapp", "reddit", "tiktok", "apple", "microsoft",
+}
+
+# Maximum percentage a non-anchor baseline is permitted to change in a single cycle.
+# Prevents DNS anomaly spikes or dips from distorting web traffic estimates.
+MAX_ALLOWED_DELTA_PCT = 15.0
 
 
 def estimate_monthly_from_rank(rank: int) -> int:
@@ -248,6 +266,11 @@ def run_baseline_update():
     changes = 0
 
     for site_id, current_val in current.items():
+        if site_id in PROTECTED_ANCHORS:
+            # Protected anchor: verified via official filings / audited stats; skip DNS override
+            print(f"  {site_id:20s} | Protected Anchor | Kept at {current_val/1e9:.2f}B / mo")
+            continue
+
         domain = SITE_DOMAINS.get(site_id, "").replace("www.", "")
         cf_rank = cf_ranks.get(domain)
 
@@ -256,6 +279,15 @@ def run_baseline_update():
             continue
 
         new_estimate = estimate_monthly_from_rank(cf_rank)
+        raw_change_pct = (new_estimate - current_val) / float(current_val) * 100.0
+
+        # Safety Clamp: prevent DNS anomalies from swinging traffic by more than allowed limit
+        if abs(raw_change_pct) > MAX_ALLOWED_DELTA_PCT:
+            clamped_pct = MAX_ALLOWED_DELTA_PCT if raw_change_pct > 0 else -MAX_ALLOWED_DELTA_PCT
+            clamped_estimate = int(round(current_val * (1.0 + clamped_pct / 100.0)))
+            print(f"  [SAFETY GUARD] {site_id:20s} | Raw change {raw_change_pct:+.1f}% clamped to {clamped_pct:+.1f}%")
+            new_estimate = clamped_estimate
+
         change_pct = abs(new_estimate - current_val) / current_val * 100
 
         if change_pct > 5.0:

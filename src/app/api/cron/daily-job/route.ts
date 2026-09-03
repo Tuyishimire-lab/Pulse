@@ -11,28 +11,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
 const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
 
-// Rank-to-traffic power law model
-// Calibrated against known data: Google (#1) ≈ 85B/mo, rank #10 ≈ 6.7B/mo, rank #100 ≈ 536M/mo
-// Uses modified Zipf's law: monthly_visits = ANCHOR_MONTHLY / rank^EXPONENT
-const ANCHOR_MONTHLY = 85_000_000_000; // Google's approximate monthly visits
-const ZIPF_EXPONENT = 1.1;
 
-function estimateTrafficFromRank(rank: number): { dailyVisits: number; monthlyVisits: number; rate: number } {
-  const clampedRank = Math.max(1, rank);
-  const monthlyVisits = Math.round(ANCHOR_MONTHLY / Math.pow(clampedRank, ZIPF_EXPONENT));
-  const dailyVisits = Math.round(monthlyVisits / 30.4);
-  const rate = Math.max(1, Math.round(dailyVisits / 86400));
-  return { dailyVisits, monthlyVisits, rate };
-}
-
-function formatBaseline(monthlyVisits: number): string {
-  if (monthlyVisits >= 1_000_000_000) {
-    return (monthlyVisits / 1_000_000_000).toFixed(1) + 'B / mo';
-  } else if (monthlyVisits >= 1_000_000) {
-    return (monthlyVisits / 1_000_000).toFixed(1) + 'M / mo';
-  }
-  return (monthlyVisits / 1_000).toFixed(1) + 'K / mo';
-}
 async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | null> {
   const apiKey = process.env.KEYWORDSEVERYWHERE_API_KEY;
   if (!apiKey) return null;
@@ -173,70 +152,17 @@ export async function GET(request: Request) {
       );
     }
 
-    // [New Segment] Sync rankings with Cloudflare Radar (Once daily inside cron)
-    const cfRadarToken = process.env.CLOUDFLARE_API_TOKEN;
-    if (cfRadarToken) {
-      try {
-        const cfRes = await fetch('https://api.cloudflare.com/client/v4/radar/ranking/top?limit=100&format=json', {
-          headers: {
-            'Authorization': `Bearer ${cfRadarToken}`,
-            'Accept': 'application/json'
-          },
-          signal: AbortSignal.timeout(6000)
-        });
-        if (cfRes.ok) {
-          const cfData = await cfRes.json();
-          if (cfData.success && cfData.result && cfData.result.top_0) {
-            const radarRanks = cfData.result.top_0;
-            const rankMap = new Map<string, number>();
-            radarRanks.forEach((item: any) => {
-              rankMap.set(item.domain.toLowerCase(), item.rank);
-            });
-
-            // Match and prepare updates
-            const rankUpdates: { id: string; rank: number }[] = [];
-            sites.forEach((site: any) => {
-              const domain = site.url
-                .replace('https://', '')
-                .replace('http://', '')
-                .replace('www.', '')
-                .split('/')[0]
-                .toLowerCase();
-              
-              const newRank = rankMap.get(domain);
-              if (newRank !== undefined && newRank !== site.rank) {
-                rankUpdates.push({ id: site.id, rank: newRank });
-                // Mutate the local array so subsequent OPR steps also have the updated rank!
-                site.rank = newRank;
-              }
-            });
-
-            // Write updates to Supabase
-            if (rankUpdates.length > 0) {
-              const dbUpdates = rankUpdates.map((upd) => 
-                supabase
-                  .from('sites')
-                  .update({ rank: upd.rank })
-                  .eq('id', upd.id)
-              );
-              // Perform updates
-              const chunkSize = 10;
-              for (let i = 0; i < dbUpdates.length; i += chunkSize) {
-                await Promise.all(dbUpdates.slice(i, i + chunkSize));
-              }
-              console.log(`Unified Cron: Synced ${rankUpdates.length} rankings with Cloudflare Radar.`);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Unified Cron: Failed to sync rankings with Cloudflare Radar:', err);
-      }
-    }
+    // Global site ranks, baselines, and rates are authoritatively managed by the
+    // Pulse Traffic Index Python engine (scripts/pulse_engine/run_engine.py).
+    // Raw Cloudflare Radar DNS queries must NOT directly override global web rankings
+    // (DNS query volume heavily inflates OS telemetry like apple.com/microsoft.com
+    // while undercounting CDN/app-first video streams like youtube.com/tiktok.com).
 
     // ── Country-specific rankings refresh (runs daily, after global sync) ──────
     // For each country: call Cloudflare Radar with location=cfCode, match domains
     // to our sites database, upsert to country_rankings table.
     // getCountrySites.ts reads this table and falls back to live Radar if stale.
+    const cfRadarToken = process.env.CLOUDFLARE_API_TOKEN;
     if (cfRadarToken) {
       try {
         console.log('Unified Cron: Starting country-specific rankings refresh...');
@@ -378,55 +304,16 @@ export async function GET(request: Request) {
       );
     }
 
-    // 5. Compute traffic from Cloudflare Radar rank using power law model
-    // This is the primary traffic estimation - derived from rank position,
-    // not from external scraping or credit-burning APIs.
-    let maxRate = estimateTrafficFromRank(1).rate; // Google's estimated rate
+    // 5. Update keywords if newly fetched (keywords only — baseline/rate/rank are managed by Python PTI engine)
+    const keywordUpdates = sites
+      .filter((s: any) => keKeywordsMap[s.id] && keKeywordsMap[s.id]!.length > 0)
+      .map((s: any) => supabase.from('sites').update({ keywords: keKeywordsMap[s.id] }).eq('id', s.id));
 
-    const updates = sites.map((site: any) => {
-      const { rate, monthlyVisits } = estimateTrafficFromRank(site.rank);
-      const prettyBaseline = formatBaseline(monthlyVisits);
-
-      if (site.rank === 1) {
-        maxRate = rate;
+    if (keywordUpdates.length > 0) {
+      for (let i = 0; i < keywordUpdates.length; i += 20) {
+        await Promise.all(keywordUpdates.slice(i, i + 20));
       }
-
-      return {
-        id: site.id,
-        rate,
-        baseline: prettyBaseline,
-        progress: 0,
-        rank: site.rank,
-        keywords: keKeywordsMap[site.id] || null
-      };
-    });
-
-    // 6. Recalculate progress values relative to maxRate
-    const finalUpdates = updates.map((upd: any) => {
-      upd.progress = parseFloat(Math.min(100, (upd.rate / maxRate) * 100).toFixed(2));
-      return upd;
-    });
-
-    // Write updates to Supabase (in parallel batches)
-    const dbUpdates = finalUpdates.map((upd: any) => {
-      const updatePayload: any = {
-        rate: upd.rate,
-        baseline: upd.baseline,
-        progress: upd.progress
-      };
-      if (upd.keywords !== null) {
-        updatePayload.keywords = upd.keywords;
-      }
-      return supabase
-        .from('sites')
-        .update(updatePayload)
-        .eq('id', upd.id);
-    });
-
-    const chunkSize = 20;
-    for (let i = 0; i < dbUpdates.length; i += chunkSize) {
-      const chunk = dbUpdates.slice(i, i + chunkSize);
-      await Promise.all(chunk);
+      console.log(`Unified Cron: Enriched keywords for ${keywordUpdates.length} sites.`);
     }
 
     // 7. Calculate & bulk-insert 6 hourly points (matching the 6-hour cron cadence)
@@ -439,16 +326,16 @@ export async function GET(request: Request) {
       const timestamp = new Date(now.getTime() - h * 60 * 60 * 1000);
       const hourValue = timestamp.getHours();
       
-      finalUpdates.forEach((upd: any) => {
+      sites.forEach((site: any) => {
         // Calculate site-specific phase-shifted wave
-        const phaseOffset = (upd.rank * 7) % 24;
+        const phaseOffset = ((site.rank || 10) * 7) % 24;
         const shiftedHour = (hourValue + phaseOffset) % 24;
         const baseCircadian = Math.sin((shiftedHour - 9) / 24 * 2 * Math.PI) * 28;
         const noise = (Math.random() - 0.5) * 14;
         const visitsPercentage = Math.max(20, Math.min(98, Math.round(62 + baseCircadian + noise)));
 
         historyInsertions.push({
-          site_id: upd.id,
+          site_id: site.id,
           visits_percentage: visitsPercentage,
           timestamp: timestamp.toISOString()
         });
@@ -490,10 +377,10 @@ export async function GET(request: Request) {
     // Each run stamps a consistent recorded_at so the trending page can diff
     // the two most recent distinct timestamps to get real rank deltas.
     const siteHistoryTimestamp = now.toISOString();
-    const siteHistoryRows = finalUpdates.map((upd: any) => ({
-      site_id: upd.id,
-      rank: upd.rank,
-      rate: upd.rate,
+    const siteHistoryRows = sites.map((site: any) => ({
+      site_id: site.id,
+      rank: site.rank,
+      rate: site.rate,
       recorded_at: siteHistoryTimestamp,
     }));
 
@@ -543,15 +430,15 @@ export async function GET(request: Request) {
         }
 
         if (prevRankMap.size > 0) {
-          const volatilityUpdates = finalUpdates
-            .map((upd: any) => {
-              const prevRank = prevRankMap.get(upd.id);
+          const volatilityUpdates = sites
+            .map((site: any) => {
+              const prevRank = prevRankMap.get(site.id);
               if (prevRank === undefined) return null;
-              const volatility = Math.abs(prevRank - upd.rank); // always positive
+              const volatility = Math.abs(prevRank - site.rank); // always positive
               return supabase
                 .from('sites')
                 .update({ volatility })
-                .eq('id', upd.id);
+                .eq('id', site.id);
             })
             .filter(Boolean);
 
@@ -585,21 +472,18 @@ export async function GET(request: Request) {
 
         if (!existingSnapshot) {
           // Build site summaries for the snapshot
-          const sitesSnapshot = sites.map((site: any) => {
-            const upd = finalUpdates.find((u: any) => u.id === site.id);
-            return {
-              id: site.id,
-              name: site.name,
-              url: site.url,
-              rank: site.rank,
-              rate: upd?.rate ?? site.rate,
-              baseline: upd?.baseline ?? site.baseline,
-              category: site.category,
-              color: site.color,
-              logo: site.logo,
-              keywords: upd?.keywords ?? site.keywords ?? null,
-            };
-          });
+          const sitesSnapshot = sites.map((site: any) => ({
+            id: site.id,
+            name: site.name,
+            url: site.url,
+            rank: site.rank,
+            rate: site.rate,
+            baseline: site.baseline,
+            category: site.category,
+            color: site.color,
+            logo: site.logo,
+            keywords: keKeywordsMap[site.id] ?? site.keywords ?? null,
+          }));
 
           // Pre-compute category totals
           const categoryTotals: Record<string, { count: number; totalRate: number }> = {};
