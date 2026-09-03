@@ -52,7 +52,7 @@ export default function AddCustomSiteModal({
         if (data.category) onCategoryChange(data.category);
         if (data.baseline) onBaselineChange(data.baseline);
         if (data.color) onColorChange(data.color);
-        setEstimateMsg(`✓ Estimated: ${data.baseline} (${data.rate?.toLocaleString()} visits/s)`);
+        setEstimateMsg(`Estimated: ${data.baseline} (${data.rate?.toLocaleString()} visits/s)`);
       } else {
         setEstimateMsg(data.error || 'Could not estimate domain');
       }
@@ -62,6 +62,8 @@ export default function AddCustomSiteModal({
       setIsEstimating(false);
     }
   };
+
+  if (!show) return null;
 
   return (
     <div
@@ -98,7 +100,7 @@ export default function AddCustomSiteModal({
               </button>
             </div>
             {estimateMsg && (
-              <p className={`text-xs mt-1.5 ${estimateMsg.startsWith('✓') ? 'text-emerald-400' : 'text-amber-400'}`}>
+              <p className={`text-xs mt-1.5 ${estimateMsg.startsWith('Estimated:') ? 'text-emerald-400' : 'text-amber-400'}`}>
                 {estimateMsg}
               </p>
             )}
