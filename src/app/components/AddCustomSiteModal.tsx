@@ -37,7 +37,31 @@ export default function AddCustomSiteModal({
   onColorChange,
   onSubmit,
 }: AddCustomSiteModalProps) {
-  if (!show) return null;
+  const [isEstimating, setIsEstimating] = React.useState(false);
+  const [estimateMsg, setEstimateMsg] = React.useState<string | null>(null);
+
+  const handleAutoEstimate = async () => {
+    if (!newSiteUrl) return;
+    setIsEstimating(true);
+    setEstimateMsg(null);
+    try {
+      const res = await fetch(`/api/estimate-domain?url=${encodeURIComponent(newSiteUrl)}`);
+      const data = await res.json();
+      if (data.success) {
+        if (!newSiteName || newSiteName === 'My Portfolio') onNameChange(data.name);
+        if (data.category) onCategoryChange(data.category);
+        if (data.baseline) onBaselineChange(data.baseline);
+        if (data.color) onColorChange(data.color);
+        setEstimateMsg(`✓ Estimated: ${data.baseline} (${data.rate?.toLocaleString()} visits/s)`);
+      } else {
+        setEstimateMsg(data.error || 'Could not estimate domain');
+      }
+    } catch {
+      setEstimateMsg('Estimator service unavailable');
+    } finally {
+      setIsEstimating(false);
+    }
+  };
 
   return (
     <div
@@ -54,25 +78,40 @@ export default function AddCustomSiteModal({
 
         <form onSubmit={onSubmit} className="custom-form-container">
           <div className="form-field">
+            <label className="form-label">Domain URL</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                placeholder="e.g. linear.app"
+                value={newSiteUrl}
+                onChange={(e) => onUrlChange(e.target.value)}
+                className="form-input flex-1"
+              />
+              <button
+                type="button"
+                onClick={handleAutoEstimate}
+                disabled={isEstimating || !newSiteUrl}
+                className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all whitespace-nowrap disabled:opacity-50"
+              >
+                {isEstimating ? 'Estimating...' : 'Auto-Estimate'}
+              </button>
+            </div>
+            {estimateMsg && (
+              <p className={`text-xs mt-1.5 ${estimateMsg.startsWith('✓') ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {estimateMsg}
+              </p>
+            )}
+          </div>
+
+          <div className="form-field">
             <label className="form-label">Website Name</label>
             <input
               type="text"
               required
-              placeholder="e.g. My Portfolio"
+              placeholder="e.g. My Website"
               value={newSiteName}
               onChange={(e) => onNameChange(e.target.value)}
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Domain URL</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. mywebsite.com"
-              value={newSiteUrl}
-              onChange={(e) => onUrlChange(e.target.value)}
               className="form-input"
             />
           </div>
@@ -103,6 +142,9 @@ export default function AddCustomSiteModal({
                 onChange={(e) => onBaselineChange(e.target.value)}
                 className="form-select"
               >
+                {!['1M / mo', '5M / mo', '10M / mo', '50M / mo', '100M / mo', '500M / mo'].includes(newSiteBaseline) && (
+                  <option value={newSiteBaseline}>{newSiteBaseline} (Estimated)</option>
+                )}
                 <option value="1M / mo">1 Million / mo</option>
                 <option value="5M / mo">5 Million / mo</option>
                 <option value="10M / mo">10 Million / mo</option>

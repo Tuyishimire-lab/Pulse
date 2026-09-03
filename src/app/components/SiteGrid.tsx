@@ -87,9 +87,17 @@ export default function SiteGrid({
                     const change = getRankChange(site);
                     if (change === null || change === 0) return null;
                     if (change > 0) {
-                      return <span className="text-[10px] font-bold text-emerald-400">▲ +{change}</span>;
+                      return (
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          ▲+{change}
+                        </span>
+                      );
                     } else {
-                      return <span className="text-[10px] font-bold text-rose-500">▼ {change}</span>;
+                      return (
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          ▼{change}
+                        </span>
+                      );
                     }
                   })()}
                   {sitesWithIncidents.has(site.id) && (
@@ -219,9 +227,17 @@ export default function SiteGrid({
                     const change = getRankChange(site);
                     if (change === null || change === 0) return null;
                     if (change > 0) {
-                      return <span className="text-[10px] font-bold text-emerald-400">▲ +{change}</span>;
+                      return (
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          ▲+{change}
+                        </span>
+                      );
                     } else {
-                      return <span className="text-[10px] font-bold text-rose-500">▼ {change}</span>;
+                      return (
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          ▼{change}
+                        </span>
+                      );
                     }
                   })()}
                   {site.rank_history && site.rank_history.length >= 2 && (

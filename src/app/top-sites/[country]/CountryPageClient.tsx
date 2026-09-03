@@ -43,11 +43,12 @@ function FaviconImg({ url, logo, color }: { url: string; logo: string; color: st
 
 function LiveCounter({ rate }: { rate: number }) {
   const [count, setCount] = useState(0);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
 
   useEffect(() => {
     startRef.current = Date.now();
     const tick = () => {
+      if (!startRef.current) return;
       const elapsed = (Date.now() - startRef.current) / 1000;
       setCount(Math.floor(rate * elapsed));
     };

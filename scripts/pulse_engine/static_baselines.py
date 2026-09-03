@@ -126,6 +126,14 @@ STATIC_BASELINES: dict[str, int] = {
     "airbnb":          155_000_000,   # #101
     "uber":            148_000_000,   # #102
     "figma":           152_000_000,   # #103
+    "threads":         380_000_000,   # #104 Meta Threads Web
+    "kick":            165_000_000,   # #105 Kick Live Streaming
+    "perplexity":      135_000_000,   # #106 Perplexity AI
+    "substack":        110_000_000,   # #107 Substack Publishing
+    "bsky":             85_000_000,   # #108 Bluesky Social
+    "suno":             55_000_000,   # #109 Suno AI Music
+    "cursor":           48_000_000,   # #110 Cursor AI IDE
+    "supabase":         42_000_000,   # #111 Supabase Cloud
 }
 
 # Seconds in a calendar month (30.4167 days)
@@ -268,5 +276,13 @@ SITE_META: dict[str, dict] = {
     "airbnb":        {"name": "Airbnb",           "category": "ecommerce",     "color": "#ff5a5f", "logo": "Ab"},
     "uber":          {"name": "Uber",             "category": "ecommerce",     "color": "#000000", "logo": "Ub"},
     "figma":         {"name": "Figma",            "category": "dev",           "color": "#f24e1e", "logo": "Fg"},
+    "threads":       {"name": "Threads",          "category": "social",        "color": "#ffffff", "logo": "Th"},
+    "kick":          {"name": "Kick",             "category": "entertainment", "color": "#53fc18", "logo": "Kc"},
+    "perplexity":    {"name": "Perplexity",       "category": "ai",            "color": "#22b8cd", "logo": "Px"},
+    "substack":      {"name": "Substack",         "category": "reference",     "color": "#ff6719", "logo": "Sb"},
+    "bsky":          {"name": "Bluesky",          "category": "social",        "color": "#0285ff", "logo": "Bs"},
+    "suno":          {"name": "Suno",             "category": "ai",            "color": "#ff3366", "logo": "Su"},
+    "cursor":        {"name": "Cursor",           "category": "dev",           "color": "#00f0ff", "logo": "Cr"},
+    "supabase":      {"name": "Supabase",         "category": "dev",           "color": "#3ecf8e", "logo": "Sb"},
 }
 

@@ -162,9 +162,9 @@ async function fetchAllTimeframes(): Promise<{
 }> {
   const supabase = getSupabase();
 
-  let raw24h: TrendingSite[] = [];
-  let raw7d: TrendingSite[] = [];
-  let raw30d: TrendingSite[] = [];
+  const raw24h: TrendingSite[] = [];
+  const raw7d: TrendingSite[] = [];
+  const raw30d: TrendingSite[] = [];
   let snapshotAge = '';
 
   if (supabase) {

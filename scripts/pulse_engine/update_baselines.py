@@ -163,7 +163,9 @@ SITE_DOMAINS = {
     "vercel": "vercel.com", "netlify": "netlify.com", "npm": "npmjs.com",
     "gitlab": "gitlab.com", "docker": "docker.com", "stackexchange": "stackexchange.com",
     "wunderground": "wunderground.com", "airbnb": "airbnb.com", "uber": "uber.com",
-    "figma": "figma.com",
+    "figma": "figma.com", "threads": "threads.net", "kick": "kick.com",
+    "perplexity": "perplexity.ai", "substack": "substack.com", "bsky": "bsky.app",
+    "suno": "suno.com", "cursor": "cursor.com", "supabase": "supabase.com",
 }
 
 # Reverse map: domain → site_id (strip www.)

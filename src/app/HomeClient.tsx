@@ -94,7 +94,13 @@ export default function HomeClient({
   // ── Refs ──────────────────────────────────────────────────────────────────
   const loadMoreRef = useRef<HTMLDivElement>(null);
   /** Captured once on mount - never resets during re-renders */
-  const pageLoadTimeRef = useRef<number>(Date.now());
+  const pageLoadTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!pageLoadTimeRef.current) {
+      pageLoadTimeRef.current = Date.now();
+    }
+  }, []);
 
   // ── Rank change helper ────────────────────────────────────────────────────
   // Derives the baseline rank from the oldest rank_history entry stored in

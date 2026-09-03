@@ -136,6 +136,14 @@ export const SITES: SiteConfig[] = [
   { id: 'stackexchange', name: 'Stack Exchange', url: 'https://stackexchange.com', rank: 101, category: 'reference', baseline: '62.0M / mo', baselineRaw: 62000000, rate: 23, logo: 'SE', color: '#0072bc', glow: 'rgba(136, 136, 136, 0.15)', progress: 0.1 },
   { id: 'stripe', name: 'Stripe', url: 'https://stripe.com', rank: 102, category: 'finance', baseline: '62.0M / mo', baselineRaw: 62000000, rate: 23, logo: 'Sr', color: '#635bff', glow: 'rgba(136, 136, 136, 0.15)', progress: 0.1 },
   { id: 'wunderground', name: 'Weather Underground', url: 'https://wunderground.com', rank: 103, category: 'reference', baseline: '58.0M / mo', baselineRaw: 58000000, rate: 22, logo: 'Wu', color: '#1a2b4c', glow: 'rgba(136, 136, 136, 0.15)', progress: 0.1 },
+  { id: 'threads', name: 'Threads', url: 'https://threads.net', rank: 104, category: 'social', baseline: '380.0M / mo', baselineRaw: 380000000, rate: 144, logo: 'Th', color: '#ffffff', glow: 'rgba(255, 255, 255, 0.15)', progress: 0.5 },
+  { id: 'kick', name: 'Kick', url: 'https://kick.com', rank: 105, category: 'entertainment', baseline: '165.0M / mo', baselineRaw: 165000000, rate: 62, logo: 'Kc', color: '#53fc18', glow: 'rgba(83, 252, 24, 0.2)', progress: 0.2 },
+  { id: 'perplexity', name: 'Perplexity', url: 'https://perplexity.ai', rank: 106, category: 'ai', baseline: '135.0M / mo', baselineRaw: 135000000, rate: 51, logo: 'Px', color: '#22b8cd', glow: 'rgba(34, 184, 205, 0.2)', progress: 0.2 },
+  { id: 'substack', name: 'Substack', url: 'https://substack.com', rank: 107, category: 'reference', baseline: '110.0M / mo', baselineRaw: 110000000, rate: 41, logo: 'Sb', color: '#ff6719', glow: 'rgba(255, 103, 25, 0.2)', progress: 0.1 },
+  { id: 'bsky', name: 'Bluesky', url: 'https://bsky.app', rank: 108, category: 'social', baseline: '85.0M / mo', baselineRaw: 85000000, rate: 32, logo: 'Bs', color: '#0285ff', glow: 'rgba(2, 133, 255, 0.2)', progress: 0.1 },
+  { id: 'suno', name: 'Suno', url: 'https://suno.com', rank: 109, category: 'ai', baseline: '55.0M / mo', baselineRaw: 55000000, rate: 20, logo: 'Su', color: '#ff3366', glow: 'rgba(255, 51, 102, 0.2)', progress: 0.1 },
+  { id: 'cursor', name: 'Cursor', url: 'https://cursor.com', rank: 110, category: 'dev', baseline: '48.0M / mo', baselineRaw: 48000000, rate: 18, logo: 'Cr', color: '#00f0ff', glow: 'rgba(0, 240, 255, 0.2)', progress: 0.1 },
+  { id: 'supabase', name: 'Supabase', url: 'https://supabase.com', rank: 111, category: 'dev', baseline: '42.0M / mo', baselineRaw: 42000000, rate: 16, logo: 'Sb', color: '#3ecf8e', glow: 'rgba(62, 207, 142, 0.2)', progress: 0.1 },
 ];
 
 export const SITE_META: Record<string, SiteMeta> = Object.fromEntries(

@@ -14,7 +14,7 @@ export interface FlagColors {
 }
 
 // Fallback for unlisted codes
-const DEFAULT_FLAG_COLORS: FlagColors = {
+export const DEFAULT_FLAG_COLORS: FlagColors = {
   primary: '#82c8e5',
   secondary: '#0047ab',
   bgGradient: 'linear-gradient(135deg, rgba(0, 71, 171, 0.12) 0%, rgba(130, 200, 229, 0.04) 100%)',

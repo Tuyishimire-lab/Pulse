@@ -79,7 +79,8 @@ export default function SitePageClient({ id }: { id: string }) {
 
   const timerRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
-  const pageLoadTimeRef = useRef<number>(Date.now());
+  const pageLoadTimeRef = useRef<number>(0);
+  const [mountTime, setMountTime] = useState<number | null>(null);
   const [dbHistory, setDbHistory] = useState<{ visits_percentage: number; timestamp: string }[]>([]);
   const [dbKeywords, setDbKeywords] = useState<string[] | null>(null);
   const [liveRank, setLiveRank] = useState<number | null>(null);
@@ -153,6 +154,11 @@ export default function SitePageClient({ id }: { id: string }) {
 
   useEffect(() => {
     if (!site) return;
+    const now = Date.now();
+    if (!pageLoadTimeRef.current) {
+      pageLoadTimeRef.current = now;
+      setMountTime(now);
+    }
     let animationFrameId: number;
     const numberFormatter = new Intl.NumberFormat('en-US');
 
@@ -197,11 +203,12 @@ export default function SitePageClient({ id }: { id: string }) {
       return dbHistory;
     }
     // Fallback static history (always 24 hourly nodes)
+    const baseTime = mountTime ?? 1770000000000;
     return details?.trafficHistory.map((val, idx) => {
-      const ts = new Date(Date.now() - (23 - idx) * 60 * 60 * 1000).toISOString();
+      const ts = new Date(baseTime - (23 - idx) * 60 * 60 * 1000).toISOString();
       return { visits_percentage: val, timestamp: ts };
     }) || [];
-  }, [dbHistory, timeRange, details]);
+  }, [dbHistory, timeRange, details, mountTime]);
 
   // Calculate high-performance SVG plotting coordinates
   const chartPoints = useMemo(() => {

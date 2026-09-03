@@ -179,7 +179,32 @@ def run_pulse_engine(run_validation_report: bool = True):
         }
 
         try:
-            supabase.table("sites").update(update_payload).eq("id", site_id).execute()
+            if not db_row:
+                meta = SITE_META.get(site_id, {})
+                domain_url = f"https://{site_id}.com"
+                if site_id == "threads": domain_url = "https://threads.net"
+                elif site_id == "kick": domain_url = "https://kick.com"
+                elif site_id == "perplexity": domain_url = "https://perplexity.ai"
+                elif site_id == "substack": domain_url = "https://substack.com"
+                elif site_id == "bsky": domain_url = "https://bsky.app"
+                elif site_id == "suno": domain_url = "https://suno.com"
+                elif site_id == "cursor": domain_url = "https://cursor.com"
+                elif site_id == "supabase": domain_url = "https://supabase.com"
+
+                insert_payload = {
+                    "id": site_id,
+                    "name": meta.get("name", site_id.capitalize()),
+                    "url": domain_url,
+                    "category": meta.get("category", "dev"),
+                    "color": meta.get("color", "#82c8e5"),
+                    "glow": "rgba(130,200,229,0.15)",
+                    "baseline_raw": monthly_visits,
+                    **update_payload,
+                }
+                supabase.table("sites").upsert(insert_payload).execute()
+            else:
+                supabase.table("sites").update(update_payload).eq("id", site_id).execute()
+
             updates_count += 1
             cf_note = f"CF=#{cf_rank}" if cf_rank else "CF=n/a"
             print(f"  {site_id:20s} | #{static_rank:3d} | {baseline_str:12s} | {display_rate:5d}/s | Vol:{volatility:+6.1f}% | {trend} | {cf_note}")
