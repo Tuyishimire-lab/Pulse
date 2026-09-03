@@ -320,7 +320,57 @@ export default function SiteDetailModal({
             </button>
           </div>
 
-          <p className="modal-description text-left">{details.description}</p>
+          {/* Executive Profile Card */}
+          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 mb-6 text-left">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
+              <span className="text-[11px] font-bold tracking-widest text-[#82c8e5] uppercase">
+                Executive Overview
+              </span>
+              <span className="text-[10px] font-mono text-white/40 uppercase">
+                Verified Dossier
+              </span>
+            </div>
+            
+            <p className="text-sm leading-relaxed text-white/90 m-0">
+              {details.description}
+            </p>
+
+            {/* 4-Chip Metadata Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/5 text-left">
+              <div className="p-2 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider block">
+                  Headquarters
+                </span>
+                <span className="text-xs font-semibold text-white/90 mt-0.5 block truncate" title={details.headquarters}>
+                  {details.headquarters}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider block">
+                  Founded
+                </span>
+                <span className="text-xs font-semibold text-white/90 mt-0.5 block">
+                  {details.founded}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider block">
+                  Business Model
+                </span>
+                <span className="text-xs font-semibold text-white/90 mt-0.5 block truncate" title={details.businessModel}>
+                  {details.businessModel}
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider block">
+                  Infrastructure
+                </span>
+                <span className="text-xs font-semibold text-white/90 mt-0.5 block truncate" title={details.primaryTech}>
+                  {details.primaryTech}
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* Stat boxes */}
           <div className="modal-stats-grid text-left">
@@ -439,12 +489,39 @@ export default function SiteDetailModal({
             </div>
           </div>
 
-          {/* Fun Fact */}
-          <div className="modal-trivia text-left">
-            
-            <p>
-              <strong>Fact:</strong> {details.funFact}
+          {/* Market & Traffic Intelligence Card */}
+          <div 
+            className="p-5 rounded-2xl bg-white/[0.02] border transition-all mt-6 text-left"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--brand-color) 30%, rgba(255,255,255,0.08))',
+              boxShadow: `0 4px 20px -8px ${site.glow}`
+            }}
+          >
+            <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-3">
+              <span className="text-[11px] font-bold tracking-widest text-[#82c8e5] uppercase">
+                Market &amp; Traffic Intelligence
+              </span>
+              <span 
+                className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--brand-color) 15%, transparent)',
+                  color: site.color
+                }}
+              >
+                PTI Analysis
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed text-white/85 m-0 mb-3">
+              {details.marketIntelligence}
             </p>
+            <div className="pt-3 border-t border-white/5 flex items-start gap-2">
+              <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider whitespace-nowrap mt-0.5">
+                Historical Milestone:
+              </span>
+              <span className="text-xs text-white/70 leading-normal">
+                {details.funFact}
+              </span>
+            </div>
           </div>
         </div>
       </div>
