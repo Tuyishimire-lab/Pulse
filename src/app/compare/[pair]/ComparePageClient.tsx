@@ -110,7 +110,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
   ];
 
   const verdict = pairData?.verdict
-    ? `${pairData.verdict} Currently: ${siteA.name} receives ${siteA.baseline}/mo vs ${siteB.name}'s ${siteB.baseline}/mo.`
+    ? `${pairData.verdict} Currently: ${siteA.name} receives ${siteA.baseline} vs ${siteB.name}'s ${siteB.baseline}.`
     : `${aWinsRank ? siteA.name : siteB.name} leads in global traffic, ranked #${Math.min(siteA.rank, siteB.rank)} versus #${Math.max(siteA.rank, siteB.rank)}.`;
 
   // Related site pairs involving A or B (for internal linking)
@@ -296,7 +296,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           </div>
           <SocialShareBar
             title={`📊 ${siteA.name} vs ${siteB.name} Traffic Comparison (${CURRENT_YEAR})`}
-            summary={`${aWinsRank ? siteA.name : siteB.name} leads with ${aWinsRank ? siteA.baseline : siteB.baseline}/mo vs ${aWinsRank ? siteB.baseline : siteA.baseline}/mo.`}
+            summary={`${aWinsRank ? siteA.name : siteB.name} leads with ${aWinsRank ? siteA.baseline : siteB.baseline} vs ${aWinsRank ? siteB.baseline : siteA.baseline}.`}
             hashtags={['WebTraffic', siteA.name.replace(/[^a-zA-Z0-9]/g, ''), siteB.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}
             onOpenEmbed={() => setEmbedSite(aWinsRank ? siteA : siteB)}
           />
