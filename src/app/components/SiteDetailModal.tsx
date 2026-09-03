@@ -412,12 +412,6 @@ export default function SiteDetailModal({
                 style={{ width: `${details.desktopShare}%`, backgroundColor: site.color }}
               />
             </div>
-            {radarStats?.deviceType && (
-              <div className="text-[9px] font-bold text-white/30 uppercase tracking-wider mt-1.5 flex justify-between">
-                <span>Cloudflare Radar Benchmark</span>
-                <span>{radarStats.deviceType.desktop}% Desktop | {radarStats.deviceType.mobile}% Mobile</span>
-              </div>
-            )}
           </div>
 
           {/* Chart Section with tabs */}
