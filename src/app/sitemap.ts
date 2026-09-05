@@ -116,9 +116,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/methodology`,
-      lastModified: new Date('2026-08-11'),
+      lastModified: now,
       changeFrequency: 'monthly' as const,
-      priority: 0.60,
+      priority: 0.75,
     },
     {
       url: `${baseUrl}/terms`,
