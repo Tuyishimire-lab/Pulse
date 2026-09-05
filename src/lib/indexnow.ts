@@ -92,12 +92,13 @@ export async function submitToIndexNow(
       message: `IndexNow responded with status ${response.status}: ${responseText || response.statusText}`,
       submittedCount: 0,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to submit URLs to IndexNow:', error);
+    const message = error instanceof Error ? error.message : 'Network error submitting to IndexNow';
     return {
       success: false,
       status: 500,
-      message: error?.message || 'Network error submitting to IndexNow',
+      message,
       submittedCount: 0,
     };
   }

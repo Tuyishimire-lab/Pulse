@@ -1,6 +1,13 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const revalidate = 3600; // Cache per-site data for 1 hour
+
+interface RadarLocationEntry {
+  value?: string | number;
+  share?: string | number;
+  clientCountryAlpha2?: string;
+  location?: string;
+}
 
 // Country code → display name lookup
 const COUNTRY_NAMES: Record<string, string> = {
@@ -66,18 +73,18 @@ export async function GET(req: Request) {
     );
     if (res.ok) {
       const json = await res.json();
-      const locations = json?.result?.top_0 ?? json?.result?.topLocations ?? json?.result?.locations;
+      const locations = (json?.result?.top_0 ?? json?.result?.topLocations ?? json?.result?.locations) as RadarLocationEntry[] | undefined;
       if (Array.isArray(locations) && locations.length > 0) {
         // Normalize percentage fields - CF may return 'value' or 'share'
-        const total = locations.reduce((sum: number, loc: any) => {
-          const v = parseFloat(loc.value ?? loc.share ?? loc.clientCountryAlpha2 ?? '0');
+        const total = locations.reduce((sum: number, loc) => {
+          const v = parseFloat(String(loc.value ?? loc.share ?? loc.clientCountryAlpha2 ?? '0'));
           return sum + (isNaN(v) ? 0 : v);
         }, 0);
 
         results.geographies = locations
-          .map((loc: any) => {
+          .map((loc) => {
             const code: string = loc.clientCountryAlpha2 ?? loc.location ?? '';
-            const raw = parseFloat(loc.value ?? loc.share ?? '0');
+            const raw = parseFloat(String(loc.value ?? loc.share ?? '0'));
             // If values already look like percentages (sum ~100), use directly
             const pct = total > 10 ? parseFloat(((raw / total) * 100).toFixed(1)) : parseFloat(raw.toFixed(1));
             return {

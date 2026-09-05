@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useState, useSyncExternalStore } from 'react';
 
 interface MarqueeItem {
   text: string;
@@ -37,18 +37,27 @@ const TYPE_CONFIG: Record<string, { icon: string; className: string }> = {
  *  - news    → orange (breaking tech news)
  *  - insight → cyan (Cloudflare Radar events & traffic facts)
  */
+const getReducedMotionSnapshot = () =>
+  typeof window !== 'undefined'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+
+const subscribeReducedMotion = (callback: () => void) => {
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  mq.addEventListener('change', callback);
+  return () => mq.removeEventListener('change', callback);
+};
+
 export default function MarqueeBanner({ items }: MarqueeBannerProps) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [paused, setPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
+  const prefersReducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    () => false
+  );
 
-  // Detect prefers-reduced-motion and pause immediately if set
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPaused(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setPaused(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+  const paused = prefersReducedMotion || hoverPaused;
 
   // Apply pause to the CSS animation via inline style rather than toggling a class,
   // so it works regardless of the active stylesheet.
@@ -83,18 +92,13 @@ export default function MarqueeBanner({ items }: MarqueeBannerProps) {
       role="marquee"
       aria-label="Live traffic insights ticker"
       aria-live="off"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={(e) => {
-        // Only resume if the element losing focus isn't inside the container
-        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-        if (!mq.matches) setPaused(false);
-      }}
-      onFocusCapture={() => setPaused(true)}
+      onMouseEnter={() => setHoverPaused(true)}
+      onMouseLeave={() => setHoverPaused(false)}
+      onFocusCapture={() => setHoverPaused(true)}
       onBlurCapture={(e) => {
         // Resume only if focus left the container entirely
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-          const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-          if (!mq.matches) setPaused(false);
+          setHoverPaused(false);
         }
       }}
     >

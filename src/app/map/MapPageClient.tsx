@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { ComposableMap, Geographies, Geography, Sphere, Graticule } from 'react-simple-maps';
 import NavHeader from '../components/NavHeader';
@@ -91,7 +90,7 @@ function easeInOut(t: number): number {
 }
 
 function shortestAngle(from: number, to: number): number {
-  let d = ((to - from) % 360 + 540) % 360 - 180;
+  const d = ((to - from) % 360 + 540) % 360 - 180;
   return from + d;
 }
 
@@ -189,6 +188,8 @@ function Stars() {
   );
 }
 
+const emptySubscribe = () => () => {};
+
 export default function MapPageClient({ countryMap }: Props) {
   const router = useRouter();
 
@@ -199,7 +200,7 @@ export default function MapPageClient({ countryMap }: Props) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isFlying, setIsFlying] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -210,9 +211,7 @@ export default function MapPageClient({ countryMap }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; country: CountryInfo } | null>(null);
-
-  useEffect(() => setMounted(true), []);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; flipped: boolean; country: CountryInfo } | null>(null);
 
   // Auto-rotation - throttled to 30 FPS and pauses on tab visibility / user interaction
   useEffect(() => {
@@ -642,7 +641,11 @@ export default function MapPageClient({ countryMap }: Props) {
                           onMouseEnter={(e) => {
                             if (!countryData) return;
                             const rect = containerRef.current?.getBoundingClientRect();
-                            if (rect) setTooltip({ x: e.clientX - rect.left, y: e.clientY - rect.top, country: countryData });
+                            if (rect) {
+                              const x = e.clientX - rect.left;
+                              const y = e.clientY - rect.top;
+                              setTooltip({ x, y, flipped: x > rect.width - 240, country: countryData });
+                            }
                           }}
                           onMouseLeave={() => setTooltip(null)}
                           onClick={() => { if (!isDragging && countryData) router.push(`/top-sites/${countryData.slug}`); }}
@@ -679,7 +682,7 @@ export default function MapPageClient({ countryMap }: Props) {
                 style={{
                   left: tooltip.x + 14,
                   top: tooltip.y - 10,
-                  transform: tooltip.x > (containerRef.current?.clientWidth ?? 0) - 240
+                  transform: tooltip.flipped
                     ? 'translateX(calc(-100% - 28px))' : 'none',
                 }}
               >

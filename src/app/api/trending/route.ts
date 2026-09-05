@@ -137,7 +137,7 @@ export async function GET(req: Request) {
   const timeframe = (searchParams.get('timeframe') || '7d') as '24h' | '7d' | '30d';
 
   const supabase = getSupabase();
-  let rawMovers: TrendingSite[] = [];
+  const rawMovers: TrendingSite[] = [];
   let snapshotAge = '';
 
   if (supabase) {
@@ -151,7 +151,7 @@ export async function GET(req: Request) {
 
         if (timestamps && timestamps.length > 0) {
           const distinctTimes = Array.from(
-            new Set(timestamps.map((r: any) => r.recorded_at as string))
+            new Set(timestamps.map((r: { recorded_at: string }) => r.recorded_at))
           ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
           if (distinctTimes.length >= 2) {
@@ -164,37 +164,41 @@ export async function GET(req: Request) {
             ]);
 
             if (newest.data && older.data) {
-              const olderMap = new Map<string, number>();
-              for (const r of older.data as any[]) olderMap.set(r.site_id, r.rank);
-              const siteMetaMap = new Map<string, any>();
-              for (const s of (sitesData.data ?? []) as any[]) siteMetaMap.set(s.id, s);
+              interface HistoryRowShort { site_id: string; rank: number }
+              interface HistoryRowFull { site_id: string; rank: number; rate: number; volatility?: number | null }
+              interface SiteMetaShort { id: string; name: string; url: string; rank: number; category: string; baseline: string; rate: number; volatility?: number }
 
-              for (const row of newest.data as any[]) {
+              const olderMap = new Map<string, number>();
+              for (const r of older.data as HistoryRowShort[]) olderMap.set(r.site_id, r.rank);
+              const siteMetaMap = new Map<string, SiteMetaShort>();
+              for (const s of (sitesData.data ?? []) as SiteMetaShort[]) siteMetaMap.set(s.id, s);
+
+              for (const row of newest.data as HistoryRowFull[]) {
                 const rawDelta = olderMap.has(row.site_id) ? (olderMap.get(row.site_id)! - row.rank) : 0;
                 const delta = rawDelta !== 0 ? rawDelta : (row.rank % 2 === 0 ? 1 : -1);
                 const meta = SITE_META[row.site_id] ?? {};
-                const live = siteMetaMap.get(row.site_id) ?? {};
-                const vol = row.volatility || live.volatility || 5;
+                const live = siteMetaMap.get(row.site_id);
+                const vol = row.volatility || live?.volatility || 5;
                 const rawPct = Math.round((Math.abs(delta) / Math.max(1, row.rank)) * 1000) / 10 || +(vol * 0.8).toFixed(1);
                 const pct = delta > 0 ? Math.abs(rawPct) : -Math.abs(rawPct);
 
                 const rival = RIVALS[row.site_id];
                 rawMovers.push({
                   id: row.site_id,
-                  name: live.name ?? meta.name ?? row.site_id,
-                  url: live.url ?? meta.url ?? '',
+                  name: live?.name ?? meta.name ?? row.site_id,
+                  url: live?.url ?? meta.url ?? '',
                   logo: meta.logo ?? row.site_id.charAt(0).toUpperCase(),
                   color: meta.color ?? '#82c8e5',
                   glow: meta.glow ?? 'rgba(130,200,229,0.15)',
-                  category: live.category ?? meta.category ?? 'general',
+                  category: live?.category ?? meta.category ?? 'general',
                   currentRank: row.rank,
                   previousRank: row.rank + delta,
                   delta,
-                  rate: live.rate ?? row.rate ?? 0,
-                  baseline: live.baseline ?? '',
+                  rate: live?.rate ?? row.rate ?? 0,
+                  baseline: live?.baseline ?? '',
                   percentageChange: pct,
                   volatility: Math.abs(pct),
-                  catalyst: assignCatalyst(live.category ?? meta.category ?? '', delta, Math.abs(pct)),
+                  catalyst: assignCatalyst(live?.category ?? meta.category ?? '', delta, Math.abs(pct)),
                   sparkline: generateSparkline(delta, Math.abs(pct)),
                   topRivalId: rival?.id,
                   topRivalName: rival?.name,
@@ -216,12 +220,23 @@ export async function GET(req: Request) {
           const compareSnap = snapshots[compareIdx] || snapshots[1];
           snapshotAge = currentSnap.snapshot_date;
 
-          const compareMap = new Map<string, any>();
-          for (const s of (compareSnap.sites_data ?? []) as any[]) {
+          interface SnapSiteItem {
+            id: string;
+            name: string;
+            rank: number;
+            rate: number;
+            url?: string;
+            logo?: string;
+            color?: string;
+            category?: string;
+            baseline?: string;
+          }
+          const compareMap = new Map<string, SnapSiteItem>();
+          for (const s of (compareSnap.sites_data ?? []) as SnapSiteItem[]) {
             compareMap.set(s.id, s);
           }
 
-          for (const curr of (currentSnap.sites_data ?? []) as any[]) {
+          for (const curr of (currentSnap.sites_data ?? []) as SnapSiteItem[]) {
             const prev = compareMap.get(curr.id);
             const rawDelta = prev ? prev.rank - curr.rank : 0;
             const delta = rawDelta !== 0 ? rawDelta : (curr.rank % 2 === 0 ? 1 : -1);
@@ -243,7 +258,7 @@ export async function GET(req: Request) {
               previousRank: curr.rank + delta,
               delta,
               rate: curr.rate,
-              baseline: curr.baseline,
+              baseline: curr.baseline ?? '',
               percentageChange: pct,
               volatility: Math.abs(pct),
               catalyst: assignCatalyst(curr.category ?? meta.category ?? '', delta, Math.abs(pct)),

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { SiteConfig, SITES } from '../data/sites';
 
 interface AddCustomSiteModalProps {
   show: boolean;

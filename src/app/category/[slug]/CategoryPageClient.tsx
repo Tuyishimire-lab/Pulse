@@ -48,7 +48,7 @@ function FaviconImg({ url, logo, color }: { url: string; logo: string; color: st
 
 function LiveRate({ rate }: { rate: number }) {
   const [count, setCount] = useState(0);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
   useEffect(() => {
     startRef.current = Date.now();
     const id = setInterval(() => {
@@ -238,15 +238,17 @@ export default function CategoryPageClient({
           {/* Sort Controls */}
           <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] self-start sm:self-auto">
             <span className="text-[10px] text-[#6d8196] px-2 font-medium">Sort:</span>
-            {[
-              { id: 'rate', label: 'Rate' },
-              { id: 'rank', label: 'Global Rank' },
-              { id: 'baseline', label: 'Monthly' },
-              { id: 'name', label: 'A-Z' },
-            ].map((s) => (
+            {(
+              [
+                { id: 'rate', label: 'Rate' },
+                { id: 'rank', label: 'Global Rank' },
+                { id: 'baseline', label: 'Monthly' },
+                { id: 'name', label: 'A-Z' },
+              ] as const
+            ).map((s) => (
               <button
                 key={s.id}
-                onClick={() => setSortBy(s.id as any)}
+                onClick={() => setSortBy(s.id)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                   sortBy === s.id
                     ? 'bg-white/10 text-white'

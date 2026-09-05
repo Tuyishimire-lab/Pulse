@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { STATIC_TRAFFIC_FACTS } from '../../../data/marquee';
 
 export const revalidate = 60;
@@ -14,6 +14,22 @@ interface StatuspageResponse {
     shortlink: string;
     incident_updates?: { body: string }[];
   }[];
+}
+
+interface RadarOutageAnnotation {
+  description?: string;
+  locations?: string[];
+  asns?: number[];
+  outage?: {
+    outageCause?: string;
+    outageType?: string;
+  };
+}
+
+interface RadarGeneralAnnotation {
+  eventType?: string;
+  description?: string;
+  locations?: string[];
 }
 
 /**
@@ -98,8 +114,8 @@ export async function GET(req: Request) {
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.result?.annotations)) {
-          data.result.annotations.slice(0, 4).forEach((ann: any) => {
-            const where = ann.locations?.length > 0 ? ann.locations.join(', ') : 'Global';
+          (data.result.annotations as RadarOutageAnnotation[]).slice(0, 4).forEach((ann) => {
+            const where = ann.locations && ann.locations.length > 0 ? ann.locations.join(', ') : 'Global';
             const cause = ann.outage?.outageCause
               ? ann.outage.outageCause.replace(/_/g, ' ').toLowerCase()
               : 'cause under investigation';
@@ -142,13 +158,13 @@ export async function GET(req: Request) {
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.result?.annotations)) {
-          data.result.annotations
-            .filter((ann: any) => ann.eventType && ann.eventType !== 'OUTAGE' && ann.description)
+          (data.result.annotations as RadarGeneralAnnotation[])
+            .filter((ann) => ann.eventType && ann.eventType !== 'OUTAGE' && ann.description)
             .slice(0, 2)
-            .forEach((ann: any) => {
-              const where = ann.locations?.length > 0 ? ` (${ann.locations.join(', ')})` : '';
+            .forEach((ann) => {
+              const where = ann.locations && ann.locations.length > 0 ? ` (${ann.locations.join(', ')})` : '';
               feedItems.push({
-                text: `Radar: ${sentence(clean(ann.description, 100))}${where}`,
+                text: `Radar: ${sentence(clean(ann.description || '', 100))}${where}`,
                 type: 'insight',
                 locations: ann.locations || [],
               });

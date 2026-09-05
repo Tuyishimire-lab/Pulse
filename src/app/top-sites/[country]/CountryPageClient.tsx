@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { SiteConfig } from '../../data/sites';
 import { CountryData } from '../data/countries';
 import NavHeader from '../../components/NavHeader';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
+import { exportCountryRankingReport } from '../../../utils/exportCsv';
 
 interface Props {
   countryData: CountryData;
@@ -15,31 +15,7 @@ interface Props {
   dataSource?: string;
 }
 
-function FaviconImg({ url, logo, color }: { url: string; logo: string; color: string }) {
-  const [err, setErr] = useState(false);
-  const domain = url.replace(/https?:\/\/(www\.)?/, '');
-  if (err) {
-    return (
-      <span
-        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-        style={{ backgroundColor: color + '33', color: color === '#ffffff' ? '#111' : color }}
-      >
-        {logo}
-      </span>
-    );
-  }
-  return (
-    <Image
-      src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
-      alt={`${logo} favicon`}
-      width={32}
-      height={32}
-      onError={() => setErr(true)}
-      className="w-8 h-8 rounded-full object-contain p-0.5 bg-white/10"
-      unoptimized
-    />
-  );
-}
+import FaviconImage from '../../components/ui/FaviconImage';
 
 function LiveCounter({ rate }: { rate: number }) {
   const [count, setCount] = useState(0);
@@ -350,10 +326,33 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
 
         {/* Rankings Table */}
         <section aria-label={`Top 20 websites in ${countryData.name}`} className="mb-12">
-          <div className="overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#6d8196]">
+              {countryData.name} Traffic Leaderboard
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => exportCountryRankingReport(countryData.name, countryData.cfCode, sites, 'csv')}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-[#82c8e5] hover:bg-white/[0.08] hover:text-white transition-all flex items-center gap-1.5"
+                title="Download CSV"
+              >
+                <span>Export CSV</span>
+                <span className="text-[10px] text-[#6d8196]">↓</span>
+              </button>
+              <button
+                onClick={() => exportCountryRankingReport(countryData.name, countryData.cfCode, sites, 'json')}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-[#94a3b8] hover:bg-white/[0.08] hover:text-white transition-all flex items-center gap-1.5"
+                title="Download JSON"
+              >
+                <span>Export JSON</span>
+                <span className="text-[10px] text-[#6d8196]">↓</span>
+              </button>
+            </div>
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-white/[0.06] bg-white/[0.02] table-scroll-hint">
             <table className="w-full text-sm">
               <thead>
-              <tr className="border-b border-white/[0.06]">
+                <tr className="border-b border-white/[0.06] sticky-table-header">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider w-10">Local</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Website</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden sm:table-cell">Category</th>
@@ -373,7 +372,13 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
                     </td>
                     <td className="px-4 py-3.5">
                       <Link href={`/sites/${site.id}`} className="flex items-center gap-3 group">
-                        <FaviconImg url={site.url} logo={site.logo} color={site.color} />
+                        <FaviconImage
+                          url={site.url}
+                          logo={site.logo}
+                          color={site.color}
+                          size={32}
+                          className="w-8 h-8 rounded-full object-contain p-0.5 bg-white/10"
+                        />
                         <div>
                           <div className="font-semibold text-white group-hover:text-[#82c8e5] transition-colors text-sm">
                             {site.name}

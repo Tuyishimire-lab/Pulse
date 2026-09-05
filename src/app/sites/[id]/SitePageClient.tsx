@@ -2,48 +2,14 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { SITES } from '../../data/sites';
-import { getSiteDetails, SiteDetails } from '../../data/details';
+import { getSiteDetails } from '../../data/details';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 import { COMPARE_PAIRS } from '../../compare/data/pairs';
-import { COUNTRIES } from '../../top-sites/data/countries';
 import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
-
-
-// Reusable Favicon Component with Letter Fallback
-function FaviconImage({ url, logo, color }: { url: string; logo: string; color: string }) {
-  const [error, setError] = useState(false);
-  const domain = url.replace('https://', '').replace('http://', '').replace('www.', '');
-  const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
-
-  if (error) {
-    return (
-      <span 
-        style={{
-          color: color === '#ffffff' ? '#111111' : '#ffffff',
-          fontWeight: 800
-        }}
-      >
-        {logo}
-      </span>
-    );
-  }
-
-  return (
-    <Image
-      src={faviconUrl}
-      alt={`${logo} logo`}
-      width={64}
-      height={64}
-      onError={() => setError(true)}
-      className="w-full h-full object-contain p-1 rounded-full bg-white/10"
-      unoptimized
-    />
-  );
-}
+import FaviconImage from '../../components/ui/FaviconImage';
 
 // Helper to generate dynamic fallback search topics based on domain name & category
 export function getMostSearchedTopics(site: { name: string; category: string }) {
@@ -82,9 +48,9 @@ export default function SitePageClient({ id }: { id: string }) {
   const pageLoadTimeRef = useRef<number>(0);
   const [mountTime, setMountTime] = useState<number | null>(null);
   const [dbHistory, setDbHistory] = useState<{ visits_percentage: number; timestamp: string }[]>([]);
-  const [dbKeywords, setDbKeywords] = useState<string[] | null>(null);
-  const [liveRank, setLiveRank] = useState<number | null>(null);
-  const [liveBaseline, setLiveBaseline] = useState<string | null>(null);
+  const dbKeywords = site?.keywords ?? null;
+  const liveRank = site?.rank ?? null;
+  const liveBaseline = site?.baseline ?? null;
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
   const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
 
@@ -99,10 +65,10 @@ export default function SitePageClient({ id }: { id: string }) {
         .eq('site_id', site.id)
         .order('timestamp', { ascending: false })
         .limit(24)
-        .then((res: any) => {
+        .then((res: { data: { visits_percentage: number | string; timestamp: string }[] | null }) => {
           const data = res.data;
           if (data && data.length > 0) {
-            const sorted = data.map((item: any) => ({
+            const sorted = data.map((item) => ({
               visits_percentage: Number(item.visits_percentage),
               timestamp: item.timestamp
             })).reverse();
@@ -116,10 +82,10 @@ export default function SitePageClient({ id }: { id: string }) {
         .eq('site_id', site.id)
         .order('date', { ascending: false })
         .limit(7)
-        .then((res: any) => {
+        .then((res: { data: { avg_visits_percentage: number | string; date: string }[] | null }) => {
           const data = res.data;
           if (data && data.length > 0) {
-            const sorted = data.map((item: any) => ({
+            const sorted = data.map((item) => ({
               visits_percentage: Number(item.avg_visits_percentage),
               timestamp: new Date(item.date).toISOString()
             })).reverse();
@@ -127,20 +93,6 @@ export default function SitePageClient({ id }: { id: string }) {
           }
         });
     }
-
-    // Fetch live rank, baseline and keywords from database
-    supabase
-      .from('sites')
-      .select('rank, baseline, keywords')
-      .eq('id', site.id)
-      .single()
-      .then((res: any) => {
-        if (res && res.data) {
-          if (typeof res.data.rank === 'number' && res.data.rank > 0) setLiveRank(res.data.rank);
-          if (res.data.baseline) setLiveBaseline(res.data.baseline);
-          if (Array.isArray(res.data.keywords) && res.data.keywords.length > 0) setDbKeywords(res.data.keywords);
-        }
-      });
   }, [site, timeRange]);
 
   const displayedKeywords = useMemo(() => {
@@ -290,6 +242,31 @@ export default function SitePageClient({ id }: { id: string }) {
     document.body.removeChild(link);
   };
 
+  // Handle local JSON export
+  const handleExportJSON = () => {
+    if (activeHistory.length === 0 || !site) return;
+    const payload = {
+      siteId: site.id,
+      siteName: site.name,
+      url: site.url,
+      timeRange,
+      exportedAt: new Date().toISOString(),
+      history: activeHistory.map((node) => ({
+        timestamp: node.timestamp,
+        capacityPercentage: node.visits_percentage,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${site.id}_traffic_history_${timeRange}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Construct chart stroke line path
   const linePath = useMemo(() => {
     if (chartPoints.length === 0) return '';
@@ -324,8 +301,7 @@ export default function SitePageClient({ id }: { id: string }) {
     <div 
       className="min-h-screen relative overflow-hidden bg-[#08080f] text-white font-sans flex flex-col items-center pb-16 animate-fadeIn"
       style={{
-        ['--brand-color' as any]: site.color,
-        ['--brand-glow' as any]: site.glow,
+        ...({ '--brand-color': site.color, '--brand-glow': site.glow } as React.CSSProperties),
       }}
     >
       {/* Background mesh element for aesthetic gradients */}
@@ -504,9 +480,17 @@ export default function SitePageClient({ id }: { id: string }) {
                   </div>
                   <button 
                     onClick={handleExportCSV}
-                    className="px-3 py-1 text-[10px] font-bold text-white/80 bg-white/5 border border-white/10 hover:border-white/20 rounded-lg hover:bg-white/10 transition"
+                    className="px-2.5 py-1 text-[10px] font-bold text-white/80 bg-white/5 border border-white/10 hover:border-white/20 rounded-lg hover:bg-white/10 transition"
+                    title="Download CSV"
                   >
-                    Export CSV
+                    CSV ↓
+                  </button>
+                  <button 
+                    onClick={handleExportJSON}
+                    className="px-2.5 py-1 text-[10px] font-bold text-[#82c8e5] bg-white/5 border border-white/10 hover:border-white/20 rounded-lg hover:bg-white/10 transition"
+                    title="Download JSON"
+                  >
+                    JSON ↓
                   </button>
                 </div>
               </div>
@@ -540,7 +524,7 @@ export default function SitePageClient({ id }: { id: string }) {
                       className="chart-trend-line" 
                       style={{ 
                         stroke: site.color,
-                        ['--brand-glow' as any]: site.glow
+                        ...({ '--brand-glow': site.glow } as React.CSSProperties),
                       }} 
                     />
                   )}
@@ -553,7 +537,7 @@ export default function SitePageClient({ id }: { id: string }) {
                         cx={pt.x}
                         cy={pt.y}
                         className="chart-dot"
-                        style={{ ['--brand-color' as any]: site.color }}
+                        style={{ ...({ '--brand-color': site.color } as React.CSSProperties) }}
                       >
                         <title>{`${pt.label} - Capacity: ${pt.value}%`}</title>
                       </circle>

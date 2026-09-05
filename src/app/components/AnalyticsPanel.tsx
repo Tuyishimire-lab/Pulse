@@ -158,7 +158,7 @@ export default function AnalyticsPanel({
               <select
                 className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
                 value={trafficTierFilter}
-                onChange={(e) => onTrafficTierChange(e.target.value as any)}
+                onChange={(e) => onTrafficTierChange(e.target.value as 'all' | 'enterprise' | 'midmarket' | 'growth')}
               >
                 <option value="all">All Tiers</option>
                 <option value="enterprise">Enterprise (&gt; 500M / mo)</option>
@@ -172,9 +172,9 @@ export default function AnalyticsPanel({
               <select
                 className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-[#82c8e5]"
                 value={sortBy}
-                onChange={(e) => onSortByChange(e.target.value as any)}
+                onChange={(e) => onSortByChange(e.target.value as 'rank' | 'rate' | 'name')}
               >
-                <option value="rank">⭐ Global Rank</option>
+                <option value="rank">Global Rank</option>
                 <option value="rate">Live Dispatch Rate</option>
                 <option value="name">Brand Name</option>
               </select>
@@ -184,16 +184,22 @@ export default function AnalyticsPanel({
               <label className="text-xs font-bold text-[#6d8196] uppercase tracking-wider">Sort Order Direction</label>
               <div className="segmented-tabs mt-0.5">
                 <button
-                  className={`tab-item text-xs py-1.5 ${sortOrder === 'asc' ? 'active' : ''}`}
+                  className={`tab-item text-xs py-1.5 flex items-center gap-1.5 ${sortOrder === 'asc' ? 'active' : ''}`}
                   onClick={() => onSortOrderChange('asc')}
                 >
-                  Ascending ↑
+                  <span>Ascending</span>
+                  <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
                 </button>
                 <button
-                  className={`tab-item text-xs py-1.5 ${sortOrder === 'desc' ? 'active' : ''}`}
+                  className={`tab-item text-xs py-1.5 flex items-center gap-1.5 ${sortOrder === 'desc' ? 'active' : ''}`}
                   onClick={() => onSortOrderChange('desc')}
                 >
-                  Descending ↓
+                  <span>Descending</span>
+                  <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
                 </button>
               </div>
             </div>

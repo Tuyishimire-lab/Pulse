@@ -325,7 +325,7 @@ export default function CompareHubClient({ sites, pairs }: Props) {
           {/* Grid of Compare Cards */}
           {filteredPairs.length === 0 ? (
             <div className="p-12 text-center text-sm text-[#6d8196] border border-white/[0.06] rounded-2xl bg-white/[0.02]">
-              No editorial comparisons found matching "{searchFilter}". Use the Custom VS Picker above to compare any two platforms!
+              No editorial comparisons found matching &quot;{searchFilter}&quot;. Use the Custom VS Picker above to compare any two platforms!
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

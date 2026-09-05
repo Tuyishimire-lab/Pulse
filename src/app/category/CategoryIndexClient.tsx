@@ -56,7 +56,8 @@ function FaviconImg({ url, logo, color }: { url: string; logo: string; color: st
   );
 }
 
-export default function CategoryIndexClient({ categories, totalTrackedTraffic }: Props) {
+export default function CategoryIndexClient({ categories, totalTrackedTraffic: _totalTrackedTraffic }: Props) {
+  void _totalTrackedTraffic;
   return (
     <div className="min-h-screen bg-[#02020a] text-white flex flex-col selection:bg-[#82c8e5]/30">
       <NavHeader />

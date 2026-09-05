@@ -76,8 +76,7 @@ export default function SiteGrid({
               className={`card card-visible cursor-pointer ${sitesWithIncidents.has(site.id) ? 'card-incident animate-pulse' : ''}`}
               onClick={() => onSiteClick(site)}
               style={{
-                ['--brand-color' as any]: site.color,
-                ['--brand-glow' as any]: site.glow,
+                ...({ '--brand-color': site.color, '--brand-glow': site.glow } as React.CSSProperties),
               }}
             >
               <div className="card-header">
@@ -186,7 +185,7 @@ export default function SiteGrid({
 
           {!watchlistFilter && (
             <div className="add-custom-card" onClick={onShowAddCustomModal}>
-              
+              <span className="add-custom-icon">+</span>
               <span className="text-sm font-bold text-[#6d8196]">Track Custom Domain</span>
             </div>
           )}
@@ -210,8 +209,7 @@ export default function SiteGrid({
               className={`list-row card-visible cursor-pointer ${sitesWithIncidents.has(site.id) ? 'row-incident animate-pulse' : ''}`}
               onClick={() => onSiteClick(site)}
               style={{
-                ['--brand-color' as any]: site.color,
-                ['--brand-glow' as any]: site.glow,
+                ...({ '--brand-color': site.color, '--brand-glow': site.glow } as React.CSSProperties),
               }}
             >
               <div className="flex items-center gap-3">
@@ -323,14 +321,30 @@ export default function SiteGrid({
 
       {/* Empty state */}
       {displayedSites.length === 0 && (
-        <div className="w-full text-center py-16 text-[#6d8196]">
-          <p className="text-lg">No websites match your search or filter criteria.</p>
-          <button
-            onClick={onResetFilters}
-            className="px-6 py-2.5 bg-[#0047ab] text-white rounded-xl font-semibold hover:bg-[#003c91] transition"
-          >
-            Reset Filters
-          </button>
+        <div className="w-full text-center py-20 px-4 flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mb-4 text-[#82c8e5]">
+            <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">No Matching Websites Found</h3>
+          <p className="text-sm text-[#6d8196] max-w-md mb-6">
+            We couldn&apos;t find any web domains matching your current search query or filter tags.
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onResetFilters}
+              className="px-5 py-2.5 bg-[#0047ab] text-white rounded-xl text-xs font-semibold hover:bg-[#003c91] transition shadow-md"
+            >
+              Reset Filters
+            </button>
+            <button
+              onClick={onShowAddCustomModal}
+              className="px-5 py-2.5 bg-white/[0.05] border border-white/10 text-white rounded-xl text-xs font-semibold hover:bg-white/[0.1] transition"
+            >
+              + Track Domain
+            </button>
+          </div>
         </div>
       )}
 

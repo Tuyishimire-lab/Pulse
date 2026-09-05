@@ -208,7 +208,7 @@ const MapPageClient = dynamic(() => import('./MapPageClient'), {
     if (error) {
       return (
         <div style={{ padding: 48, textAlign: 'center', color: '#ef4444', fontFamily: 'system-ui' }}>
-          Map failed to load. <a href="/" style={{ color: '#00e5ff' }}>Return to dashboard →</a>
+          Map failed to load. <Link href="/" style={{ color: '#00e5ff' }}>Return to dashboard →</Link>
         </div>
       );
     }
@@ -230,13 +230,14 @@ interface Props {
   }>;
 }
 
+const emptySubscribe = () => () => {};
+
 export default function MapClientWrapper({ countryMap }: Props) {
   // After JS hydrates, hide the SSR skeleton so the interactive map shows cleanly.
   // We use a simple inline style toggle rather than a class to avoid needing a
   // global CSS rule - this way the skeleton is visible in the SSR HTML but
   // disappears immediately once the client component tree mounts.
-  const [hydrated, setHydrated] = React.useState(false);
-  React.useEffect(() => { setHydrated(true); }, []);
+  const hydrated = React.useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   return (
     <>

@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { SITES } from '../../data/sites';
 import { getSites } from '../../../lib/getSites';
 import { COMPARE_PAIRS, getPairBySlug, getAllCompareSlugs, parsePairSlug } from '../data/pairs';
 import { generateDynamicPair } from './generateDynamicPair';

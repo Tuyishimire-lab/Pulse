@@ -36,7 +36,7 @@ async function getAllSiteUrls(): Promise<string[]> {
   });
 
   // Sites from database or static
-  let activeSites = SITES;
+  let activeSites: { id: string }[] = SITES;
   if (isSupabaseConfigured) {
     try {
       const { data } = await supabase
@@ -45,7 +45,7 @@ async function getAllSiteUrls(): Promise<string[]> {
         .order('rank', { ascending: true })
         .limit(300);
       if (data && data.length > 0) {
-        activeSites = data as any[];
+        activeSites = data;
       }
     } catch (e) {
       console.warn('IndexNow API: Using static sites fallback:', e);
@@ -75,9 +75,10 @@ export async function POST(request: Request) {
       submittedCount: result.submittedCount,
       keyLocation: `${BASE_URL}/14eac490de1941d88e198247a1246901.txt`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to submit to IndexNow';
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to submit to IndexNow' },
+      { success: false, error: message },
       { status: 500 }
     );
   }
@@ -104,9 +105,10 @@ export async function GET() {
       submittedCount: result.submittedCount,
       keyLocation: `${BASE_URL}/14eac490de1941d88e198247a1246901.txt`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to submit to IndexNow';
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to submit to IndexNow' },
+      { success: false, error: message },
       { status: 500 }
     );
   }

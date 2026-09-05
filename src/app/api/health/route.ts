@@ -81,9 +81,10 @@ export async function GET() {
         ? `Data frozen - last sync was ${Math.round(ageSeconds / 3600)}h ago`
         : 'Sync healthy',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json(
-      { ok: false, degraded: true, message: err?.message ?? 'Unknown error' },
+      { ok: false, degraded: true, message },
       { status: 503 },
     );
   }

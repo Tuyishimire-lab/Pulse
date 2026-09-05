@@ -15,15 +15,21 @@ export default function VisitsCounter({ rate, pageLoadTime }: VisitsCounterProps
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const elapsedSeconds = (Date.now() - pageLoadTime) / 1000;
-    setCount(Math.floor(elapsedSeconds * rate));
-
-    const interval = setInterval(() => {
-      const elapsed = (Date.now() - pageLoadTime) / 1000;
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      const elapsed = pageLoadTime ? (Date.now() - pageLoadTime) / 1000 : 0;
       setCount(Math.floor(elapsed * rate));
-    }, 500);
+    };
 
-    return () => clearInterval(interval);
+    const timer = setTimeout(tick, 0);
+    const interval = setInterval(tick, 500);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [rate, pageLoadTime]);
 
   return <span>{count.toLocaleString('en-US')}</span>;

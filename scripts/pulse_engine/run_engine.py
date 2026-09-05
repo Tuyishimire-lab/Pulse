@@ -172,6 +172,7 @@ def run_pulse_engine(run_validation_report: bool = True):
         update_payload = {
             "rank": static_rank,
             "baseline": baseline_str,
+            "baseline_raw": monthly_visits,
             "rate": display_rate,
             "progress": progress,
             "volatility": volatility,

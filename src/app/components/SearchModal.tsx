@@ -21,9 +21,8 @@ export default function SearchModal({ isOpen, onClose }: Props) {
   // Focus input on open
   useEffect(() => {
     if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -204,7 +203,7 @@ export default function SearchModal({ isOpen, onClose }: Props) {
         <div className="max-h-80 overflow-y-auto p-2 divide-y divide-white/[0.04]">
           {results.length === 0 ? (
             <div className="py-8 text-center text-xs text-[#6d8196]">
-              No results found for "{query}". Try searching for a domain like "youtube" or country like "spain".
+              No results found for &quot;{query}&quot;. Try searching for a domain like &quot;youtube&quot; or country like &quot;spain&quot;.
             </div>
           ) : (
             results.map((item, idx) => (

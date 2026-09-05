@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://www.pulstraffic.com';
   const now = new Date();
 
-  let activeSites = SITES;
+  let activeSites: { id: string }[] = SITES;
 
   if (isSupabaseConfigured) {
     try {
@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .select('id')
         .order('rank', { ascending: true });
       if (data && data.length > 0) {
-        activeSites = data as any[];
+        activeSites = data as { id: string }[];
       }
     } catch (e) {
       console.error('Sitemap: Failed to load sites from database, falling back to static schema:', e);

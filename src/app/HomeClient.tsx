@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CATEGORIES, SITE_META, SiteConfig, SITE_COUNT } from './data/sites';
+import React, { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react';
+import { SITE_META, SiteConfig } from './data/sites';
 
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { STATIC_TRAFFIC_FACTS } from '../data/marquee';
-import { getMostSearchedTopics } from '../utils/searchTopics';
+import { RadarStatsData, MarqueeItem, SiteDbRow } from '../types/radar';
 
 // Components
 import Header from './components/Header';
@@ -14,20 +14,24 @@ import MarqueeBanner from './components/MarqueeBanner';
 import DashboardConsole from './components/DashboardConsole';
 import AnalyticsPanel from './components/AnalyticsPanel';
 import SiteGrid from './components/SiteGrid';
-import SiteDetailModal from './components/SiteDetailModal';
-import AddCustomSiteModal from './components/AddCustomSiteModal';
-import LegalModals from './components/LegalModals';
-import CompareModal from './components/CompareModal';
 import NavHeader from './components/NavHeader';
+import dynamic from 'next/dynamic';
+
+const SiteDetailModal = dynamic(() => import('./components/SiteDetailModal'), { ssr: false });
+const AddCustomSiteModal = dynamic(() => import('./components/AddCustomSiteModal'), { ssr: false });
+const LegalModals = dynamic(() => import('./components/LegalModals'), { ssr: false });
+const CompareModal = dynamic(() => import('./components/CompareModal'), { ssr: false });
 
 interface HomeClientProps {
   /** Sites pre-fetched from Supabase server-side (avoids client waterfall) */
   initialSites: SiteConfig[];
   /** Radar stats pre-fetched server-side */
-  initialRadarStats: any | null;
+  initialRadarStats: RadarStatsData | null;
   /** Marquee items pre-fetched server-side */
-  initialMarquee: { text: string; type: string; asns?: number[]; locations?: string[] }[];
+  initialMarquee: MarqueeItem[];
 }
+
+const emptySubscribe = () => () => {};
 
 export default function HomeClient({
   initialSites,
@@ -39,7 +43,8 @@ export default function HomeClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
   const [visibleCount, setVisibleCount] = useState(30);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const [pageLoadTime, setPageLoadTime] = useState<number>(0);
 
   // ── Site Selection ────────────────────────────────────────────────────────
   const [selectedSite, setSelectedSite] = useState<SiteConfig | null>(null);
@@ -51,9 +56,11 @@ export default function HomeClient({
   // Do NOT use sites[0].updated_at - that column changes on any Supabase write.
   const [lastSynced, setLastSynced] = useState<string | null>(null);
 
-  // ── Watchlist ─────────────────────────────────────────────────────────────
+  // ── Watchlist & Channels ─────────────────────────────────────────────────
   const [watchlistIds, setWatchlistIds] = useState<string[]>([]);
-  const [watchlistFilter, setWatchlistFilter] = useState<boolean>(false);
+  const [channelFilter, setChannelFilter] = useState<'all' | 'watchlist' | 'incidents'>('all');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const watchlistFilter = channelFilter === 'watchlist';
 
   // ── Custom Sites ──────────────────────────────────────────────────────────
   const [customSites, setCustomSites] = useState<SiteConfig[]>([]);
@@ -88,19 +95,11 @@ export default function HomeClient({
   const [localRanks, setLocalRanks] = useState<Record<string, number>>({});
 
   // ── Cloudflare Radar - seed with server-fetched data ──────────────────────
-  const [radarStats, setRadarStats] = useState<any>(initialRadarStats);
+  const [radarStats, setRadarStats] = useState<RadarStatsData | null>(initialRadarStats);
   const [loadingRadar, setLoadingRadar] = useState<boolean>(!initialRadarStats);
 
   // ── Refs ──────────────────────────────────────────────────────────────────
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  /** Captured once on mount - never resets during re-renders */
-  const pageLoadTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!pageLoadTimeRef.current) {
-      pageLoadTimeRef.current = Date.now();
-    }
-  }, []);
 
   // ── Rank change helper ────────────────────────────────────────────────────
   // Derives the baseline rank from the oldest rank_history entry stored in
@@ -144,15 +143,35 @@ export default function HomeClient({
 
   // ── Load persisted state on mount ─────────────────────────────────────────
   useEffect(() => {
-    setIsMounted(true);
-    const storedStars = localStorage.getItem('pulse_watchlist');
-    if (storedStars) {
-      try { setWatchlistIds(JSON.parse(storedStars)); } catch {}
-    }
-    const storedCustom = localStorage.getItem('pulse_custom_sites');
-    if (storedCustom) {
-      try { setCustomSites(JSON.parse(storedCustom)); } catch {}
-    }
+    const timer = setTimeout(() => {
+      setPageLoadTime(Date.now());
+      
+      // Check for shareable ?watchlist=id1,id2 in URL query first
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const urlWatchlist = params.get('watchlist');
+        if (urlWatchlist) {
+          const ids = urlWatchlist.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+          if (ids.length > 0) {
+            setWatchlistIds(ids);
+            setChannelFilter('watchlist');
+            localStorage.setItem('pulse_watchlist', JSON.stringify(ids));
+            setToastMessage(`Loaded ${ids.length} sites from shared watchlist!`);
+            setTimeout(() => setToastMessage(null), 4000);
+            return;
+          }
+        }
+      }
+
+      const storedStars = localStorage.getItem('pulse_watchlist');
+      if (storedStars) {
+        try { setWatchlistIds(JSON.parse(storedStars)); } catch {}
+      }
+      const storedCustom = localStorage.getItem('pulse_custom_sites');
+      if (storedCustom) {
+        try { setCustomSites(JSON.parse(storedCustom)); } catch {}
+      }
+    }, 0);
 
     // Fetch authoritative last-sync timestamp from /api/health
     fetch('/api/health')
@@ -161,6 +180,8 @@ export default function HomeClient({
         if (data?.lastSyncedAt) setLastSynced(data.lastSyncedAt);
       })
       .catch(() => { /* non-fatal: badge stays hidden */ });
+
+    return () => clearTimeout(timer);
   }, []);
 
   // ── Supabase realtime subscription (incremental updates only) ─────────────
@@ -181,7 +202,7 @@ export default function HomeClient({
         }
         if (data && data.length > 0) {
           // Merge static metadata (logo, color, glow, asn) from SITE_META onto DB rows
-          const enriched = data.map((row: any) => ({
+          const enriched = (data as SiteDbRow[]).map((row) => ({
             ...(SITE_META[row.id] ?? {}),
             ...row,
             baselineRaw: row.baseline_raw ?? 0,
@@ -221,25 +242,27 @@ export default function HomeClient({
 
   // ── Cloudflare Radar stats ────────────────────────────────────────────────
   useEffect(() => {
-    // Skip initial global fetch - we already have server-side data
+    // Skip initial global fetch if we already have server-side data
     if (selectedCountry === 'global' && initialRadarStats) {
-      setRadarStats(initialRadarStats);
-      setLoadingRadar(false);
       return;
     }
 
-    setLoadingRadar(true);
+    let ignore = false;
+    const timer = setTimeout(() => {
+      if (!ignore) setLoadingRadar(true);
+    }, 0);
 
     fetch(
       `/api/radar-stats${selectedCountry !== 'global' ? `?location=${selectedCountry}` : ''}`,
-      { next: { revalidate: 300 } },
     )
       .then((res) => res.json())
       .then((data) => {
+        if (ignore) return;
         if (data && data.success) { setRadarStats(data); }
         setLoadingRadar(false);
       })
       .catch((err) => {
+        if (ignore) return;
         console.error('Error fetching Cloudflare Radar stats:', err);
         setLoadingRadar(false);
       });
@@ -248,12 +271,16 @@ export default function HomeClient({
       fetch(`/api/sync-rankings?location=${selectedCountry}`, { next: { revalidate: 3600 } })
         .then((res) => res.json())
         .then((data) => {
+          if (ignore) return;
           if (data && data.success && data.ranks) { setLocalRanks(data.ranks); }
         })
         .catch((err) => console.warn('Rank synchronization check failed:', err));
-    } else {
-      setLocalRanks({});
     }
+
+    return () => {
+      ignore = true;
+      clearTimeout(timer);
+    };
   }, [selectedCountry, initialRadarStats]);
 
   // ── Keyboard / scroll side-effects ───────────────────────────────────────
@@ -287,6 +314,21 @@ export default function HomeClient({
       : [...watchlistIds, siteId];
     setWatchlistIds(updated);
     localStorage.setItem('pulse_watchlist', JSON.stringify(updated));
+  };
+
+  const handleShareWatchlist = () => {
+    if (watchlistIds.length === 0) return;
+    const shareUrl = `${window.location.origin}/?watchlist=${watchlistIds.join(',')}`;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setToastMessage('Watchlist link copied to clipboard!');
+        setTimeout(() => setToastMessage(null), 3500);
+      }).catch(() => {
+        prompt('Copy your watchlist link:', shareUrl);
+      });
+    } else {
+      prompt('Copy your watchlist link:', shareUrl);
+    }
   };
 
   const handleAddCustomSite = (e: React.FormEvent) => {
@@ -353,10 +395,10 @@ export default function HomeClient({
         .eq('site_id', site.id)
         .order('timestamp', { ascending: true })
         .limit(24)
-        .then((res: any) => {
+        .then((res: { data: { visits_percentage: number | string }[] | null }) => {
           const data = res.data;
           if (data && data.length > 0) {
-            const mappedHistory = data.map((item: any) => Number(item.visits_percentage));
+            const mappedHistory = data.map((item) => Number(item.visits_percentage));
             setSelectedDetails((prev) => prev ? { ...prev, trafficHistory: mappedHistory } : null);
           }
         });
@@ -366,9 +408,10 @@ export default function HomeClient({
         .select('keywords')
         .eq('id', site.id)
         .single()
-        .then((res: any) => {
-          if (res?.data?.keywords?.length > 0) {
-            setSelectedDetails((prev) => prev ? { ...prev, keywords: res.data.keywords } : null);
+        .then((res: { data: { keywords: string[] } | null }) => {
+          const kw = res?.data?.keywords;
+          if (kw && kw.length > 0) {
+            setSelectedDetails((prev) => prev ? { ...prev, keywords: kw } : null);
           }
         });
     }
@@ -376,7 +419,7 @@ export default function HomeClient({
     // ── Cloudflare Radar: real geographies, device split, traffic curve ──
     const primaryAsn = site.asn?.[0];
     if (primaryAsn) {
-      fetch(`/api/radar-site?asn=${primaryAsn}`, { next: { revalidate: 3600 } } as any)
+      fetch(`/api/radar-site?asn=${primaryAsn}`)
         .then((r) => r.json())
         .then((data) => {
           if (!data || data.source === 'unavailable') return;
@@ -427,7 +470,7 @@ export default function HomeClient({
       });
     }
     return merged;
-  }, [dbSites, customSites, selectedCountry, localRanks]);
+  }, [dbSites, customSites, selectedCountry, localRanks, initialSites]);
 
   const filteredSites = useMemo(() => {
     return allSites
@@ -437,13 +480,18 @@ export default function HomeClient({
           searchQuery === '' ||
           site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           site.url.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesWatchlist = !watchlistFilter || watchlistIds.includes(site.id);
+        const matchesChannel =
+          channelFilter === 'all'
+            ? true
+            : channelFilter === 'watchlist'
+            ? watchlistIds.includes(site.id)
+            : sitesWithIncidents.has(site.id);
         const monthlyVisits = site.rate * 86400 * 30.4;
         let matchesTraffic = true;
         if (trafficTierFilter === 'enterprise') matchesTraffic = monthlyVisits >= 500_000_000;
         else if (trafficTierFilter === 'midmarket') matchesTraffic = monthlyVisits >= 50_000_000 && monthlyVisits < 500_000_000;
         else if (trafficTierFilter === 'growth') matchesTraffic = monthlyVisits < 50_000_000;
-        return matchesCategory && matchesSearch && matchesWatchlist && matchesTraffic;
+        return matchesCategory && matchesSearch && matchesChannel && matchesTraffic;
       })
       .sort((a, b) => {
         let comparison = 0;
@@ -452,7 +500,7 @@ export default function HomeClient({
         else if (sortBy === 'name') comparison = a.name.localeCompare(b.name);
         return sortOrder === 'asc' ? comparison : -comparison;
       });
-  }, [allSites, activeCategory, searchQuery, watchlistFilter, watchlistIds, trafficTierFilter, sortBy, sortOrder]);
+  }, [allSites, activeCategory, searchQuery, channelFilter, watchlistIds, sitesWithIncidents, trafficTierFilter, sortBy, sortOrder]);
 
   const analyticsStats = useMemo(() => {
     const count = filteredSites.length;
@@ -496,9 +544,9 @@ export default function HomeClient({
       activeCategory !== 'all' ||
       searchQuery !== '' ||
       trafficTierFilter !== 'all' ||
-      watchlistFilter ||
+      channelFilter !== 'all' ||
       selectedCountry !== 'global',
-    [activeCategory, searchQuery, trafficTierFilter, watchlistFilter, selectedCountry],
+    [activeCategory, searchQuery, trafficTierFilter, channelFilter, selectedCountry],
   );
 
   const displayRankMap = useMemo<Record<string, number> | undefined>(() => {
@@ -533,17 +581,21 @@ export default function HomeClient({
 
       <NavHeader />
 
-      <Header pageLoadTime={pageLoadTimeRef.current} />
+      <Header pageLoadTime={pageLoadTime} />
 
       <main className="main-content relative z-10 w-full max-w-[1200px] px-6 pb-8 flex flex-col items-center">
         <DashboardConsole
           searchQuery={searchQuery}
           onSearchChange={(q) => { setSearchQuery(q); setVisibleCount(30); }}
           selectedCountry={selectedCountry}
-          onCountryChange={(c) => { setSelectedCountry(c); setVisibleCount(30); }}
+          onCountryChange={(c) => { setSelectedCountry(c); if (c === 'global') setLocalRanks({}); setVisibleCount(30); }}
+          channelFilter={channelFilter}
+          onChannelFilterChange={setChannelFilter}
           watchlistFilter={watchlistFilter}
-          onWatchlistFilterChange={setWatchlistFilter}
+          onWatchlistFilterChange={(v) => setChannelFilter(v ? 'watchlist' : 'all')}
           watchlistCount={watchlistIds.length}
+          incidentCount={sitesWithIncidents.size}
+          onShareWatchlist={handleShareWatchlist}
           viewLayout={viewLayout}
           onViewLayoutChange={setViewLayout}
           compareModeActive={compareModeActive}
@@ -577,7 +629,7 @@ export default function HomeClient({
           displayedSites={displayedSites}
           viewLayout={viewLayout}
           isMounted={isMounted}
-          pageLoadTime={pageLoadTimeRef.current}
+          pageLoadTime={pageLoadTime}
           sitesWithIncidents={sitesWithIncidents}
           watchlistIds={watchlistIds}
           compareModeActive={compareModeActive}
@@ -591,7 +643,7 @@ export default function HomeClient({
           filteredCount={filteredSites.length}
           visibleCount={visibleCount}
           loadMoreRef={loadMoreRef}
-          onResetFilters={() => { setSearchQuery(''); setActiveCategory('all'); setWatchlistFilter(false); setVisibleCount(30); }}
+          onResetFilters={() => { setSearchQuery(''); setActiveCategory('all'); setChannelFilter('all'); setVisibleCount(30); }}
           displayRankMap={displayRankMap}
         />
 
@@ -638,7 +690,7 @@ export default function HomeClient({
         <SiteDetailModal
           site={selectedSite}
           details={selectedDetails}
-          pageLoadTime={pageLoadTimeRef.current}
+          pageLoadTime={pageLoadTime}
           radarStats={radarStats}
           onClose={() => { setSelectedSite(null); setSelectedDetails(null); }}
         />
@@ -679,6 +731,13 @@ export default function HomeClient({
         onCloseTerms={() => setShowTermsModal(false)}
         onCloseMethodology={() => setShowMethodologyModal(false)}
       />
+
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#82c8e5]/40 text-white text-xs font-semibold shadow-2xl animate-fadeIn flex items-center gap-2">
+          <span className="text-emerald-400">✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

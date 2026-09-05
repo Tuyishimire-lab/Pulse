@@ -9,6 +9,14 @@ interface RadarRankItem {
   domain: string;
 }
 
+interface SyncSiteItem {
+  id: string;
+  url: string;
+  rank: number;
+  baseline_raw?: number;
+  baselineRaw?: number;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const rawLocation = searchParams.get('location') || 'global';
@@ -83,13 +91,13 @@ export async function GET(req: Request) {
     const updates: { id: string; rank: number; baseline_raw?: number }[] = [];
     const ranksObj: Record<string, number> = {};
     
-    let currentSites = SITES;
+    let currentSites: SyncSiteItem[] = SITES;
     if (isSupabaseConfigured) {
       const { data: dbSites, error } = await supabase
         .from('sites')
         .select('id, url, rank, baseline_raw');
       if (!error && dbSites) {
-        currentSites = dbSites as any[];
+        currentSites = dbSites as SyncSiteItem[];
       }
     }
 
@@ -111,7 +119,7 @@ export async function GET(req: Request) {
           updates.push({
             id: site.id,
             rank: newRank,
-            baseline_raw: (site as any).baseline_raw ?? staticEntry?.baselineRaw,
+            baseline_raw: site.baseline_raw ?? site.baselineRaw ?? staticEntry?.baselineRaw,
           });
         }
       }
@@ -144,11 +152,12 @@ export async function GET(req: Request) {
       updates
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Failed to sync rankings:', err);
+    const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({
       success: false,
-      error: err.message
+      error: message
     }, { status: 500 });
   }
 }

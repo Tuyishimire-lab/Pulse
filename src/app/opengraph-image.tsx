@@ -94,7 +94,7 @@ export default async function Image() {
               lineHeight: '1.6',
             }}
           >
-            A real-time analytics ticker visualizing estimated active visitors, session counts, and geo-traffic trends across the world's most popular websites.
+            A real-time analytics ticker visualizing estimated active visitors, session counts, and geo-traffic trends across the world&apos;s most popular websites.
           </div>
         </div>
 

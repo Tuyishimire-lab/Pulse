@@ -245,7 +245,7 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
           </h2>
 
           <div className="space-y-3">
-            {report.topMovers.map((mover, i) => (
+            {report.topMovers.map((mover) => (
               <Link
                 key={mover.site.id}
                 href={`/sites/${mover.site.id}`}
@@ -302,7 +302,7 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
         {/* Stories */}
         <section className="mb-10">
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-             This Week's Internet Stories
+             This Week&apos;s Internet Stories
           </h2>
           <div className="space-y-4">
             {report.stories.map((story, i) => (

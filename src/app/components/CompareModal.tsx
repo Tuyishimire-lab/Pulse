@@ -12,7 +12,7 @@ export default function CompareModal({ siteA, siteB, onClose }: CompareModalProp
   const detailsA = useMemo(() => getSiteDetails(siteA), [siteA]);
   const detailsB = useMemo(() => getSiteDetails(siteB), [siteB]);
 
-  const pageLoadTimeRef = useRef<number>(Date.now());
+  const pageLoadTimeRef = useRef<number>(0);
   const [elapsed, setElapsed] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState<'a' | 'b'>('a');
@@ -47,6 +47,9 @@ export default function CompareModal({ siteA, siteB, onClose }: CompareModalProp
   };
 
   useEffect(() => {
+    if (!pageLoadTimeRef.current) {
+      pageLoadTimeRef.current = Date.now();
+    }
     setElapsed((Date.now() - pageLoadTimeRef.current) / 1000);
     const interval = setInterval(() => {
       setElapsed((Date.now() - pageLoadTimeRef.current) / 1000);

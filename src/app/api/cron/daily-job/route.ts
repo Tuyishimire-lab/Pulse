@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parseDomain } from '../../../../utils/domain';
-import { generateAIStories } from '../../../../utils/groqAnalysis';
+import { generateAIStories, SiteSnapshot, CategoryTotal } from '../../../../utils/groqAnalysis';
 import { ALL_COUNTRIES, CountryData } from '../../../top-sites/data/countries';
 import { getRegionalProfile } from '../../../top-sites/data/regionalProfiles';
 import { submitToIndexNow } from '../../../../lib/indexnow';
@@ -11,6 +11,31 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 const isSupabaseConfigured = !!(supabaseUrl && supabaseKey);
 const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
 
+interface CronSiteRow {
+  id: string;
+  name: string;
+  url: string;
+  rank: number;
+  rate: number;
+  baseline: string;
+  category: string;
+  color?: string;
+  logo?: string;
+  keywords?: string[] | null;
+  rank_history?: { rank: number; date: string }[];
+}
+
+interface OpenPageRankResponseItem {
+  domain: string;
+  page_rank_decimal?: string;
+  rank?: string;
+}
+
+interface HistoryInsertionRow {
+  site_id: string;
+  visits_percentage: number;
+  timestamp: string;
+}
 
 async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | null> {
   const apiKey = process.env.KEYWORDSEVERYWHERE_API_KEY;
@@ -38,7 +63,7 @@ async function fetchKeywordsEverywhereKeywords(url: string): Promise<string[] | 
     const json = await res.json();
 
     if (json && Array.isArray(json.data)) {
-      return json.data.slice(0, 5).map((item: any) => item.keyword);
+      return json.data.slice(0, 5).map((item: { keyword?: string }) => item.keyword || '').filter(Boolean);
     }
     return null;
   } catch (err) {
@@ -69,7 +94,7 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
         .filter((item: string) => !item.startsWith('http://') && !item.startsWith('https://') && item.trim().length > 0)
         .map((item: string) => {
           // 1. Strip out the brand name case-insensitively
-          let cleaned = item.toLowerCase().replace(brand.toLowerCase(), '').trim();
+          const cleaned = item.toLowerCase().replace(brand.toLowerCase(), '').trim();
           
           // 2. Handle empty queries
           if (cleaned.length === 0) {
@@ -140,17 +165,18 @@ export async function GET(request: Request) {
 
   try {
     // 2. Fetch all current sites from Supabase
-    const { data: sites, error: fetchError } = await supabase
+    const { data: rawSites, error: fetchError } = await supabase
       .from('sites')
       .select('*')
       .order('rank', { ascending: true });
 
-    if (fetchError || !sites || sites.length === 0) {
+    if (fetchError || !rawSites || rawSites.length === 0) {
       return NextResponse.json(
         { success: false, error: fetchError?.message || 'No sites found' },
         { status: 500 }
       );
     }
+    const sites = rawSites as CronSiteRow[];
 
     // Global site ranks, baselines, and rates are authoritatively managed by the
     // Pulse Traffic Index Python engine (scripts/pulse_engine/run_engine.py).
@@ -169,7 +195,7 @@ export async function GET(request: Request) {
 
         // Build domain → siteId lookup from current sites
         const domainToSiteId = new Map<string, string>();
-        sites.forEach((site: any) => {
+        sites.forEach((site) => {
           const host = site.url
             .replace(/https?:\/\/(www\.)?/, '')
             .split('/')[0]
@@ -254,7 +280,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Query Open PageRank API for all domains in one single request
-    const domainsList = sites.map((s: any) => parseDomain(s.url));
+    const domainsList = sites.map((s) => parseDomain(s.url));
     const domainsQuery = domainsList.map((d: string) => `domains[]=${d}`).join('&');
 
     const oprRes = await fetch(`https://openpagerank.com/api/v1.0/getPageRank?${domainsQuery}`, {
@@ -272,10 +298,10 @@ export async function GET(request: Request) {
     const rankMap: Record<string, { pageRank: number; globalRank: number }> = {};
     
     if (oprData && Array.isArray(oprData.response)) {
-      oprData.response.forEach((item: any) => {
+      (oprData.response as OpenPageRankResponseItem[]).forEach((item) => {
         rankMap[item.domain] = {
-          pageRank: parseFloat(item.page_rank_decimal) || 0,
-          globalRank: parseInt(item.rank) || 9999999
+          pageRank: parseFloat(item.page_rank_decimal || '0') || 0,
+          globalRank: parseInt(item.rank || '9999999') || 9999999
         };
       });
     }
@@ -289,7 +315,7 @@ export async function GET(request: Request) {
     for (let i = 0; i < sites.length; i += KEYWORD_BATCH_SIZE) {
       const batch = sites.slice(i, i + KEYWORD_BATCH_SIZE);
       await Promise.all(
-        batch.map(async (site: any) => {
+        batch.map(async (site) => {
           try {
             let keywords = await fetchKeywordsEverywhereKeywords(site.url);
             // Fallback to Google Suggest (free) if KE fails
@@ -306,8 +332,8 @@ export async function GET(request: Request) {
 
     // 5. Update keywords if newly fetched (keywords only — baseline/rate/rank are managed by Python PTI engine)
     const keywordUpdates = sites
-      .filter((s: any) => keKeywordsMap[s.id] && keKeywordsMap[s.id]!.length > 0)
-      .map((s: any) => supabase.from('sites').update({ keywords: keKeywordsMap[s.id] }).eq('id', s.id));
+      .filter((s) => keKeywordsMap[s.id] && keKeywordsMap[s.id]!.length > 0)
+      .map((s) => supabase.from('sites').update({ keywords: keKeywordsMap[s.id] }).eq('id', s.id));
 
     if (keywordUpdates.length > 0) {
       for (let i = 0; i < keywordUpdates.length; i += 20) {
@@ -319,14 +345,14 @@ export async function GET(request: Request) {
     // 7. Calculate & bulk-insert 6 hourly points (matching the 6-hour cron cadence)
     // Each run covers the 6 hours since the last execution.
     const HISTORY_HOURS = 6;
-    const historyInsertions: any[] = [];
+    const historyInsertions: HistoryInsertionRow[] = [];
     const now = new Date();
 
     for (let h = 0; h < HISTORY_HOURS; h++) {
       const timestamp = new Date(now.getTime() - h * 60 * 60 * 1000);
       const hourValue = timestamp.getHours();
       
-      sites.forEach((site: any) => {
+      sites.forEach((site) => {
         // Calculate site-specific phase-shifted wave
         const phaseOffset = ((site.rank || 10) * 7) % 24;
         const shiftedHour = (hourValue + phaseOffset) % 24;
@@ -356,11 +382,11 @@ export async function GET(request: Request) {
     }
 
     // 7b. Persist rank_history for sparkline tracking (keep last 7 entries per site)
-    const rankHistoryUpdates = sites.map((site: any) => {
+    const rankHistoryUpdates = sites.map((site) => {
       const existingHistory: { rank: number; date: string }[] = Array.isArray(site.rank_history) ? site.rank_history : [];
       const todayStr = now.toISOString().split('T')[0];
       // Skip if we already have an entry for today
-      if (existingHistory.some((h: any) => h.date === todayStr)) return null;
+      if (existingHistory.some((h) => h.date === todayStr)) return null;
       const updated = [...existingHistory.slice(-6), { rank: site.rank, date: todayStr }];
       return supabase.from('sites').update({ rank_history: updated }).eq('id', site.id);
     }).filter(Boolean);
@@ -377,7 +403,7 @@ export async function GET(request: Request) {
     // Each run stamps a consistent recorded_at so the trending page can diff
     // the two most recent distinct timestamps to get real rank deltas.
     const siteHistoryTimestamp = now.toISOString();
-    const siteHistoryRows = sites.map((site: any) => ({
+    const siteHistoryRows = sites.map((site) => ({
       site_id: site.id,
       rank: site.rank,
       rate: site.rate,
@@ -421,7 +447,7 @@ export async function GET(request: Request) {
 
         // Group by site_id: take the SECOND occurrence (i.e. previous snapshot)
         const seenIds = new Set<string>();
-        for (const row of prevSnapshot as any[]) {
+        for (const row of (prevSnapshot || []) as { site_id: string; rank: number }[]) {
           if (!seenIds.has(row.site_id)) {
             seenIds.add(row.site_id); // first occurrence = current (just inserted)
           } else if (!prevRankMap.has(row.site_id)) {
@@ -431,7 +457,7 @@ export async function GET(request: Request) {
 
         if (prevRankMap.size > 0) {
           const volatilityUpdates = sites
-            .map((site: any) => {
+            .map((site) => {
               const prevRank = prevRankMap.get(site.id);
               if (prevRank === undefined) return null;
               const volatility = Math.abs(prevRank - site.rank); // always positive
@@ -472,7 +498,7 @@ export async function GET(request: Request) {
 
         if (!existingSnapshot) {
           // Build site summaries for the snapshot
-          const sitesSnapshot = sites.map((site: any) => ({
+          const sitesSnapshot = sites.map((site) => ({
             id: site.id,
             name: site.name,
             url: site.url,
@@ -487,13 +513,13 @@ export async function GET(request: Request) {
 
           // Pre-compute category totals
           const categoryTotals: Record<string, { count: number; totalRate: number }> = {};
-          sitesSnapshot.forEach((s: any) => {
+          sitesSnapshot.forEach((s) => {
             if (!categoryTotals[s.category]) categoryTotals[s.category] = { count: 0, totalRate: 0 };
             categoryTotals[s.category].count++;
             categoryTotals[s.category].totalRate += s.rate;
           });
 
-          const totalRate = sitesSnapshot.reduce((sum: number, s: any) => sum + s.rate, 0);
+          const totalRate = sitesSnapshot.reduce((sum: number, s) => sum + s.rate, 0);
 
           // Count outages from marquee (if available)
           let outageCount = 0;
@@ -505,7 +531,7 @@ export async function GET(request: Request) {
             if (outageRes.ok) {
               const marqueeData = await outageRes.json();
               if (Array.isArray(marqueeData)) {
-                outageCount = marqueeData.filter((m: any) => m.type === 'outage').length;
+                outageCount = (marqueeData as { type?: string }[]).filter((m) => m.type === 'outage').length;
               }
             }
           } catch { /* non-critical */ }
@@ -525,14 +551,22 @@ export async function GET(request: Request) {
           const prevWeekNum = Math.ceil((((prevD.getTime() - prevYearStart.getTime()) / 86400000) + 1) / 7);
           const prevWeekSlug = `${prevD.getUTCFullYear()}-w${String(prevWeekNum).padStart(2, '0')}`;
 
-          let prevSnapshot: any = null;
+          let prevSnapshot: {
+            sites_data?: SiteSnapshot[];
+            category_totals?: Record<string, CategoryTotal>;
+            total_rate?: number;
+          } | null = null;
           try {
             const { data: prevData } = await supabase
               .from('weekly_snapshots')
               .select('sites_data, category_totals, total_rate')
               .eq('week_slug', prevWeekSlug)
               .single();
-            prevSnapshot = prevData;
+            prevSnapshot = prevData as {
+              sites_data?: SiteSnapshot[];
+              category_totals?: Record<string, CategoryTotal>;
+              total_rate?: number;
+            } | null;
           } catch { /* no previous snapshot */ }
 
           // Generate AI-powered editorial stories via Groq
@@ -611,7 +645,7 @@ export async function GET(request: Request) {
         await supabase
           .from('sync_log')
           .delete()
-          .in('id', logRows.map((r: any) => r.id));
+          .in('id', (logRows as { id: string | number }[]).map((r) => r.id));
       }
     } catch (logErr) {
       // Non-fatal: don't fail the cron just because logging failed
@@ -624,7 +658,7 @@ export async function GET(request: Request) {
         'https://www.pulstraffic.com',
         'https://www.pulstraffic.com/trending',
         'https://www.pulstraffic.com/top-sites',
-        ...sites.slice(0, 50).map((s: any) => `https://www.pulstraffic.com/sites/${s.id}`),
+        ...sites.slice(0, 50).map((s) => `https://www.pulstraffic.com/sites/${s.id}`),
       ];
       submitToIndexNow(pingUrls).catch((err) =>
         console.warn('IndexNow auto-ping error in cron:', err)
@@ -639,8 +673,9 @@ export async function GET(request: Request) {
       historyNodesDeletedCount: deletedCount || 0
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Unified Cron Ingestion Exception:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     // Log the failure so /api/health can surface it
     try {
       if (isSupabaseConfigured) {
@@ -648,10 +683,10 @@ export async function GET(request: Request) {
           completed_at:  new Date().toISOString(),
           sites_count:   null,
           status:        'error',
-          error_message: String(error?.message ?? error).slice(0, 500),
+          error_message: errorMessage.slice(0, 500),
         });
       }
     } catch { /* swallow - we're already in the error path */ }
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

@@ -157,6 +157,37 @@ function buildDatasetFromMovers(rawMovers: TrendingSite[], timeframe: '24h' | '7
   };
 }
 
+interface SiteLiveMeta {
+  id: string;
+  name: string;
+  url: string;
+  rank: number;
+  category: string;
+  baseline: string;
+  rate: number;
+  volatility?: number;
+}
+
+interface HistoryRow {
+  recorded_at: string;
+  site_id: string;
+  rank: number;
+  rate: number;
+  volatility: number | null;
+}
+
+interface SnapshotSiteData {
+  id: string;
+  name: string;
+  rank: number;
+  rate: number;
+  url?: string;
+  logo?: string;
+  color?: string;
+  category?: string;
+  baseline?: string;
+}
+
 async function fetchAllTimeframes(): Promise<{
   datasets: Record<'24h' | '7d' | '30d', TrendingDataset>;
 }> {
@@ -175,13 +206,14 @@ async function fetchAllTimeframes(): Promise<{
         supabase.from('sites').select('id, name, url, rank, category, baseline, rate, volatility'),
       ]);
 
-      const sitesData = sitesRes.data ?? [];
-      const siteMetaMap = new Map<string, any>();
-      for (const s of sitesData as any[]) siteMetaMap.set(s.id, s);
+      const sitesData = (sitesRes.data ?? []) as SiteLiveMeta[];
+      const siteMetaMap = new Map<string, SiteLiveMeta>();
+      for (const s of sitesData) siteMetaMap.set(s.id, s);
 
       // 1. Process 24h
       if (historyRes.data && historyRes.data.length > 0) {
-        const distinctTimes = Array.from(new Set(historyRes.data.map((r: any) => r.recorded_at as string)))
+        const historyData = (historyRes.data ?? []) as HistoryRow[];
+        const distinctTimes = Array.from(new Set(historyData.map((r) => r.recorded_at)))
           .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
         
         if (distinctTimes.length >= 2) {
@@ -189,8 +221,8 @@ async function fetchAllTimeframes(): Promise<{
           const olderTs = distinctTimes[1];
           snapshotAge = newestTs;
 
-          const newestRows = historyRes.data.filter((r: any) => r.recorded_at === newestTs);
-          const olderRows = historyRes.data.filter((r: any) => r.recorded_at === olderTs);
+          const newestRows = historyData.filter((r) => r.recorded_at === newestTs);
+          const olderRows = historyData.filter((r) => r.recorded_at === olderTs);
           const olderMap = new Map<string, number>();
           for (const r of olderRows) olderMap.set(r.site_id, r.rank);
 
@@ -198,28 +230,28 @@ async function fetchAllTimeframes(): Promise<{
             const rawDelta = olderMap.has(row.site_id) ? (olderMap.get(row.site_id)! - row.rank) : 0;
             const delta = rawDelta !== 0 ? rawDelta : (row.rank % 2 === 0 ? 1 : -1);
             const meta = SITE_META[row.site_id] ?? {};
-            const live = siteMetaMap.get(row.site_id) ?? {};
-            const vol = row.volatility || live.volatility || 5;
+            const live = siteMetaMap.get(row.site_id);
+            const vol = row.volatility || live?.volatility || 5;
             const rawPct = Math.round((Math.abs(delta) / Math.max(1, row.rank)) * 1000) / 10 || +(vol * 0.8).toFixed(1);
             const pct = delta > 0 ? Math.abs(rawPct) : -Math.abs(rawPct);
             const rival = RIVALS[row.site_id];
 
             raw24h.push({
               id: row.site_id,
-              name: live.name ?? meta.name ?? row.site_id,
-              url: live.url ?? meta.url ?? '',
+              name: live?.name ?? meta.name ?? row.site_id,
+              url: live?.url ?? meta.url ?? '',
               logo: meta.logo ?? row.site_id.charAt(0).toUpperCase(),
               color: meta.color ?? '#82c8e5',
               glow: meta.glow ?? 'rgba(130,200,229,0.15)',
-              category: live.category ?? meta.category ?? 'general',
+              category: live?.category ?? meta.category ?? 'general',
               currentRank: row.rank,
               previousRank: row.rank + delta,
               delta,
-              rate: live.rate ?? row.rate ?? 0,
-              baseline: live.baseline ?? '',
+              rate: live?.rate ?? row.rate ?? 0,
+              baseline: live?.baseline ?? '',
               percentageChange: pct,
               volatility: Math.abs(pct),
-              catalyst: assignCatalyst(live.category ?? meta.category ?? '', delta, Math.abs(pct)),
+              catalyst: assignCatalyst(live?.category ?? meta.category ?? '', delta, Math.abs(pct)),
               sparkline: generateSparkline(delta, Math.abs(pct)),
               topRivalId: rival?.id,
               topRivalName: rival?.name,
@@ -234,13 +266,13 @@ async function fetchAllTimeframes(): Promise<{
         const snap7d = snapshotsRes.data[1];
         const snap30d = snapshotsRes.data.length >= 4 ? snapshotsRes.data[3] : snapshotsRes.data[snapshotsRes.data.length - 1];
 
-        const map7d = new Map<string, any>();
-        for (const s of (snap7d.sites_data ?? []) as any[]) map7d.set(s.id, s);
+        const map7d = new Map<string, SnapshotSiteData>();
+        for (const s of (snap7d.sites_data ?? []) as SnapshotSiteData[]) map7d.set(s.id, s);
 
-        const map30d = new Map<string, any>();
-        for (const s of (snap30d.sites_data ?? []) as any[]) map30d.set(s.id, s);
+        const map30d = new Map<string, SnapshotSiteData>();
+        for (const s of (snap30d.sites_data ?? []) as SnapshotSiteData[]) map30d.set(s.id, s);
 
-        for (const curr of (currentSnap.sites_data ?? []) as any[]) {
+        for (const curr of (currentSnap.sites_data ?? []) as SnapshotSiteData[]) {
           const meta = SITE_META[curr.id] ?? {};
           const rival = RIVALS[curr.id];
 
@@ -264,7 +296,7 @@ async function fetchAllTimeframes(): Promise<{
             previousRank: curr.rank + delta7,
             delta: delta7,
             rate: curr.rate,
-            baseline: curr.baseline,
+            baseline: curr.baseline ?? '',
             percentageChange: pct7,
             volatility: Math.abs(pct7),
             catalyst: assignCatalyst(curr.category ?? meta.category ?? '', delta7, Math.abs(pct7)),
@@ -293,7 +325,7 @@ async function fetchAllTimeframes(): Promise<{
             previousRank: curr.rank + delta30,
             delta: delta30,
             rate: curr.rate,
-            baseline: curr.baseline,
+            baseline: curr.baseline ?? '',
             percentageChange: pct30,
             volatility: Math.abs(pct30),
             catalyst: assignCatalyst(curr.category ?? meta.category ?? '', delta30, Math.abs(pct30)),

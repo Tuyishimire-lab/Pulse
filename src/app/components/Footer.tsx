@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { getPlatformLinks, RESOURCE_LINKS } from '../../lib/navLinks';
 
 // Featured countries shown in the footer - covers major traffic regions.
@@ -18,6 +19,9 @@ const FEATURED_COUNTRIES = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/embed')) return null;
+
   const year = new Date().getFullYear();
 
   return (

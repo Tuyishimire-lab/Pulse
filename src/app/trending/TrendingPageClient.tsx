@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import NavHeader from '../components/NavHeader';
 
 export interface TrendingSite {
@@ -49,37 +48,7 @@ interface Props {
   datasets: Record<'24h' | '7d' | '30d', TrendingDataset>;
 }
 
-function FaviconImg({ url, logo, color }: { url: string; logo: string; color: string }) {
-  const [err, setErr] = useState(false);
-  const domain = url.replace(/https?:\/\/(www\.)?/, '');
-  if (err) {
-    return (
-      <span
-        className="rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs"
-        style={{
-          width: 36,
-          height: 36,
-          backgroundColor: color + '28',
-          color: color === '#ffffff' ? '#c0cfd8' : color,
-        }}
-      >
-        {logo}
-      </span>
-    );
-  }
-  return (
-    <Image
-      src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
-      alt={`${logo} favicon`}
-      width={36}
-      height={36}
-      onError={() => setErr(true)}
-      className="rounded-full object-contain flex-shrink-0"
-      style={{ backgroundColor: color + '1a', padding: 2 }}
-      unoptimized
-    />
-  );
-}
+import FaviconImage from '../components/ui/FaviconImage';
 
 function DeltaBadge({ delta, pct }: { delta: number; pct: number }) {
   const isUp = delta > 0;
@@ -184,14 +153,16 @@ export default function TrendingPageClient({ datasets }: Props) {
 
             {/* Timeframe Switcher */}
             <div className="flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] self-start md:self-auto">
-              {[
-                { id: '24h', label: '24 Hours' },
-                { id: '7d', label: '7 Days' },
-                { id: '30d', label: '30 Days' },
-              ].map((t) => (
+              {(
+                [
+                  { id: '24h', label: '24 Hours' },
+                  { id: '7d', label: '7 Days' },
+                  { id: '30d', label: '30 Days' },
+                ] as const
+              ).map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setTimeframe(t.id as any)}
+                  onClick={() => setTimeframe(t.id)}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     timeframe === t.id
                       ? 'bg-[#82c8e5] text-black font-bold shadow-md'
@@ -214,10 +185,12 @@ export default function TrendingPageClient({ datasets }: Props) {
                 Top Velocity Breakout
               </div>
               <div className="flex items-center gap-3">
-                <FaviconImg
+                <FaviconImage
                   url={currentDataset.breakoutStars[0].url}
                   logo={currentDataset.breakoutStars[0].logo}
                   color={currentDataset.breakoutStars[0].color}
+                  size={36}
+                  className="w-9 h-9 rounded-full object-contain p-1 bg-white/10 flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-white text-sm truncate">
@@ -244,10 +217,12 @@ export default function TrendingPageClient({ datasets }: Props) {
                 Highest Volatility Radar
               </div>
               <div className="flex items-center gap-3">
-                <FaviconImg
+                <FaviconImage
                   url={currentDataset.highVolatility[0].url}
                   logo={currentDataset.highVolatility[0].logo}
                   color={currentDataset.highVolatility[0].color}
+                  size={36}
+                  className="w-9 h-9 rounded-full object-contain p-1 bg-white/10 flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-white text-sm truncate">
@@ -353,14 +328,16 @@ export default function TrendingPageClient({ datasets }: Props) {
         {/* Filter and Tab Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
           <div className="flex items-center p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] self-start">
-            {[
-              { id: 'all', label: `All Movers (${totalMovers})` },
-              { id: 'risers', label: `Rising (${filteredRisers.length})` },
-              { id: 'fallers', label: `Declining (${filteredFallers.length})` },
-            ].map((tab) => (
+            {(
+              [
+                { id: 'all', label: `All Movers (${totalMovers})` },
+                { id: 'risers', label: `Rising (${filteredRisers.length})` },
+                { id: 'fallers', label: `Declining (${filteredFallers.length})` },
+              ] as const
+            ).map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === tab.id
                     ? 'bg-white/10 text-white'
@@ -412,7 +389,13 @@ export default function TrendingPageClient({ datasets }: Props) {
                     </div>
 
                     {/* Favicon */}
-                    <FaviconImg url={site.url} logo={site.logo} color={site.color} />
+                    <FaviconImage
+                      url={site.url}
+                      logo={site.logo}
+                      color={site.color}
+                      size={36}
+                      className="w-9 h-9 rounded-full object-contain p-1 bg-white/10 flex-shrink-0"
+                    />
 
                     {/* Site Info & Catalyst */}
                     <div className="flex-1 min-w-0">
@@ -489,7 +472,13 @@ export default function TrendingPageClient({ datasets }: Props) {
                     </div>
 
                     {/* Favicon */}
-                    <FaviconImg url={site.url} logo={site.logo} color={site.color} />
+                    <FaviconImage
+                      url={site.url}
+                      logo={site.logo}
+                      color={site.color}
+                      size={36}
+                      className="w-9 h-9 rounded-full object-contain p-1 bg-white/10 flex-shrink-0"
+                    />
 
                     {/* Site Info & Catalyst */}
                     <div className="flex-1 min-w-0">

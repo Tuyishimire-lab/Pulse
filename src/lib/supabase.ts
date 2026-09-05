@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
@@ -8,28 +8,29 @@ const isValidUrl = (url: string) => {
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch (_) {
+  } catch {
     return false;
   }
 };
 
 // Create a generic chainable mock client to avoid compile-time/run-time crashes before keys are configured
-const createMockClient = () => {
+const createMockClient = (): SupabaseClient => {
   const chainable = {
     select: () => chainable,
     order: () => chainable,
     eq: () => chainable,
     limit: () => chainable,
-    then: (cb: any) => Promise.resolve({ data: null, error: null }).then(cb),
+    then: <T>(cb?: (value: { data: null; error: null }) => T | PromiseLike<T>) =>
+      Promise.resolve({ data: null, error: null }).then(cb),
     on: () => chainable,
-    subscribe: () => ({})
+    subscribe: () => ({}),
   };
 
   return {
     from: () => chainable,
     channel: () => chainable,
-    removeChannel: () => {}
-  } as any;
+    removeChannel: () => {},
+  } as unknown as SupabaseClient;
 };
 
 export const isSupabaseConfigured = !!(isValidUrl(supabaseUrl) && supabaseAnonKey);
@@ -43,5 +44,3 @@ if (!isSupabaseConfigured) {
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : createMockClient();
-
-

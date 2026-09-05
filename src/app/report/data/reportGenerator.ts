@@ -443,10 +443,6 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
     return `${arrow} ${abs}% vs last week${context}`;
   }
 
-  // Total rate for share percent calculation
-  const totalCatRate = Object.values(currentSnapshot.category_totals)
-    .reduce((sum, c) => sum + c.totalRate, 0);
-
   const quickStats = [
     {
       label: 'Total Tracked Traffic',

@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { getSites } from '../lib/getSites';
+import { getRadarStats } from '../lib/getRadarStats';
+import { getMarqueeItems } from '../lib/getMarquee';
+import { RadarStatsData, MarqueeItem } from '../types/radar';
 import HomeClient from './HomeClient';
 
 export const metadata: Metadata = {
@@ -14,36 +17,21 @@ export const metadata: Metadata = {
  * Uses getSites() which is the single source of truth for site data.
  */
 export default async function Home() {
-  // ── Server-side data fetching ──────────────────────────────────────────
-  let initialRadarStats: any = null;
-  let initialMarquee: { text: string; type: string; asns?: number[]; locations?: string[] }[] = [];
+  // Fetch initial data in parallel directly without loopback HTTP fetches
+  let initialRadarStats: RadarStatsData | null = null;
+  let initialMarquee: MarqueeItem[] = [];
 
-  // Fetch sites via unified data layer (Supabase → sites.ts fallback)
-  const initialSites = await getSites(60);
+  const [initialSites, radarData, marqueeData] = await Promise.all([
+    getSites(60),
+    getRadarStats('global').catch(() => null),
+    getMarqueeItems().catch(() => []),
+  ]);
 
-  // Fetch radar stats and marquee data in parallel
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-  try {
-    const [radarRes, marqueeRes] = await Promise.allSettled([
-      fetch(`${baseUrl}/api/radar-stats`, { next: { revalidate: 300 } }),
-      fetch(`${baseUrl}/api/marquee`, { next: { revalidate: 60 } }),
-    ]);
-
-    if (radarRes.status === 'fulfilled' && radarRes.value.ok) {
-      const data = await radarRes.value.json();
-      if (data && data.success) initialRadarStats = data;
-    }
-
-    if (marqueeRes.status === 'fulfilled' && marqueeRes.value.ok) {
-      const data = await marqueeRes.value.json();
-      if (Array.isArray(data) && data.length > 0) initialMarquee = data;
-    }
-  } catch (err) {
-    // Non-critical - client will re-fetch on mount
-    console.warn('Server: Failed to pre-fetch radar/marquee data:', err);
+  if (radarData && radarData.success) {
+    initialRadarStats = radarData;
+  }
+  if (Array.isArray(marqueeData) && marqueeData.length > 0) {
+    initialMarquee = marqueeData;
   }
 
   return (

@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import Footer from "./components/Footer";
 import { CURRENT_YEAR } from "../lib/currentYear";
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -96,12 +103,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${outfit.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
         {/* OmniRoute Tag - AI Crawler Detection (native tag required for server-rendered HTML detection) */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com"></script>
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>

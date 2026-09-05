@@ -60,10 +60,10 @@ export interface CountrySitesResult {
   cronLastRan: string | null; // ISO timestamp or null if never
 }
 
-function withTimeout<T>(promise: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
+function withTimeout<T, F>(promise: PromiseLike<T>, ms: number, fallback: F): Promise<T | F> {
   return Promise.race([
     Promise.resolve(promise),
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+    new Promise<F>((resolve) => setTimeout(() => resolve(fallback), ms)),
   ]);
 }
 
@@ -84,7 +84,7 @@ export async function resolveCountrySites(
           .eq('cf_code', cfCode.toUpperCase())
           .single(),
         3000,
-        { data: null, error: null } as any
+        { data: null, error: null } as { data: { site_ids: string[]; source: string; updated_at: string } | null; error: null }
       );
 
       if (data) {

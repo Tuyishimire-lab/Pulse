@@ -6,12 +6,13 @@ import { SiteDetails } from '../data/details';
 import FaviconImage from './ui/FaviconImage';
 import VisitsCounter from './ui/VisitsCounter';
 import { getMostSearchedTopics } from '../../utils/searchTopics';
+import { RadarStatsData } from '../../types/radar';
 
 interface SiteDetailModalProps {
   site: SiteConfig;
   details: SiteDetails;
   pageLoadTime: number;
-  radarStats: any;
+  radarStats: RadarStatsData | null;
   onClose: () => void;
 }
 
@@ -32,7 +33,7 @@ interface ChartSectionProps {
   chartPoints: { x: number; y: number; value: number; hour: number }[];
   linePath: string;
   fillPath: string;
-  radarStats: any;
+  radarStats: RadarStatsData | null;
 }
 
 function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartSectionProps) {
@@ -64,7 +65,7 @@ function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartS
     });
 
     const linePath = pts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`).join(' ');
-    const fillPath = `M 0 110 ${pts.map((pt) => `L ${pt.x} ${pt.y}`).join(' ')} L 580 110 Z`;
+    const fillPath = `M 0 ${height} ${pts.map((pt) => `L ${pt.x} ${pt.y}`).join(' ')} L ${width} ${height} Z`;
 
     const best = pts.reduce((a, b) => (a.rank < b.rank ? a : b));
     const worst = pts.reduce((a, b) => (a.rank > b.rank ? a : b));
@@ -124,7 +125,7 @@ function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartS
                 <path
                   d={linePath}
                   className="chart-trend-line"
-                  style={{ stroke: site.color, ['--brand-glow' as any]: site.glow }}
+                  style={{ stroke: site.color, ...({ '--brand-glow': site.glow } as React.CSSProperties) }}
                 />
               )}
               {chartPoints.map((pt, i) => (
@@ -133,7 +134,7 @@ function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartS
                   cx={pt.x}
                   cy={pt.y}
                   className="chart-dot"
-                  style={{ ['--brand-color' as any]: site.color }}
+                  style={{ ...({ '--brand-color': site.color } as React.CSSProperties) }}
                 >
                   <title>{`Hour ${pt.hour}:00 - Traffic Capacity: ${pt.value}%`}</title>
                 </circle>
@@ -208,7 +209,7 @@ function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartS
                   strokeWidth="1.5"
                   opacity="0"
                   className="chart-dot"
-                  style={{ ['--brand-color' as any]: site.color }}
+                  style={{ ...({ '--brand-color': site.color } as React.CSSProperties) }}
                 >
                   <title>{`${new Date(pt.date).toLocaleDateString()} - Rank #${pt.rank}`}</title>
                 </circle>
@@ -285,8 +286,7 @@ export default function SiteDetailModal({
       <div
         className="modal-content"
         style={{
-          ['--brand-color' as any]: site.color,
-          ['--brand-glow' as any]: site.glow,
+          ...({ '--brand-color': site.color, '--brand-glow': site.glow } as React.CSSProperties),
         }}
       >
         <div className="modal-body">

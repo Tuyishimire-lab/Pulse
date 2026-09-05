@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { SiteConfig } from '../../data/sites';
 import { ComparePair } from '../data/pairs';
 import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
+import { exportComparisonReport } from '../../../utils/exportCsv';
+import { parseTrafficMetric, compareMetric } from '../../../lib/metrics';
 
 
 interface Props {
@@ -19,38 +20,11 @@ interface Props {
   allSites: SiteConfig[];
 }
 
-function FaviconImg({ url, logo, color, size = 56 }: { url: string; logo: string; color: string; size?: number }) {
-  const [err, setErr] = useState(false);
-  const domain = url.replace(/https?:\/\/(www\.)?/, '');
-  const bg = color === '#ffffff' ? '#18181b' : color + '22';
-  const textColor = color === '#ffffff' ? '#111' : color;
-  if (err) {
-    return (
-      <span
-        className="rounded-2xl flex items-center justify-center font-extrabold text-2xl flex-shrink-0"
-        style={{ width: size, height: size, backgroundColor: bg, color: textColor }}
-      >
-        {logo}
-      </span>
-    );
-  }
-  return (
-    <Image
-      src={`https://www.google.com/s2/favicons?sz=128&domain=${domain}`}
-      alt={`${logo} logo`}
-      width={size}
-      height={size}
-      onError={() => setErr(true)}
-      className="rounded-2xl object-contain p-2 flex-shrink-0"
-      style={{ backgroundColor: bg }}
-      unoptimized
-    />
-  );
-}
+import FaviconImage from '../../components/ui/FaviconImage';
 
 function LiveCounter({ rate, color }: { rate: number; color: string }) {
   const [count, setCount] = useState(0);
-  const startRef = useRef(Date.now());
+  const startRef = useRef(0);
 
   useEffect(() => {
     startRef.current = Date.now();
@@ -76,12 +50,12 @@ function StatRow({ label, a, b, colorA, colorB, winner }: {
 }) {
   return (
     <div className="grid grid-cols-3 items-center py-3 border-b border-white/[0.05] last:border-0">
-      <div className={`text-sm font-medium tabular-nums text-right pr-4 ${winner === 'a' ? 'text-white font-bold' : 'text-[#94a3b8]'}`}>
+      <div className={`text-sm font-medium tabular-nums text-right pr-4 ${winner === 'a' ? 'text-white font-bold' : 'text-[#94a3b8]'}`} style={winner === 'a' ? { color: colorA } : undefined}>
         {a}
         {winner === 'a' && <span className="ml-1.5 text-[10px] text-emerald-400 font-bold">win</span>}
       </div>
       <div className="text-xs text-[#6d8196] text-center font-medium uppercase tracking-wider px-2">{label}</div>
-      <div className={`text-sm font-medium tabular-nums pl-4 ${winner === 'b' ? 'text-white font-bold' : 'text-[#94a3b8]'}`}>
+      <div className={`text-sm font-medium tabular-nums pl-4 ${winner === 'b' ? 'text-white font-bold' : 'text-[#94a3b8]'}`} style={winner === 'b' ? { color: colorB } : undefined}>
         {winner === 'b' && <span className="mr-1.5 text-[10px] text-emerald-400 font-bold">win</span>}
         {b}
       </div>
@@ -93,15 +67,40 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [embedSite, setEmbedSite] = useState<SiteConfig | null>(null);
 
-  // Use numeric baselineRaw to avoid JS string-comparison bug ("820M" > "2.0B" alphabetically)
-  const aWinsVisits = (siteA.baselineRaw ?? siteA.rate) > (siteB.baselineRaw ?? siteB.rate);
-  const aWinsRate = siteA.rate > siteB.rate;
-  const aWinsRank = siteA.rank < siteB.rank;
+  // Canonical evaluation: derive directly from rendered baseline strings (with baselineRaw fallback).
+  // This guarantees UI displayed numbers NEVER contradict the winner badge.
+  const valA = parseTrafficMetric(siteA.baseline, siteA.baselineRaw || siteA.rate * 30 * 24 * 3600);
+  const valB = parseTrafficMetric(siteB.baseline, siteB.baselineRaw || siteB.rate * 30 * 24 * 3600);
 
+  const winnerVisits = compareMetric(valA, valB, true);
+  const winnerRate = compareMetric(siteA.rate, siteB.rate, true);
+  const winnerRank = compareMetric(siteA.rank, siteB.rank, false); // lower rank is better (#1 beats #33)
+
+  // Comparative Intelligence Metrics
+  const maxVal = Math.max(valA, valB);
+  const minVal = Math.max(1, Math.min(valA, valB));
+  const disparityRatio = Number((maxVal / minVal).toFixed(1));
+  const leaderSite = valA >= valB ? siteA : siteB;
+  const trailingSite = valA >= valB ? siteB : siteA;
+  const diffVisits = Math.abs(valA - valB);
+  const diffFormatted = diffVisits >= 1_000_000_000
+    ? `+${(diffVisits / 1_000_000_000).toFixed(1)}B / mo`
+    : diffVisits >= 1_000_000
+    ? `+${(diffVisits / 1_000_000).toFixed(0)}M / mo`
+    : `+${diffVisits.toLocaleString()} / mo`;
+
+  const velocityDiff = siteA.rate - siteB.rate;
+  const velocityAdvantage = velocityDiff === 0
+    ? 'Even request velocity'
+    : velocityDiff > 0
+    ? `${siteA.name} leads by +${velocityDiff.toLocaleString()} req/s`
+    : `${siteB.name} leads by +${Math.abs(velocityDiff).toLocaleString()} req/s`;
+
+  const rankLeader = winnerRank === 'a' ? siteA : winnerRank === 'b' ? siteB : siteA;
   const faq = pairData?.faq ?? [
     {
       q: `Which gets more traffic, ${siteA.name} or ${siteB.name}?`,
-      a: `${aWinsRank ? siteA.name : siteB.name} ranks higher globally at #${Math.min(siteA.rank, siteB.rank)}, receiving ${aWinsRank ? siteA.baseline : siteB.baseline} per month.`,
+      a: `${rankLeader.name} ranks higher globally at #${Math.min(siteA.rank, siteB.rank)}, receiving ${rankLeader.baseline} per month.`,
     },
     {
       q: `What is the difference between ${siteA.name} and ${siteB.name}?`,
@@ -111,13 +110,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
 
   const verdict = pairData?.verdict
     ? `${pairData.verdict} Currently: ${siteA.name} receives ${siteA.baseline} vs ${siteB.name}'s ${siteB.baseline}.`
-    : `${aWinsRank ? siteA.name : siteB.name} leads in global traffic, ranked #${Math.min(siteA.rank, siteB.rank)} versus #${Math.max(siteA.rank, siteB.rank)}.`;
-
-  // Related site pairs involving A or B (for internal linking)
-  const relatedSiteIds = related.flatMap((p) => [p.siteAId, p.siteBId]);
-  const relatedSites = allSites
-    .filter((s) => relatedSiteIds.includes(s.id) && s.id !== siteA.id && s.id !== siteB.id)
-    .slice(0, 3);
+    : `${rankLeader.name} leads in global traffic, ranked #${Math.min(siteA.rank, siteB.rank)} versus #${Math.max(siteA.rank, siteB.rank)}.`;
 
   return (
     <div className="min-h-screen bg-[#02020a] text-white font-sans">
@@ -180,7 +173,14 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           <div className="flex items-center justify-center gap-4 sm:gap-8 mb-6">
             {/* Site A */}
             <div className="flex flex-col items-center gap-3 flex-1">
-              <FaviconImg url={siteA.url} logo={siteA.logo} color={siteA.color} size={72} />
+              <FaviconImage
+                url={siteA.url}
+                logo={siteA.logo}
+                color={siteA.color}
+                size={72}
+                rounded="2xl"
+                className="rounded-2xl object-contain p-2 flex-shrink-0 bg-white/10"
+              />
               <div className="text-center">
                 <Link href={`/sites/${siteA.id}`} className="text-lg font-bold text-white hover:opacity-80 transition-opacity">
                   {siteA.name}
@@ -204,7 +204,14 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
 
             {/* Site B */}
             <div className="flex flex-col items-center gap-3 flex-1">
-              <FaviconImg url={siteB.url} logo={siteB.logo} color={siteB.color} size={72} />
+              <FaviconImage
+                url={siteB.url}
+                logo={siteB.logo}
+                color={siteB.color}
+                size={72}
+                rounded="2xl"
+                className="rounded-2xl object-contain p-2 flex-shrink-0 bg-white/10"
+              />
               <div className="text-center">
                 <Link href={`/sites/${siteB.id}`} className="text-lg font-bold text-white hover:opacity-80 transition-opacity">
                   {siteB.name}
@@ -244,7 +251,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
                 b={siteB.baseline}
                 colorA={siteA.color}
                 colorB={siteB.color}
-                winner={aWinsVisits ? 'a' : 'b'}
+                winner={winnerVisits}
               />
               <StatRow
                 label="Global Rank"
@@ -252,7 +259,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
                 b={`#${siteB.rank}`}
                 colorA={siteA.color}
                 colorB={siteB.color}
-                winner={aWinsRank ? 'a' : 'b'}
+                winner={winnerRank}
               />
               <StatRow
                 label="Requests / sec"
@@ -260,7 +267,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
                 b={`${siteB.rate.toLocaleString()}/s`}
                 colorA={siteA.color}
                 colorB={siteB.color}
-                winner={aWinsRate ? 'a' : 'b'}
+                winner={winnerRate}
               />
               <StatRow
                 label="Category"
@@ -284,21 +291,69 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           </div>
         </section>
 
+        {/* Comparative Advantage Intelligence Card */}
+        <section className="mb-8">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#82c8e5]">
+                Comparative Advantage Analysis
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => exportComparisonReport(siteA, siteB, { ratio: disparityRatio, diffBaseline: diffFormatted, winnerName: leaderSite.name, velocityAdvantage }, 'csv')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-white/10 bg-white/[0.03] text-[#82c8e5] hover:bg-white/[0.08] hover:text-white transition-all flex items-center gap-1"
+                  title="Download CSV report"
+                >
+                  Export CSV ↓
+                </button>
+                <button
+                  onClick={() => exportComparisonReport(siteA, siteB, { ratio: disparityRatio, diffBaseline: diffFormatted, winnerName: leaderSite.name, velocityAdvantage }, 'json')}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-white/10 bg-white/[0.03] text-[#94a3b8] hover:bg-white/[0.08] hover:text-white transition-all flex items-center gap-1"
+                  title="Download JSON report"
+                >
+                  Export JSON ↓
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl border border-white/5 bg-white/[0.015]">
+                <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">Volume Disparity</span>
+                <span className="text-xl font-black text-white mt-1 block">{disparityRatio}×</span>
+                <span className="text-[11px] text-[#94a3b8] mt-0.5 block">{leaderSite.name} vs {trailingSite.name}</span>
+              </div>
+              <div className="p-3 rounded-xl border border-white/5 bg-white/[0.015]">
+                <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">Net Traffic Spread</span>
+                <span className="text-xl font-black text-emerald-400 mt-1 block">{diffFormatted}</span>
+                <span className="text-[11px] text-[#94a3b8] mt-0.5 block">{leaderSite.name} lead</span>
+              </div>
+              <div className="p-3 rounded-xl border border-white/5 bg-white/[0.015]">
+                <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">Live Request Velocity</span>
+                <span className="text-xs font-bold text-white mt-2 block truncate">{velocityAdvantage}</span>
+                <span className="text-[11px] text-[#6d8196] mt-0.5 block">real-time throughput delta</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Social Share & Embed Bar */}
-        <section className="mb-8 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <section className="mb-8 p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-r from-white/[0.04] via-white/[0.02] to-transparent flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-xl">
           <div className="flex-1">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-1">
-              Share or Embed this Comparison
-            </h3>
-            <p className="text-xs text-[#6d8196]">
-              Share live metrics with your network or embed live widgets on your site.
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                Share or Embed this Comparison
+              </h3>
+            </div>
+            <p className="text-xs text-[#94a3b8] leading-relaxed">
+              Share real-time comparison metrics with your audience or embed live interactive telemetry widgets on your site.
             </p>
           </div>
           <SocialShareBar
-            title={`📊 ${siteA.name} vs ${siteB.name} Traffic Comparison (${CURRENT_YEAR})`}
-            summary={`${aWinsRank ? siteA.name : siteB.name} leads with ${aWinsRank ? siteA.baseline : siteB.baseline} vs ${aWinsRank ? siteB.baseline : siteA.baseline}.`}
+            title={`${siteA.name} vs ${siteB.name} Traffic Comparison (${CURRENT_YEAR})`}
+            summary={`${rankLeader.name} leads with ${rankLeader.baseline} vs ${(rankLeader.id === siteA.id ? siteB : siteA).baseline}.`}
             hashtags={['WebTraffic', siteA.name.replace(/[^a-zA-Z0-9]/g, ''), siteB.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}
-            onOpenEmbed={() => setEmbedSite(aWinsRank ? siteA : siteB)}
+            onOpenEmbed={() => setEmbedSite(rankLeader)}
           />
         </section>
 
@@ -362,6 +417,7 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
         {embedSite && (
           <EmbedWidgetModal
             site={embedSite}
+            alternateSite={embedSite.id === siteA.id ? siteB : siteA}
             isOpen={true}
             onClose={() => setEmbedSite(null)}
           />

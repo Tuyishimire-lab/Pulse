@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Groq AI Analysis Utility
  *
  * Generates editorial-quality weekly report narratives using Groq's
@@ -8,7 +8,7 @@
  * Free tier friendly: single call per week, ~500 token output.
  */
 
-interface SiteSnapshot {
+export interface SiteSnapshot {
   id: string;
   name: string;
   rank: number;
@@ -17,7 +17,7 @@ interface SiteSnapshot {
   category: string;
 }
 
-interface CategoryTotal {
+export interface CategoryTotal {
   count: number;
   totalRate: number;
 }
