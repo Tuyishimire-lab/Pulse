@@ -1,0 +1,215 @@
+# Pulse - Comprehensive Platform Documentation
+
+> The transparent, model-driven index of global web traffic, visitor velocities, and digital platform momentum.
+
+Website: https://www.pulstraffic.com
+Version: Pulse Traffic Index (PTI v1.2)
+Monitored Catalog: 137 Top Global Web Domains
+
+---
+
+## 1. System Overview
+
+Pulse (https://www.pulstraffic.com) tracks estimated global web traffic, visitor request rates (requests per second), and digital momentum for the world's most visited internet destinations. Rather than relying on intrusive consumer browser panels or third-party web scraping, Pulse utilizes a reproducible statistical and AI engine called the Pulse Traffic Index (PTI v1.2).
+
+### Core Signals
+1. Cloudflare Radar: Real-time DNS query velocity from Cloudflare 1.1.1.1 network telemetry.
+2. Tranco Top Sites: Aggregated daily top ranking list combining Cisco Umbrella, Majestic, Farsight, and Google Chrome User Experience (CrUX) data.
+3. Open PageRank: Logarithmic backlink authority score (0 to 10) validating structural domain presence.
+4. Groq AI Momentum: Llama 3.3 70B contextual trend classification assigning dynamic momentum states (Surging, Growing, Stable, Cooling) weekly.
+5. Google CrUX Core Web Vitals: Largest Contentful Paint (LCP), First Input Delay (FID), Cumulative Layout Shift (CLS), and Interaction to Next Paint (INP).
+
+---
+
+## 2. Mathematical Methodology and Rate Physics
+
+### Traffic Estimation Formula
+Base traffic estimation follows a Zipf power law anchored to verified macro traffic nodes (Google approximately 85 billion monthly visits):
+- Base Monthly Visits = 85,000,000,000 / (Rank ^ 1.3)
+- Authority Factor = 0.85 + (PageRank / 10.0) * 0.30
+- Category Multipliers: Streaming (1.45x), Social Media (0.55x), Developer Tools (0.65x)
+- Visit Velocity = Daily Visits / 86,400 seconds
+- Exponential Smoothing Filter: (0.85 * Rate_prev) + (0.15 * Rate_new)
+
+### Tiered Empirical Validation and Confidence Bounds
+- Tier 1 (High Confidence, Ranks 1 to 15): Plus/minus 8% to 12% error margin. Verified against quarterly SEC filings, Wikimedia foundation server logs, and high-density Cloudflare Radar DNS telemetry.
+- Tier 2 (Moderate Confidence, Ranks 16 to 50): Plus/minus 18% to 24% error margin. Stabilized by daily Tranco rankings and Open PageRank link authority.
+- Tier 3 (Modeled Velocity, Ranks 51 to 137): Plus/minus 30% to 35% error margin. Growth-stage domains and developer platforms estimated through algorithmic backlink modeling and AI momentum vectors.
+
+---
+
+## 3. Monitored Categories
+
+- Search (ID: search)
+- Social Media (ID: social)
+- AI Assistants (ID: ai)
+- Reference (ID: reference)
+- E-Commerce (ID: ecommerce)
+- Entertainment (ID: entertainment)
+- News & Media (ID: news)
+- Finance & Crypto (ID: finance)
+- Developer Tools (ID: dev)
+
+---
+
+## 4. Complete Catalog of Monitored Domains (137 Websites)
+
+| Rank | Name | Domain | Category | Monthly Baseline | Visit Velocity (req/s) |
+|---|---|---|---|---|---|
+| 1 | Google | https://google.com | search | 85.0B / mo | 32,787 |
+| 2 | YouTube | https://youtube.com | entertainment | 34.8B / mo | 13,242 |
+| 3 | Facebook | https://facebook.com | social | 15.2B / mo | 5,783 |
+| 4 | Instagram | https://instagram.com | social | 6.8B / mo | 2,587 |
+| 5 | ChatGPT | https://chatgpt.com | ai | 5.5B / mo | 2,092 |
+| 6 | Wikipedia | https://wikipedia.com | reference | 4.5B / mo | 1,712 |
+| 7 | Amazon | https://amazon.com | ecommerce | 4.2B / mo | 1,598 |
+| 8 | X (Twitter) | https://x.com | social | 4.2B / mo | 1,598 |
+| 9 | WhatsApp | https://whatsapp.com | social | 2.9B / mo | 1,103 |
+| 10 | Reddit | https://reddit.com | social | 2.8B / mo | 1,065 |
+| 11 | TikTok | https://tiktok.com | social | 2.8B / mo | 1,065 |
+| 12 | Yahoo | https://yahoo.com | search | 2.8B / mo | 1,065 |
+| 13 | Yandex | https://yandex.com | search | 2.5B / mo | 951 |
+| 14 | Baidu | https://baidu.com | search | 2.2B / mo | 837 |
+| 15 | Netflix | https://netflix.com | entertainment | 2.1B / mo | 799 |
+| 16 | OpenAI | https://openai.com | dev | 2.0B / mo | 772 |
+| 17 | Bing | https://bing.com | search | 1.8B / mo | 684 |
+| 18 | Microsoft | https://microsoft.com | dev | 1.8B / mo | 684 |
+| 19 | LinkedIn | https://linkedin.com | social | 1.8B / mo | 665 |
+| 20 | Office 365 | https://office.com | dev | 1.6B / mo | 608 |
+| 21 | Twitch | https://twitch.com | entertainment | 1.1B / mo | 437 |
+| 22 | Pinterest | https://pinterest.com | social | 1.1B / mo | 418 |
+| 23 | Weather | https://weather.com | reference | 1.1B / mo | 418 |
+| 24 | GitHub | https://github.com | dev | 1.0B / mo | 380 |
+| 25 | Zoom | https://zoom.com | dev | 920.0M / mo | 350 |
+| 26 | eBay | https://ebay.com | ecommerce | 900.0M / mo | 342 |
+| 27 | Gemini | https://gemini.com | ai | 860.0M / mo | 327 |
+| 28 | DuckDuckGo | https://duckduckgo.com | search | 850.0M / mo | 323 |
+| 29 | Quora | https://quora.com | reference | 750.0M / mo | 285 |
+| 30 | Telegram | https://telegram.com | social | 750.0M / mo | 285 |
+| 31 | AliExpress | https://aliexpress.com | ecommerce | 680.0M / mo | 258 |
+| 32 | Canva | https://canva.com | dev | 650.0M / mo | 247 |
+| 33 | NY Times | https://nytimes.com | news | 650.0M / mo | 247 |
+| 34 | BBC | https://bbc.com | news | 580.0M / mo | 220 |
+| 35 | Discord | https://discord.com | social | 580.0M / mo | 220 |
+| 36 | Spotify | https://spotify.com | entertainment | 560.0M / mo | 213 |
+| 37 | Roblox | https://roblox.com | entertainment | 545.0M / mo | 207 |
+| 38 | Apple | https://apple.com | dev | 520.0M / mo | 197 |
+| 39 | Booking.com | https://booking.com | ecommerce | 520.0M / mo | 197 |
+| 40 | CNN | https://cnn.com | news | 520.0M / mo | 197 |
+| 41 | Walmart | https://walmart.com | ecommerce | 510.0M / mo | 194 |
+| 42 | Imgur | https://imgur.com | entertainment | 450.0M / mo | 171 |
+| 43 | PayPal | https://paypal.com | finance | 440.0M / mo | 167 |
+| 44 | Etsy | https://etsy.com | ecommerce | 420.0M / mo | 159 |
+| 45 | Naver | https://naver.com | search | 400.0M / mo | 152 |
+| 46 | Bilibili | https://bilibili.com | entertainment | 390.0M / mo | 148 |
+| 47 | Stack Overflow | https://stackoverflow.com | dev | 390.0M / mo | 148 |
+| 48 | IMDb | https://imdb.com | reference | 370.0M / mo | 140 |
+| 49 | Fandom | https://fandom.com | reference | 360.0M / mo | 136 |
+| 50 | Disney+ | https://disneyplus.com | entertainment | 350.0M / mo | 133 |
+| 51 | Target | https://target.com | ecommerce | 340.0M / mo | 129 |
+| 52 | The Guardian | https://theguardian.com | news | 340.0M / mo | 129 |
+| 53 | Mail.ru | https://mailru.com | news | 330.0M / mo | 125 |
+| 54 | Adobe | https://adobe.com | dev | 310.0M / mo | 117 |
+| 55 | Steam | https://steam.com | entertainment | 305.0M / mo | 116 |
+| 56 | Globo | https://globo.com | news | 295.0M / mo | 112 |
+| 57 | TradingView | https://tradingview.com | finance | 220.0M / mo | 83 |
+| 58 | ESPN | https://espn.com | entertainment | 210.0M / mo | 79 |
+| 59 | Hugging Face | https://huggingface.com | ai | 210.0M / mo | 79 |
+| 60 | Salesforce | https://salesforce.com | dev | 198.0M / mo | 75 |
+| 61 | Daily Mail | https://dailymail.com | news | 195.0M / mo | 74 |
+| 62 | Medium | https://medium.com | reference | 180.0M / mo | 68 |
+| 63 | Vimeo | https://vimeo.com | entertainment | 178.0M / mo | 67 |
+| 64 | Dropbox | https://dropbox.com | dev | 172.0M / mo | 65 |
+| 65 | Slack | https://slack.com | dev | 168.0M / mo | 63 |
+| 66 | Investing.com | https://investing.com | finance | 162.0M / mo | 61 |
+| 67 | Binance | https://binance.com | finance | 160.0M / mo | 60 |
+| 68 | Airbnb | https://airbnb.com | ecommerce | 155.0M / mo | 58 |
+| 69 | Figma | https://figma.com | dev | 152.0M / mo | 57 |
+| 70 | Bloomberg | https://bloomberg.com | finance | 148.0M / mo | 56 |
+| 71 | Uber | https://uber.com | ecommerce | 148.0M / mo | 56 |
+| 72 | Coinbase | https://coinbase.com | finance | 145.0M / mo | 55 |
+| 73 | Midjourney | https://midjourney.com | ai | 145.0M / mo | 55 |
+| 74 | Claude.ai | https://claude.com | ai | 135.0M / mo | 51 |
+| 75 | wikiHow | https://wikihow.com | reference | 122.0M / mo | 46 |
+| 76 | Shopify | https://shopify.com | ecommerce | 120.0M / mo | 45 |
+| 77 | Indeed | https://indeed.com | ecommerce | 118.0M / mo | 44 |
+| 78 | Merriam-Webster | https://merriamwebster.com | reference | 118.0M / mo | 44 |
+| 79 | AccuWeather | https://accuweather.com | reference | 115.0M / mo | 43 |
+| 80 | IKEA | https://ikea.com | ecommerce | 112.0M / mo | 42 |
+| 81 | Speedtest | https://speedtest.com | dev | 112.0M / mo | 42 |
+| 82 | Best Buy | https://bestbuy.com | ecommerce | 108.0M / mo | 41 |
+| 83 | Patreon | https://patreon.com | social | 108.0M / mo | 41 |
+| 84 | Nike | https://nike.com | ecommerce | 104.0M / mo | 39 |
+| 85 | Hulu | https://hulu.com | entertainment | 102.0M / mo | 38 |
+| 86 | Craigslist | https://craigslist.com | ecommerce | 98.0M / mo | 37 |
+| 87 | SoundCloud | https://soundcloud.com | entertainment | 96.0M / mo | 36 |
+| 88 | Max | https://max.com | entertainment | 94.0M / mo | 35 |
+| 89 | IGN | https://ign.com | entertainment | 90.0M / mo | 34 |
+| 90 | DeviantArt | https://deviantart.com | entertainment | 88.0M / mo | 33 |
+| 91 | Reuters | https://reuters.com | news | 84.0M / mo | 31 |
+| 92 | Forbes | https://forbes.com | news | 82.0M / mo | 31 |
+| 93 | NPM | https://npm.com | dev | 80.0M / mo | 30 |
+| 94 | Vercel | https://vercel.com | dev | 80.0M / mo | 30 |
+| 95 | Wired | https://wired.com | news | 78.0M / mo | 29 |
+| 96 | TechCrunch | https://techcrunch.com | news | 75.0M / mo | 28 |
+| 97 | GitLab | https://gitlab.com | dev | 72.0M / mo | 27 |
+| 98 | Robinhood | https://robinhood.com | finance | 72.0M / mo | 27 |
+| 99 | Docker | https://docker.com | dev | 70.0M / mo | 26 |
+| 100 | Netlify | https://netlify.com | dev | 68.0M / mo | 25 |
+| 101 | Stack Exchange | https://stackexchange.com | reference | 62.0M / mo | 23 |
+| 102 | Stripe | https://stripe.com | finance | 62.0M / mo | 23 |
+| 103 | Weather Underground | https://wunderground.com | reference | 58.0M / mo | 22 |
+| 104 | Threads | https://threads.net | social | 380.0M / mo | 144 |
+| 105 | Kick | https://kick.com | entertainment | 165.0M / mo | 62 |
+| 106 | Perplexity | https://perplexity.ai | ai | 135.0M / mo | 51 |
+| 107 | Substack | https://substack.com | reference | 110.0M / mo | 41 |
+| 108 | Bluesky | https://bsky.app | social | 85.0M / mo | 32 |
+| 109 | Suno | https://suno.com | ai | 55.0M / mo | 20 |
+| 110 | Cursor | https://cursor.com | dev | 48.0M / mo | 18 |
+| 111 | Supabase | https://supabase.com | dev | 42.0M / mo | 16 |
+| 112 | DeepSeek | https://deepseek.com | ai | 185.0M / mo | 70 |
+| 113 | Temu | https://temu.com | ecommerce | 620.0M / mo | 236 |
+| 114 | Character.ai | https://character.ai | ai | 220.0M / mo | 84 |
+| 115 | Notion | https://notion.so | dev | 180.0M / mo | 68 |
+| 116 | Cloudflare | https://cloudflare.com | dev | 165.0M / mo | 63 |
+| 117 | Shein | https://shein.com | ecommerce | 290.0M / mo | 110 |
+| 118 | ElevenLabs | https://elevenlabs.io | ai | 42.0M / mo | 16 |
+| 119 | Poe | https://poe.com | ai | 65.0M / mo | 25 |
+| 120 | Linear | https://linear.app | dev | 28.0M / mo | 11 |
+| 121 | Replit | https://replit.com | dev | 45.0M / mo | 17 |
+| 122 | Mistral AI | https://mistral.ai | ai | 35.0M / mo | 13 |
+| 123 | Chess.com | https://chess.com | entertainment | 250.0M / mo | 95 |
+| 124 | Crunchyroll | https://crunchyroll.com | entertainment | 140.0M / mo | 53 |
+| 125 | Epic Games | https://epicgames.com | entertainment | 110.0M / mo | 42 |
+| 126 | Civitai | https://civitai.com | ai | 52.0M / mo | 20 |
+| 127 | Postman | https://postman.com | dev | 38.0M / mo | 14 |
+| 128 | Runway | https://runwayml.com | ai | 30.0M / mo | 11 |
+| 129 | Revolut | https://revolut.com | finance | 40.0M / mo | 15 |
+| 130 | CoinMarketCap | https://coinmarketcap.com | finance | 120.0M / mo | 46 |
+| 131 | Wise | https://wise.com | finance | 55.0M / mo | 21 |
+| 132 | Bybit | https://bybit.com | finance | 60.0M / mo | 23 |
+| 133 | Letterboxd | https://letterboxd.com | entertainment | 45.0M / mo | 17 |
+| 134 | DigitalOcean | https://digitalocean.com | dev | 32.0M / mo | 12 |
+| 135 | Sentry | https://sentry.io | dev | 25.0M / mo | 10 |
+| 136 | Luma AI | https://lumalabs.ai | ai | 22.0M / mo | 8 |
+| 137 | Jira | https://atlassian.com | dev | 68.0M / mo | 26 |
+
+---
+
+## 5. Public APIs and Feeds
+
+### Site Enrichment API
+- Endpoint: GET https://www.pulstraffic.com/api/site-enrichment?domain={domain}
+- Response: Core Web Vitals (CrUX), 30-day Wikipedia pageview history, and TLS / HSTS / DNSSEC security audit.
+
+### Outage Monitoring API
+- Endpoint: GET https://www.pulstraffic.com/api/outages
+- Response: Active and resolved internet service disruptions, affected ASNs, and incident severity.
+
+### Domain Traffic Estimator
+- Endpoint: POST https://www.pulstraffic.com/api/estimate-domain
+- Response: Algorithmic traffic projection for arbitrary custom web domains using Open PageRank and category regression.
+
+### Search Engine Sitemap
+- Location: https://www.pulstraffic.com/sitemap.xml
+- Index: 700+ canonical routes covering site profiles, comparisons, country hubs, and weekly intelligence reports.
