@@ -6,6 +6,7 @@ import { SiteConfig } from '../data/sites';
 import FaviconImage from './ui/FaviconImage';
 import VisitsCounter from './ui/VisitsCounter';
 import RankSparkline from './ui/RankSparkline';
+import Pagination from './ui/Pagination';
 
 interface SiteGridProps {
   displayedSites: SiteConfig[];
@@ -22,9 +23,12 @@ interface SiteGridProps {
   onToggleCompareSelect: (siteId: string, e: React.ChangeEvent<HTMLInputElement>) => void;
   onShowAddCustomModal: () => void;
   getRankChange: (site: SiteConfig) => number | null;
-  filteredCount: number;
-  visibleCount: number;
-  loadMoreRef: React.RefObject<HTMLDivElement | null>;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  totalItems: number;
+  startIndex: number;
+  endIndex: number;
   onResetFilters: () => void;
   /**
    * When a non-global filter is active (category, search, tier, watchlist),
@@ -54,9 +58,12 @@ export default function SiteGrid({
   onToggleCompareSelect,
   onShowAddCustomModal,
   getRankChange,
-  filteredCount,
-  visibleCount,
-  loadMoreRef,
+  currentPage,
+  totalPages,
+  onPageChange,
+  totalItems,
+  startIndex,
+  endIndex,
   onResetFilters,
   displayRankMap,
 }: SiteGridProps) {
@@ -348,12 +355,16 @@ export default function SiteGrid({
         </div>
       )}
 
-      {/* Infinite scroll sentinel */}
-      {filteredCount > visibleCount && (
-        <div ref={loadMoreRef} className="infinite-scroll-trigger">
-          <div className="loading-spinner" />
-          <span>Scanning Stream database...</span>
-        </div>
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          totalItems={totalItems}
+          startIndex={startIndex}
+          endIndex={endIndex}
+        />
       )}
     </>
   );

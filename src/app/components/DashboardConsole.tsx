@@ -17,8 +17,8 @@ interface DashboardConsoleProps {
   watchlistCount: number;
   incidentCount?: number;
   onShareWatchlist?: () => void;
-  viewLayout: 'grid' | 'list';
-  onViewLayoutChange: (v: 'grid' | 'list') => void;
+  viewLayout: 'grid' | 'list' | 'treemap';
+  onViewLayoutChange: (v: 'grid' | 'list' | 'treemap') => void;
   compareModeActive: boolean;
   onToggleCompareMode: () => void;
   showAnalyticsPanel: boolean;
@@ -221,6 +221,15 @@ export default function DashboardConsole({
                 <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" />
               </svg>
               List
+            </button>
+            <button
+              onClick={() => onViewLayoutChange('treemap')}
+              className={`toggle-btn ${viewLayout === 'treemap' ? 'active' : ''}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 3h8v10H3V3zm10 0h8v5h-8V3zm0 7h8v11h-8V10zm-10 5h8v6H3v-6z" />
+              </svg>
+              Treemap
             </button>
           </div>
         </div>

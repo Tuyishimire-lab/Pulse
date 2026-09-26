@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { SITE_META, SiteConfig } from './data/sites';
 
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { STATIC_TRAFFIC_FACTS } from '../data/marquee';
 import { RadarStatsData, MarqueeItem, SiteDbRow } from '../types/radar';
+import { parseTrafficMetric } from '../lib/metrics';
 
 // Components
 import Header from './components/Header';
@@ -14,13 +15,16 @@ import MarqueeBanner from './components/MarqueeBanner';
 import DashboardConsole from './components/DashboardConsole';
 import AnalyticsPanel from './components/AnalyticsPanel';
 import SiteGrid from './components/SiteGrid';
+import TreemapView from './components/TreemapView';
 import NavHeader from './components/NavHeader';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 
 const SiteDetailModal = dynamic(() => import('./components/SiteDetailModal'), { ssr: false });
 const AddCustomSiteModal = dynamic(() => import('./components/AddCustomSiteModal'), { ssr: false });
 const LegalModals = dynamic(() => import('./components/LegalModals'), { ssr: false });
 const CompareModal = dynamic(() => import('./components/CompareModal'), { ssr: false });
+const EmbedWidgetModal = dynamic(() => import('./components/EmbedWidgetModal'), { ssr: false });
 
 interface HomeClientProps {
   /** Sites pre-fetched from Supabase server-side (avoids client waterfall) */
@@ -41,8 +45,9 @@ export default function HomeClient({
   // ── UI State ─────────────────────────────────────────────────────────────
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
-  const [visibleCount, setVisibleCount] = useState(30);
+  const [viewLayout, setViewLayout] = useState<'grid' | 'list' | 'treemap'>('grid');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const ITEMS_PER_PAGE = 24;
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [pageLoadTime, setPageLoadTime] = useState<number>(0);
 
@@ -87,7 +92,10 @@ export default function HomeClient({
   const [showMethodologyModal, setShowMethodologyModal] = useState(false);
 
   // ── Analytics / Filtering ─────────────────────────────────────────────────
-  const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(true);
+  const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(false);
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
   const [trafficTierFilter, setTrafficTierFilter] = useState<'all' | 'enterprise' | 'midmarket' | 'growth'>('all');
   const [sortBy, setSortBy] = useState<'rank' | 'rate' | 'name'>('rank');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -98,8 +106,7 @@ export default function HomeClient({
   const [radarStats, setRadarStats] = useState<RadarStatsData | null>(initialRadarStats);
   const [loadingRadar, setLoadingRadar] = useState<boolean>(!initialRadarStats);
 
-  // ── Refs ──────────────────────────────────────────────────────────────────
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+
 
   // ── Rank change helper ────────────────────────────────────────────────────
   // Derives the baseline rank from the oldest rank_history entry stored in
@@ -202,12 +209,15 @@ export default function HomeClient({
         }
         if (data && data.length > 0) {
           // Merge static metadata (logo, color, glow, asn) from SITE_META onto DB rows
-          const enriched = (data as SiteDbRow[]).map((row) => ({
-            ...(SITE_META[row.id] ?? {}),
-            ...row,
-            baselineRaw: row.baseline_raw ?? 0,
-          })) as SiteConfig[];
-          setDbSites(enriched);
+          setDbSites((prev) => {
+            const historyMap = new Map(prev.map((s) => [s.id, s.rank_history]));
+            return (data as SiteDbRow[]).map((row) => ({
+              ...(SITE_META[row.id] ?? {}),
+              ...row,
+              baselineRaw: row.baseline_raw ?? 0,
+              rank_history: historyMap.get(row.id) ?? row.rank_history,
+            })) as SiteConfig[];
+          });
           // lastSynced intentionally NOT set here - use /api/health for that
         }
       } catch (err) {
@@ -345,11 +355,8 @@ export default function HomeClient({
       return;
     }
 
-    const numStr = newSiteBaseline.replace(/[^0-9.]/g, '');
-    const num = parseFloat(numStr) || 10;
-    const isBillion = newSiteBaseline.toLowerCase().includes('b');
-    const monthlyVisits = num * (isBillion ? 1_000_000_000 : 1_000_000);
-    const calculatedRate = Math.max(1, Math.round(monthlyVisits / (30 * 24 * 3600)));
+    const monthlyVisits = parseTrafficMetric(newSiteBaseline, 1500);
+    const calculatedRate = Math.max(0, Math.round(monthlyVisits / (30 * 24 * 3600)));
     const customId = `custom-${Date.now()}`;
     const newSite: SiteConfig = {
       id: customId,
@@ -414,6 +421,33 @@ export default function HomeClient({
             setSelectedDetails((prev) => prev ? { ...prev, keywords: kw } : null);
           }
         });
+
+      if (!site.rank_history || site.rank_history.length < 2) {
+        supabase
+          .from('weekly_snapshots')
+          .select('snapshot_date, sites_data')
+          .order('snapshot_date', { ascending: true })
+          .then(
+            (res: { data: { snapshot_date: string; sites_data: { id: string; rank: number }[] }[] | null }) => {
+              if (res.data && res.data.length > 0) {
+                const hist: { rank: number; date: string }[] = [];
+                for (const snap of res.data) {
+                  const dateStr = snap.snapshot_date ? snap.snapshot_date.split('T')[0] : '';
+                  if (Array.isArray(snap.sites_data)) {
+                    const item = snap.sites_data.find((s) => s && s.id === site.id);
+                    if (item && typeof item.rank === 'number') {
+                      hist.push({ rank: item.rank, date: dateStr });
+                    }
+                  }
+                }
+                if (hist.length >= 2) {
+                  setSelectedSite((curr) => curr && curr.id === site.id ? { ...curr, rank_history: hist } : curr);
+                }
+              }
+            },
+            () => {},
+          );
+      }
     }
 
     // ── Cloudflare Radar: real geographies, device split, traffic curve ──
@@ -530,7 +564,23 @@ export default function HomeClient({
     return { totalRate, enterpriseShare, categoryCounts };
   }, [filteredSites]);
 
-  const displayedSites = useMemo(() => filteredSites.slice(0, visibleCount), [filteredSites, visibleCount]);
+  const totalPages = Math.max(1, Math.ceil(filteredSites.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+
+  const displayedSites = useMemo(
+    () => filteredSites.slice(startIndex, endIndex),
+    [filteredSites, startIndex, endIndex],
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    const consoleElem = document.querySelector('.dashboard-console');
+    if (consoleElem) {
+      consoleElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   /**
    * displayRankMap: maps siteId -> 1-based position within filteredSites.
@@ -557,20 +607,69 @@ export default function HomeClient({
   const compareSiteA = useMemo(() => allSites.find((s) => s.id === selectedCompareIds[0]) || null, [selectedCompareIds, allSites]);
   const compareSiteB = useMemo(() => allSites.find((s) => s.id === selectedCompareIds[1]) || null, [selectedCompareIds, allSites]);
 
-  // ── Infinite scroll (placed after filteredSites is declared) ──────────────
-  useEffect(() => {
-    if (!loadMoreRef.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 30, filteredSites.length));
-        }
-      },
-      { rootMargin: '200px' },
+  const handleAnalyzeDomain = (rawInput: string) => {
+    const cleaned = rawInput
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .split('/')[0];
+    if (!cleaned) return;
+
+    // Check if domain exists in allSites
+    const matched = allSites.find(
+      (s) =>
+        s.id === cleaned ||
+        s.url.toLowerCase().includes(cleaned) ||
+        s.name.toLowerCase() === cleaned
     );
-    observer.observe(loadMoreRef.current);
-    return () => { observer.disconnect(); };
-  }, [filteredSites.length, visibleCount]);
+
+    if (matched) {
+      handleSiteClick(matched);
+      return;
+    }
+
+    // Pre-populate AddCustomSiteModal and open it
+    const domainPrefix = cleaned.split('.')[0];
+    const formattedName = domainPrefix.charAt(0).toUpperCase() + domainPrefix.slice(1);
+    setNewSiteUrl(`https://${cleaned}`);
+    setNewSiteName(formattedName);
+    setShowAddCustomModal(true);
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const emailToSubmit = newsletterEmail.trim();
+    if (!emailToSubmit || isSubmittingNewsletter) return;
+
+    setIsSubmittingNewsletter(true);
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToSubmit, source: 'landing_page' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setToastMessage(data.message || 'Subscribed to Pulse Weekly Traffic Digest.');
+        setNewsletterEmail('');
+      } else {
+        setToastMessage(data.error || data.message || 'Could not complete subscription. Please try again.');
+      }
+    } catch {
+      setToastMessage('Network error. Please try again later.');
+    } finally {
+      setIsSubmittingNewsletter(false);
+      setTimeout(() => setToastMessage(null), 4000);
+    }
+  };
+
+  // Keep pagination within valid bounds if filters change
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -581,18 +680,18 @@ export default function HomeClient({
 
       <NavHeader />
 
-      <Header pageLoadTime={pageLoadTime} />
+      <Header pageLoadTime={pageLoadTime} onAnalyzeDomain={handleAnalyzeDomain} />
 
       <main className="main-content relative z-10 w-full max-w-[1200px] px-6 pb-8 flex flex-col items-center">
         <DashboardConsole
           searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); setVisibleCount(30); }}
+          onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
           selectedCountry={selectedCountry}
-          onCountryChange={(c) => { setSelectedCountry(c); if (c === 'global') setLocalRanks({}); setVisibleCount(30); }}
+          onCountryChange={(c) => { setSelectedCountry(c); if (c === 'global') setLocalRanks({}); setCurrentPage(1); }}
           channelFilter={channelFilter}
-          onChannelFilterChange={setChannelFilter}
+          onChannelFilterChange={(f) => { setChannelFilter(f); setCurrentPage(1); }}
           watchlistFilter={watchlistFilter}
-          onWatchlistFilterChange={(v) => setChannelFilter(v ? 'watchlist' : 'all')}
+          onWatchlistFilterChange={(v) => { setChannelFilter(v ? 'watchlist' : 'all'); setCurrentPage(1); }}
           watchlistCount={watchlistIds.length}
           incidentCount={sitesWithIncidents.size}
           onShareWatchlist={handleShareWatchlist}
@@ -604,7 +703,7 @@ export default function HomeClient({
           onToggleAnalyticsPanel={() => setShowAnalyticsPanel(!showAnalyticsPanel)}
           onShowAddCustomModal={() => setShowAddCustomModal(true)}
           activeCategory={activeCategory}
-          onCategoryChange={(id) => { setActiveCategory(id); setVisibleCount(30); }}
+          onCategoryChange={(id) => { setActiveCategory(id); setCurrentPage(1); }}
           filteredSites={filteredSites}
           lastSynced={lastSynced}
         />
@@ -617,35 +716,86 @@ export default function HomeClient({
             loadingRadar={loadingRadar}
             selectedCountry={selectedCountry}
             trafficTierFilter={trafficTierFilter}
-            onTrafficTierChange={setTrafficTierFilter}
+            onTrafficTierChange={(t) => { setTrafficTierFilter(t); setCurrentPage(1); }}
             sortBy={sortBy}
-            onSortByChange={setSortBy}
+            onSortByChange={(s) => { setSortBy(s); setCurrentPage(1); }}
             sortOrder={sortOrder}
-            onSortOrderChange={setSortOrder}
+            onSortOrderChange={(o) => { setSortOrder(o); setCurrentPage(1); }}
           />
         )}
 
-        <SiteGrid
-          displayedSites={displayedSites}
-          viewLayout={viewLayout}
-          isMounted={isMounted}
-          pageLoadTime={pageLoadTime}
-          sitesWithIncidents={sitesWithIncidents}
-          watchlistIds={watchlistIds}
-          compareModeActive={compareModeActive}
-          selectedCompareIds={selectedCompareIds}
-          watchlistFilter={watchlistFilter}
-          onSiteClick={handleSiteClick}
-          onToggleStar={toggleStar}
-          onToggleCompareSelect={toggleCompareSelect}
-          onShowAddCustomModal={() => setShowAddCustomModal(true)}
-          getRankChange={getRankChange}
-          filteredCount={filteredSites.length}
-          visibleCount={visibleCount}
-          loadMoreRef={loadMoreRef}
-          onResetFilters={() => { setSearchQuery(''); setActiveCategory('all'); setChannelFilter('all'); setVisibleCount(30); }}
-          displayRankMap={displayRankMap}
-        />
+        {viewLayout === 'treemap' ? (
+          <TreemapView
+            sites={filteredSites}
+            onSiteClick={handleSiteClick}
+            getRankChange={getRankChange}
+            activeCategory={activeCategory}
+            onCategoryChange={(id) => { setActiveCategory(id); setCurrentPage(1); }}
+            pageLoadTime={pageLoadTime}
+            onViewLayoutChange={setViewLayout}
+          />
+        ) : (
+          <SiteGrid
+            displayedSites={displayedSites}
+            viewLayout={viewLayout}
+            isMounted={isMounted}
+            pageLoadTime={pageLoadTime}
+            sitesWithIncidents={sitesWithIncidents}
+            watchlistIds={watchlistIds}
+            compareModeActive={compareModeActive}
+            selectedCompareIds={selectedCompareIds}
+            watchlistFilter={watchlistFilter}
+            onSiteClick={handleSiteClick}
+            onToggleStar={toggleStar}
+            onToggleCompareSelect={toggleCompareSelect}
+            onShowAddCustomModal={() => setShowAddCustomModal(true)}
+            getRankChange={getRankChange}
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredSites.length}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            onResetFilters={() => {
+              setSearchQuery('');
+              setActiveCategory('all');
+              setChannelFilter('all');
+              setTrafficTierFilter('all');
+              setCurrentPage(1);
+            }}
+            displayRankMap={displayRankMap}
+          />
+        )}
+
+        {/* Live Badge and Widget Virality Callout */}
+        <div className="w-full mt-10 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.03] via-white/[0.05] to-white/[0.02] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-md shadow-2xl">
+          <div className="flex flex-col gap-2 text-center md:text-left max-w-xl">
+            <div className="inline-flex items-center justify-center md:justify-start gap-2 text-[#82c8e5] text-xs font-semibold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#82c8e5]" />
+              <span>Embeddable Traffic Intelligence</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Add Live Traffic Badges to Your Website or README
+            </h3>
+            <p className="text-sm text-[#8da0b5] leading-relaxed">
+              Showcase your verified rank, real-time visitor velocity, and baseline metrics directly on your GitHub repository, landing page, or documentation in seconds.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0 w-full md:w-auto">
+            <button
+              onClick={() => setShowEmbedModal(true)}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#82c8e5] hover:bg-[#a1daf1] text-[#02020a] font-bold text-xs transition-all shadow-lg text-center"
+            >
+              Get Live Badge Code
+            </button>
+            <Link
+              href="/compare"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white font-semibold text-xs transition-all text-center"
+            >
+              Explore Compare Pairs
+            </Link>
+          </div>
+        </div>
 
         <section className="insights-section mt-12 w-full">
           <div className="insights-card">
@@ -656,13 +806,41 @@ export default function HomeClient({
               ChatGPT represent the rapid growth of conversational AI platforms.
             </p>
             <div className="fun-fact">
-              
               <p>
                 <strong>Internet Velocity:</strong> By the time you read this sentence, over 4.5 million videos have been streamed, 600,000 queries entered on Google, and 250 million emails dispatched globally.
               </p>
             </div>
           </div>
         </section>
+
+        {/* Weekly Digest Newsletter Card */}
+        <div className="w-full mt-6 rounded-2xl border border-white/10 bg-[#080d1a]/80 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="flex flex-col gap-1.5 text-center md:text-left max-w-lg">
+            <h4 className="text-lg font-bold text-white tracking-tight">
+              Pulse Weekly Traffic Intelligence Digest
+            </h4>
+            <p className="text-xs sm:text-sm text-[#8da0b5] leading-relaxed">
+              Get an automated breakdown of the top 10 surging and cooling global domains delivered to your inbox every Monday morning.
+            </p>
+          </div>
+          <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-2 w-full md:max-w-md">
+            <input
+              type="email"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              placeholder="Enter your work email..."
+              required
+              className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs text-white placeholder-[#5a6f84] focus:outline-none focus:border-[#82c8e5]"
+            />
+            <button
+              type="submit"
+              disabled={isSubmittingNewsletter}
+              className="flex-shrink-0 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-[#02020a] font-bold text-xs transition-all shadow-md"
+            >
+              {isSubmittingNewsletter ? 'Subscribing...' : 'Subscribe'}
+            </button>
+          </form>
+        </div>
       </main>
 
       {/* Floating comparison bar */}
@@ -722,6 +900,14 @@ export default function HomeClient({
         onSubmit={handleAddCustomSite}
       />
 
+      {/* Embed Live Traffic Badge Modal */}
+      {showEmbedModal && (
+        <EmbedWidgetModal
+          site={selectedSite || allSites[0] || initialSites[0]}
+          isOpen={showEmbedModal}
+          onClose={() => setShowEmbedModal(false)}
+        />
+      )}
 
       <LegalModals
         showPrivacyModal={showPrivacyModal}
@@ -734,7 +920,7 @@ export default function HomeClient({
 
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-[#82c8e5]/40 text-white text-xs font-semibold shadow-2xl animate-fadeIn flex items-center gap-2">
-          <span className="text-emerald-400">✓</span>
+          <span className="text-emerald-400 font-bold">[OK]</span>
           <span>{toastMessage}</span>
         </div>
       )}

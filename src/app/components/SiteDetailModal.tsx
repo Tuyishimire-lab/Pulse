@@ -60,7 +60,7 @@ function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartS
     const pts = rankPoints.map((p, idx) => {
       const x = (idx / (rankPoints.length - 1)) * width;
       // Invert: lower rank number (better) = higher on chart
-      const y = 15 + ((p.rank - minRank) / range) * 80;
+      const y = minRank === maxRank ? 50 : 15 + ((p.rank - minRank) / range) * 80;
       return { x, y, rank: p.rank, date: p.date, idx };
     });
 
@@ -175,28 +175,46 @@ function ChartSection({ site, details, chartPoints, linePath, fillPath }: ChartS
                 strokeLinecap="round"
                 style={{ filter: `drop-shadow(0 0 4px ${site.glow})` }}
               />
-              {/* Best rank label */}
-              <circle cx={rankChartData.best.x} cy={rankChartData.best.y} r="4" fill={site.color} />
-              <text
-                x={Math.min(rankChartData.best.x + 6, 530)}
-                y={rankChartData.best.y - 6}
-                fontSize="9"
-                fill="#4ade80"
-                fontWeight="bold"
-              >
-                #{rankChartData.best.rank} Best
-              </text>
-              {/* Worst rank label */}
-              <circle cx={rankChartData.worst.x} cy={rankChartData.worst.y} r="4" fill="#f87171" />
-              <text
-                x={Math.min(rankChartData.worst.x + 6, 510)}
-                y={rankChartData.worst.y + 14}
-                fontSize="9"
-                fill="#f87171"
-                fontWeight="bold"
-              >
-                #{rankChartData.worst.rank} Worst
-              </text>
+              {/* Best / Worst or Stable Rank label */}
+              {rankChartData.minRank === rankChartData.maxRank ? (
+                <>
+                  <circle cx={rankChartData.best.x} cy={rankChartData.best.y} r="4" fill={site.color} />
+                  <text
+                    x={Math.min(rankChartData.best.x + 6, 510)}
+                    y={rankChartData.best.y - 6}
+                    fontSize="9"
+                    fill="#82c8e5"
+                    fontWeight="bold"
+                  >
+                    #{rankChartData.best.rank} Steady
+                  </text>
+                </>
+              ) : (
+                <>
+                  {/* Best rank label */}
+                  <circle cx={rankChartData.best.x} cy={rankChartData.best.y} r="4" fill={site.color} />
+                  <text
+                    x={Math.min(rankChartData.best.x + 6, 530)}
+                    y={rankChartData.best.y - 6}
+                    fontSize="9"
+                    fill="#4ade80"
+                    fontWeight="bold"
+                  >
+                    #{rankChartData.best.rank} Best
+                  </text>
+                  {/* Worst rank label */}
+                  <circle cx={rankChartData.worst.x} cy={rankChartData.worst.y} r="4" fill="#f87171" />
+                  <text
+                    x={Math.min(rankChartData.worst.x + 6, 510)}
+                    y={rankChartData.worst.y + 14}
+                    fontSize="9"
+                    fill="#f87171"
+                    fontWeight="bold"
+                  >
+                    #{rankChartData.worst.rank} Worst
+                  </text>
+                </>
+              )}
               {/* Hover dots */}
               {rankChartData.pts.map((pt, i) => (
                 <circle

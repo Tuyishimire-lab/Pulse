@@ -113,7 +113,7 @@ export default function LegalModals({
                 <strong>Industry Standard Benchmark Modeling:</strong> Similar to platforms such as Worldometer and Statista, Pulse utilizes the Pulse Traffic Index (PTI) - a multi-signal statistical engine combining Cloudflare Radar DNS telemetry, Tranco rankings, Open PageRank authority scores, and Groq AI momentum signals. The methodology is publicly documented at <a href="/methodology" className="underline">pulstraffic.com/methodology</a>.
               </p>
               <p>
-                <strong>Real-Time Ticker Physics:</strong> Live visitor counters on Pulse represent high-precision mathematical rate calculations (Rate = Monthly Visits / 2,628,000 seconds) designed to illustrate global visit velocity and platform scale in real time.
+                <strong>Radar-Modulated Velocity:</strong> Visitor velocity counters on Pulse are derived from verified monthly traffic baselines, modulated in real time by Cloudflare Radar 1.1.1.1 DNS query volume signals. When Cloudflare Radar observes a domain trending higher or lower than its static baseline rank, the displayed rate adjusts by up to ±15% to reflect live internet activity.
               </p>
             </div>
           </div>

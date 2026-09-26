@@ -1,4 +1,4 @@
-﻿/**
+/**
  * generateDynamicPair.ts
  *
  * Generates a ComparePair for any two valid site IDs not already in pairs.ts.
@@ -120,6 +120,85 @@ async function fetchSitePair(
   }
 }
 
+function parseTrafficBaseline(baseline: string): number {
+  if (!baseline) return 0;
+  const m = baseline.match(/([\d.]+)\s*([BMK]?)/i);
+  if (!m) return 0;
+  let val = parseFloat(m[1]);
+  const unit = m[2]?.toUpperCase();
+  if (unit === 'B') val *= 1e9;
+  else if (unit === 'M') val *= 1e6;
+  else if (unit === 'K') val *= 1e3;
+  return val;
+}
+
+function isBasicFallbackVerdict(v?: string | null): boolean {
+  if (!v) return true;
+  return /currently ranks #\d+ with .* monthly visits, compared to .* at #\d+/i.test(v);
+}
+
+function synthesizeAnalyticalVerdict(siteA: SiteBasic, siteB: SiteBasic): string {
+  const valA = parseTrafficBaseline(siteA.baseline);
+  const valB = parseTrafficBaseline(siteB.baseline);
+  const leader = valA >= valB ? siteA : siteB;
+  const trailing = valA >= valB ? siteB : siteA;
+  const maxV = Math.max(valA, valB);
+  const minV = Math.max(1, Math.min(valA, valB));
+  const ratio = Number((maxV / minV).toFixed(1));
+  const rankDelta = Math.abs(siteA.rank - siteB.rank);
+
+  let primary = '';
+  if (ratio >= 2.0) {
+    primary = `${leader.name} commands a decisive ${ratio}x traffic lead over ${trailing.name}, registering approximately ${leader.baseline} monthly visits compared to ${trailing.baseline}.`;
+  } else if (ratio >= 1.15) {
+    primary = `${leader.name} holds a clear traffic advantage over ${trailing.name} (${leader.baseline} vs ${trailing.baseline} monthly visits), capturing roughly ${ratio}x higher volume.`;
+  } else {
+    primary = `${leader.name} and ${trailing.name} operate in close traffic parity (${leader.baseline} vs ${trailing.baseline} monthly visits), separated by only a slight volume margin.`;
+  }
+
+  const rankPart = rankDelta > 0
+    ? ` On global rankings, ${leader.name} holds position #${leader.rank} while ${trailing.name} sits at #${trailing.rank} (${rankDelta} positions spread).`
+    : '';
+
+  const catPart = siteA.category === siteB.category
+    ? ` Within the ${leader.category} space, ${leader.name} captures the primary share of audience reach and visitor velocity.`
+    : ` Comparing ${leader.name}'s ${leader.category} platform with ${trailing.name}'s ${trailing.category} footprint, ${leader.name} demonstrates wider digital reach.`;
+
+  return `${primary}${rankPart}${catPart}`;
+}
+
+function synthesizeAnalyticalContext(siteA: SiteBasic, siteB: SiteBasic): string {
+  if (siteA.category === siteB.category) {
+    return `Head-to-head digital audience and engagement benchmark within the global ${siteA.category} sector.`;
+  }
+  return `Cross-sector digital audience and traffic velocity comparison between ${siteA.name} (${siteA.category}) and ${siteB.name} (${siteB.category}).`;
+}
+
+function synthesizeAnalyticalFaq(siteA: SiteBasic, siteB: SiteBasic): { q: string; a: string }[] {
+  const valA = parseTrafficBaseline(siteA.baseline);
+  const valB = parseTrafficBaseline(siteB.baseline);
+  const leader = valA >= valB ? siteA : siteB;
+  const trailing = valA >= valB ? siteB : siteA;
+  const maxV = Math.max(valA, valB);
+  const minV = Math.max(1, Math.min(valA, valB));
+  const ratio = Number((maxV / minV).toFixed(1));
+
+  return [
+    {
+      q: `Which platform receives more monthly visits, ${siteA.name} or ${siteB.name}?`,
+      a: `${leader.name} leads in web traffic with approximately ${leader.baseline} monthly visits compared to ${trailing.baseline} for ${trailing.name} (a ${ratio}x volume ratio).`,
+    },
+    {
+      q: `How do the global ranks of ${siteA.name} and ${siteB.name} compare?`,
+      a: `${leader.name} ranks #${leader.rank} globally while ${trailing.name} ranks #${trailing.rank}, representing a difference of ${Math.abs(siteA.rank - siteB.rank)} positions.`,
+    },
+    {
+      q: `What are the primary operational categories for ${siteA.name} and ${siteB.name}?`,
+      a: `${siteA.name} is categorized under ${siteA.category}, whereas ${siteB.name} operates in the ${siteB.category} space. Both maintain distinct digital audience footprints.`,
+    },
+  ];
+}
+
 /**
  * Main entry point. Returns a ComparePair or null if either site ID is invalid.
  *
@@ -142,7 +221,7 @@ export async function generateDynamicPair(
         .eq('pair_slug', slug)
         .single();
 
-      if (cached) {
+      if (cached && !isBasicFallbackVerdict(cached.verdict)) {
         return {
           slug: cached.pair_slug,
           siteAId: cached.site_a_id,
@@ -161,25 +240,17 @@ export async function generateDynamicPair(
   const pair = await fetchSitePair(siteAId, siteBId);
   if (!pair) return null;
 
-  // 3. Call Groq for verdict + FAQs
+  // 3. Call Groq for verdict + FAQs (if configured) or use intelligent synthesis
   const generated = await callGroqForPair(pair.siteA, pair.siteB);
 
   const verdict =
-    generated?.verdict ??
-    `${pair.siteA.name} currently ranks #${pair.siteA.rank} with ${pair.siteA.baseline} monthly visits, compared to ${pair.siteB.name} at #${pair.siteB.rank} with ${pair.siteB.baseline} monthly visits.`;
+    generated?.verdict ?? synthesizeAnalyticalVerdict(pair.siteA, pair.siteB);
 
   const context =
-    generated?.context ??
-    `A traffic comparison between ${pair.siteA.name} and ${pair.siteB.name}.`;
+    generated?.context ?? synthesizeAnalyticalContext(pair.siteA, pair.siteB);
 
   const faq: { q: string; a: string }[] =
-    generated?.faq ??
-    [
-      {
-        q: `Which gets more traffic, ${pair.siteA.name} or ${pair.siteB.name}?`,
-        a: `${pair.siteA.name} receives ${pair.siteA.baseline} monthly visits (rank #${pair.siteA.rank}), while ${pair.siteB.name} receives ${pair.siteB.baseline} (rank #${pair.siteB.rank}).`,
-      },
-    ];
+    generated?.faq ?? synthesizeAnalyticalFaq(pair.siteA, pair.siteB);
 
   // 4. Store in Supabase cache for all future builds/requests
   if (sb) {

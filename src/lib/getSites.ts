@@ -35,17 +35,19 @@ function getSupabaseClient() {
   return createClient(url, key);
 }
 
-// ── DB row → SiteConfig ───────────────────────────────────────────────────────
-function rowToSiteConfig(row: SiteDbRow): SiteConfig {
+// ── DB row -> SiteConfig ───────────────────────────────────────────────────────
+function rowToSiteConfig(row: SiteDbRow, history?: { rank: number; date: string }[]): SiteConfig {
   // Merge static metadata (color, logo, glow, asn) that the engine doesn't write
   const meta = SITE_META[row.id] ?? {};
   const parsedBaseline = parseTrafficMetric(row.baseline);
   const baselineRaw = parsedBaseline > 0 ? parsedBaseline : (row.baseline_raw ?? row.baselineRaw ?? 0);
+  const rank_history = history && history.length > 0 ? history : row.rank_history;
   return {
     ...meta,      // static fields first (provides defaults)
     ...row,       // DB fields override everything (rank, rate, baseline, etc.)
-    // Normalise snake_case → camelCase with verified numeric integrity
+    // Normalise snake_case -> camelCase with verified numeric integrity
     baselineRaw,
+    rank_history,
   } as SiteConfig;
 }
 
@@ -57,7 +59,7 @@ function withTimeout<T, F>(promise: PromiseLike<T>, ms: number, fallback: F): Pr
 }
 
 /**
- * Fetch all sites from Supabase, merged with static metadata.
+ * Fetch all sites from Supabase, merged with static metadata and weekly snapshot rank history.
  * Falls back to SITES from sites.ts if Supabase is unreachable.
  * Wrapped in React.cache() to deduplicate multiple calls during the same render pass.
  *
@@ -69,19 +71,47 @@ export const getSites = cache(async function getSites(_revalidate = 60): Promise
 
   if (supabase) {
     try {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('sites')
-          .select(
-            'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
-          )
-          .order('rank', { ascending: true }),
-        1200,
-        { data: null, error: { message: 'Timed out' } } as { data: SiteDbRow[] | null; error: { message: string } | null }
-      );
+      const [{ data, error }, { data: snapshots }] = await Promise.all([
+        withTimeout(
+          supabase
+            .from('sites')
+            .select(
+              'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
+            )
+            .order('rank', { ascending: true }),
+          2500,
+          { data: null, error: { message: 'Timed out' } } as { data: SiteDbRow[] | null; error: { message: string } | null }
+        ),
+        withTimeout(
+          supabase
+            .from('weekly_snapshots')
+            .select('snapshot_date, sites_data')
+            .order('snapshot_date', { ascending: true }),
+          2500,
+          { data: null } as { data: { snapshot_date: string; sites_data: { id: string; rank: number }[] }[] | null }
+        ),
+      ]);
+
+      const rankHistoryMap: Record<string, { rank: number; date: string }[]> = {};
+      if (snapshots && snapshots.length > 0) {
+        for (const snap of snapshots) {
+          const dateStr = snap.snapshot_date ? snap.snapshot_date.split('T')[0] : '';
+          if (Array.isArray(snap.sites_data)) {
+            for (const item of snap.sites_data) {
+              if (item && item.id && typeof item.rank === 'number') {
+                if (!rankHistoryMap[item.id]) rankHistoryMap[item.id] = [];
+                rankHistoryMap[item.id].push({ rank: item.rank, date: dateStr });
+              }
+            }
+          }
+        }
+      }
 
       if (!error && data && data.length > 0) {
-        return (data as SiteDbRow[]).map(rowToSiteConfig);
+        const dbSites = (data as SiteDbRow[]).map((row) => rowToSiteConfig(row, rankHistoryMap[row.id]));
+        const dbSiteIds = new Set(dbSites.map((s) => s.id));
+        const missingFromDb = SITES.filter((s) => !dbSiteIds.has(s.id));
+        return [...dbSites, ...missingFromDb];
       }
       if (error) {
         console.warn('[getSites] Supabase error/timeout:', error.message);
@@ -105,20 +135,45 @@ export const getSiteById = cache(async function getSiteById(id: string): Promise
 
   if (supabase) {
     try {
-      const { data, error } = await withTimeout(
-        supabase
-          .from('sites')
-          .select(
-            'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
-          )
-          .eq('id', id)
-          .single(),
-        1200,
-        { data: null, error: { message: 'Timed out' } } as { data: SiteDbRow | null; error: { message: string } | null }
-      );
+      const [{ data, error }, { data: snapshots }] = await Promise.all([
+        withTimeout(
+          supabase
+            .from('sites')
+            .select(
+              'id, name, url, rank, category, baseline, baseline_raw, rate, progress, updated_at'
+            )
+            .eq('id', id)
+            .single(),
+          2500,
+          { data: null, error: { message: 'Timed out' } } as { data: SiteDbRow | null; error: { message: string } | null }
+        ),
+        withTimeout(
+          supabase
+            .from('weekly_snapshots')
+            .select('snapshot_date, sites_data')
+            .order('snapshot_date', { ascending: true }),
+          2500,
+          { data: null } as { data: { snapshot_date: string; sites_data: { id: string; rank: number }[] }[] | null }
+        ),
+      ]);
+
+      let siteHistory: { rank: number; date: string }[] | undefined = undefined;
+      if (snapshots && snapshots.length > 0) {
+        const hist: { rank: number; date: string }[] = [];
+        for (const snap of snapshots) {
+          const dateStr = snap.snapshot_date ? snap.snapshot_date.split('T')[0] : '';
+          if (Array.isArray(snap.sites_data)) {
+            const item = snap.sites_data.find((s) => s && s.id === id);
+            if (item && typeof item.rank === 'number') {
+              hist.push({ rank: item.rank, date: dateStr });
+            }
+          }
+        }
+        if (hist.length > 0) siteHistory = hist;
+      }
 
       if (!error && data) {
-        return rowToSiteConfig(data as SiteDbRow);
+        return rowToSiteConfig(data as SiteDbRow, siteHistory);
       }
     } catch {}
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { SiteConfig } from '../../data/sites';
 import { ComparePair } from '../data/pairs';
@@ -108,9 +108,36 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
     },
   ];
 
-  const verdict = pairData?.verdict
-    ? `${pairData.verdict} Currently: ${siteA.name} receives ${siteA.baseline} vs ${siteB.name}'s ${siteB.baseline}.`
-    : `${rankLeader.name} leads in global traffic, ranked #${Math.min(siteA.rank, siteB.rank)} versus #${Math.max(siteA.rank, siteB.rank)}.`;
+  const cleanVerdict = useMemo(() => {
+    const raw = pairData?.verdict?.trim();
+    const isBasicFallback = !raw || /currently ranks #\d+ with .* monthly visits, compared to .* at #\d+/i.test(raw);
+    
+    if (raw && !isBasicFallback) {
+      // Strip any legacy appended boilerplate
+      return raw.replace(/\s*Currently:\s*.*$/, '').trim();
+    }
+
+    // Synthesize high-caliber analytical verdict
+    const rankDelta = Math.abs(siteA.rank - siteB.rank);
+    let primary = '';
+    if (disparityRatio >= 2.0) {
+      primary = `${leaderSite.name} commands a decisive ${disparityRatio}x traffic lead over ${trailingSite.name}, generating approximately ${leaderSite.baseline} monthly visits compared to ${trailingSite.baseline}.`;
+    } else if (disparityRatio >= 1.15) {
+      primary = `${leaderSite.name} holds a clear traffic advantage over ${trailingSite.name} (${leaderSite.baseline} vs ${trailingSite.baseline} monthly visits), outpacing its rival by roughly ${disparityRatio}x.`;
+    } else {
+      primary = `${leaderSite.name} and ${trailingSite.name} operate in close traffic parity (${leaderSite.baseline} vs ${trailingSite.baseline} monthly visits), separated by only a narrow volume margin.`;
+    }
+
+    const rankPart = rankDelta > 0
+      ? ` On global leaderboards, ${leaderSite.name} holds position #${leaderSite.rank} while ${trailingSite.name} sits at #${trailingSite.rank} (${rankDelta} positions spread).`
+      : '';
+
+    const catPart = siteA.category === siteB.category
+      ? ` Within the ${leaderSite.category} sector, ${leaderSite.name} captures the primary share of audience reach and visitor velocity.`
+      : ` Comparing ${leaderSite.name}'s ${leaderSite.category} platform with ${trailingSite.name}'s ${trailingSite.category} footprint, ${leaderSite.name} demonstrates broader digital reach.`;
+
+    return `${primary}${rankPart}${catPart}`;
+  }, [pairData, siteA, siteB, leaderSite, trailingSite, disparityRatio]);
 
   return (
     <div className="min-h-screen bg-[#02020a] text-white font-sans">
@@ -282,12 +309,69 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
         </section>
 
         {/* Verdict Card */}
-        <section className="mb-8">
-          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04] p-5">
-            <h2 className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-               Verdict
-            </h2>
-            <p className="text-[#94a3b8] text-sm leading-relaxed">{verdict}</p>
+        <section className="mb-8" aria-label="Verdict and Market Analysis">
+          <div className="relative rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-950/25 via-[#070e14] to-[#03060a] p-5 sm:p-6 overflow-hidden shadow-[0_0_35px_rgba(16,185,129,0.06)]">
+            {/* Ambient subtle corner glow */}
+            <div
+              className="absolute -top-12 -right-12 w-48 h-48 pointer-events-none rounded-full blur-3xl opacity-20"
+              style={{ backgroundColor: leaderSite.color || '#10b981' }}
+            />
+
+            {/* Header bar with Icon, Title, and Outcome Badge */}
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    Executive Verdict
+                  </h2>
+                  <div className="text-[11px] text-[#6d8196]">
+                    Independent Traffic & Market Intelligence
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {disparityRatio >= 1.05
+                  ? `${leaderSite.name} Leads (${disparityRatio}x)`
+                  : 'Parity Battle'}
+              </div>
+            </div>
+
+            {/* Key takeaway structured chips */}
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
+              <div className="px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-[#6d8196]">Audience Leader</div>
+                <div className="text-sm font-bold text-white flex items-center gap-2 mt-0.5">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: leaderSite.color }} />
+                  <span className="truncate">{leaderSite.name}</span>
+                </div>
+              </div>
+
+              <div className="px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-[#6d8196]">Volume Advantage</div>
+                <div className="text-sm font-bold text-emerald-400 mt-0.5">
+                  {disparityRatio}x <span className="text-xs font-medium text-[#82c8e5]">({diffFormatted})</span>
+                </div>
+              </div>
+
+              <div className="px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-[#6d8196]">Global Rank Spread</div>
+                <div className="text-sm font-bold text-slate-200 mt-0.5">
+                  #{leaderSite.rank} vs #{trailingSite.rank} <span className="text-xs font-normal text-[#6d8196]">({Math.abs(siteA.rank - siteB.rank)} spots)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Core analytical verdict copy */}
+            <p className="relative z-10 text-slate-200 text-sm sm:text-[15px] leading-relaxed font-normal">
+              {cleanVerdict}
+            </p>
           </div>
         </section>
 

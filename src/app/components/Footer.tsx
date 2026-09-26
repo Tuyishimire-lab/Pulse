@@ -89,7 +89,7 @@ export default function Footer() {
         {/* ── Methodology disclaimer ───────────────────────────────── */}
         <div className="footer-disclaimer">
           <p>
-            <strong>Methodology:</strong> Pulse metrics are produced by the Pulse Traffic Index (PTI) - a statistical model combining Cloudflare Radar DNS telemetry, Tranco global rankings, Open PageRank authority scores, and Groq AI momentum signals. Pulse is not a real-time server tap; it is an independent probabilistic estimate. Mean error margin: ~34.6%. <Link href="/methodology" className="underline hover:text-white transition-colors">Full methodology →</Link>
+            <strong>Methodology:</strong> Pulse metrics are produced by the Pulse Traffic Index (PTI) - a statistical model combining verified monthly traffic baselines with live Cloudflare Radar DNS telemetry, Tranco global rankings, Open PageRank authority scores, and Groq AI momentum signals. Displayed rates are modulated by real-time Radar signals (±15%). Pulse is not a direct server tap; it is an independent probabilistic estimate. Mean error margin: ~34.6%. <Link href="/methodology" className="underline hover:text-white transition-colors">Full methodology →</Link>
           </p>
         </div>
 

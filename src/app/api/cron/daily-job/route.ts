@@ -193,7 +193,7 @@ export async function GET(request: Request) {
       try {
         console.log('Unified Cron: Starting country-specific rankings refresh...');
 
-        // Build domain → siteId lookup from current sites
+        // Build domain → siteId lookup from current sites, with standard domain aliases
         const domainToSiteId = new Map<string, string>();
         sites.forEach((site) => {
           const host = site.url
@@ -202,6 +202,24 @@ export async function GET(request: Request) {
             .toLowerCase();
           domainToSiteId.set(host, site.id);
         });
+
+        const RADAR_DOMAIN_ALIASES: Record<string, string> = {
+          'twitter.com': 'x',
+          't.co': 'x',
+          'openai.com': 'chatgpt',
+          'fb.com': 'facebook',
+          'm.facebook.com': 'facebook',
+          'youtu.be': 'youtube',
+          'en.wikipedia.org': 'wikipedia',
+          'characterai.com': 'characterai',
+          'notion.site': 'notion',
+          'us.temu.com': 'temu',
+        };
+        for (const [aliasDomain, siteId] of Object.entries(RADAR_DOMAIN_ALIASES)) {
+          if (!domainToSiteId.has(aliasDomain)) {
+            domainToSiteId.set(aliasDomain, siteId);
+          }
+        }
 
         const BATCH_SIZE = 5;
         const BATCH_DELAY_MS = 300; // stay within Cloudflare rate limits
@@ -279,37 +297,95 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Query Open PageRank API for all domains in one single request
+    // 3. Query Open PageRank API for all domains in batches of 100 (covering all 136 domains)
     const domainsList = sites.map((s) => parseDomain(s.url));
-    const domainsQuery = domainsList.map((d: string) => `domains[]=${d}`).join('&');
-
-    const oprRes = await fetch(`https://openpagerank.com/api/v1.0/getPageRank?${domainsQuery}`, {
-      headers: {
-        'API-OPR': oprApiKey
-      },
-      signal: AbortSignal.timeout(10000)
-    });
-
-    if (!oprRes.ok) {
-      throw new Error(`Open PageRank API responded with status ${oprRes.status}`);
-    }
-
-    const oprData = await oprRes.json();
     const rankMap: Record<string, { pageRank: number; globalRank: number }> = {};
-    
-    if (oprData && Array.isArray(oprData.response)) {
-      (oprData.response as OpenPageRankResponseItem[]).forEach((item) => {
-        rankMap[item.domain] = {
-          pageRank: parseFloat(item.page_rank_decimal || '0') || 0,
-          globalRank: parseInt(item.rank || '9999999') || 9999999
-        };
-      });
+    const OPR_CHUNK_SIZE = 100;
+
+    for (let i = 0; i < domainsList.length; i += OPR_CHUNK_SIZE) {
+      const chunk = domainsList.slice(i, i + OPR_CHUNK_SIZE);
+      try {
+        const oprRes = await fetch('https://openpagerank.keywordseverywhere.com/v1/domains/bulk', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${oprApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ domains: chunk }),
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (oprRes.ok) {
+          const oprData = await oprRes.json();
+          if (oprData && Array.isArray(oprData.results)) {
+            oprData.results.forEach((item: { domain: string; open_page_rank?: number; rank?: number }) => {
+              rankMap[item.domain] = {
+                pageRank: item.open_page_rank ?? 0,
+                globalRank: item.rank ?? 9999999,
+              };
+            });
+          }
+        }
+      } catch (oprErr) {
+        console.warn(`Unified Cron: Open PageRank chunk failed (${i}..${i + chunk.length}):`, oprErr);
+      }
     }
 
-    // 4. Enrich keywords only (traffic is computed from rank - no external traffic APIs needed)
-    const keKeywordsMap: Record<string, string[] | null> = {};
+    // 3b. Cloudflare Radar: Domain-Level Telemetry & Categorization
+    // Polls Cloudflare Radar for popularity tiers and authoritative category classifications
+    const radarCategoryMap: Record<string, string[]> = {};
+    if (cfRadarToken) {
+      try {
+        console.log('Unified Cron: Polling Cloudflare Radar domain-level telemetry...');
+        const RADAR_BATCH_SIZE = 10;
+        const RADAR_BATCH_DELAY_MS = 200;
 
-    // Process keywords in parallel batches of 20 (lightweight: only keyword fetches)
+        for (let i = 0; i < sites.length; i += RADAR_BATCH_SIZE) {
+          const batch = sites.slice(i, i + RADAR_BATCH_SIZE);
+          await Promise.all(
+            batch.map(async (site) => {
+              try {
+                const domain = parseDomain(site.url);
+                const radarRes = await fetch(
+                  `https://api.cloudflare.com/client/v4/radar/ranking/domain/${encodeURIComponent(domain)}`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${cfRadarToken}`,
+                      'Accept': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(6000),
+                  }
+                );
+                if (radarRes.ok) {
+                  const radarData = await radarRes.json();
+                  const categories = radarData.result?.details_0?.categories;
+                  if (Array.isArray(categories) && categories.length > 0) {
+                    const tagNames = categories
+                      .map((c: { name?: string }) => c.name)
+                      .filter(Boolean) as string[];
+                    if (tagNames.length > 0) {
+                      radarCategoryMap[site.id] = tagNames;
+                    }
+                  }
+                }
+              } catch {
+                // Non-critical: domain-level telemetry fails gracefully
+              }
+            })
+          );
+
+          if (i + RADAR_BATCH_SIZE < sites.length) {
+            await new Promise((r) => setTimeout(r, RADAR_BATCH_DELAY_MS));
+          }
+        }
+        console.log(`Unified Cron: Cloudflare Radar categorized ${Object.keys(radarCategoryMap).length} domains.`);
+      } catch (radarErr) {
+        console.warn('Unified Cron: Radar domain polling warning:', radarErr);
+      }
+    }
+
+    // 4. Enrich keywords (Keywords Everywhere + Google Suggest + Cloudflare Radar category tags)
+    const keKeywordsMap: Record<string, string[] | null> = {};
     const KEYWORD_BATCH_SIZE = 20;
 
     for (let i = 0; i < sites.length; i += KEYWORD_BATCH_SIZE) {
@@ -330,16 +406,27 @@ export async function GET(request: Request) {
       );
     }
 
-    // 5. Update keywords if newly fetched (keywords only — baseline/rate/rank are managed by Python PTI engine)
+    // Combine search keywords with authoritative Cloudflare Radar category tags
+    const finalKeywordsMap: Record<string, string[]> = {};
+    sites.forEach((site) => {
+      const searchKeywords = keKeywordsMap[site.id] || [];
+      const radarCategories = radarCategoryMap[site.id] || [];
+      const combined = Array.from(new Set([...searchKeywords, ...radarCategories])).slice(0, 6);
+      if (combined.length > 0) {
+        finalKeywordsMap[site.id] = combined;
+      }
+    });
+
+    // 5. Update keywords with merged search and Radar telemetry
     const keywordUpdates = sites
-      .filter((s) => keKeywordsMap[s.id] && keKeywordsMap[s.id]!.length > 0)
-      .map((s) => supabase.from('sites').update({ keywords: keKeywordsMap[s.id] }).eq('id', s.id));
+      .filter((s) => finalKeywordsMap[s.id] && finalKeywordsMap[s.id].length > 0)
+      .map((s) => supabase.from('sites').update({ keywords: finalKeywordsMap[s.id] }).eq('id', s.id));
 
     if (keywordUpdates.length > 0) {
       for (let i = 0; i < keywordUpdates.length; i += 20) {
         await Promise.all(keywordUpdates.slice(i, i + 20));
       }
-      console.log(`Unified Cron: Enriched keywords for ${keywordUpdates.length} sites.`);
+      console.log(`Unified Cron: Enriched keywords with Radar telemetry for ${keywordUpdates.length} sites.`);
     }
 
     // 7. Calculate & bulk-insert 6 hourly points (matching the 6-hour cron cadence)
@@ -508,7 +595,7 @@ export async function GET(request: Request) {
             category: site.category,
             color: site.color,
             logo: site.logo,
-            keywords: keKeywordsMap[site.id] ?? site.keywords ?? null,
+            keywords: finalKeywordsMap[site.id] ?? keKeywordsMap[site.id] ?? site.keywords ?? null,
           }));
 
           // Pre-compute category totals

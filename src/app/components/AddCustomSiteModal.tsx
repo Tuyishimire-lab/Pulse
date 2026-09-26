@@ -51,7 +51,11 @@ export default function AddCustomSiteModal({
         if (data.category) onCategoryChange(data.category);
         if (data.baseline) onBaselineChange(data.baseline);
         if (data.color) onColorChange(data.color);
-        setEstimateMsg(`Estimated: ${data.baseline} (${data.rate?.toLocaleString()} visits/s)`);
+        if (data.isUnranked) {
+          setEstimateMsg(`Emerging Domain: Unranked (${data.baseline})`);
+        } else {
+          setEstimateMsg(`Estimated: ${data.baseline} (${data.rate?.toLocaleString()} visits/s)`);
+        }
       } else {
         setEstimateMsg(data.error || 'Could not estimate domain');
       }
@@ -143,9 +147,14 @@ export default function AddCustomSiteModal({
                 onChange={(e) => onBaselineChange(e.target.value)}
                 className="form-select"
               >
-                {!['1M / mo', '5M / mo', '10M / mo', '50M / mo', '100M / mo', '500M / mo'].includes(newSiteBaseline) && (
+                {!['< 2.5K / mo', '10K / mo', '50K / mo', '250K / mo', '500K / mo', '1M / mo', '5M / mo', '10M / mo', '50M / mo', '100M / mo', '500M / mo'].includes(newSiteBaseline) && (
                   <option value={newSiteBaseline}>{newSiteBaseline} (Estimated)</option>
                 )}
+                <option value="< 2.5K / mo">&lt; 2.5K / mo (New / Emerging)</option>
+                <option value="10K / mo">10K / mo</option>
+                <option value="50K / mo">50K / mo</option>
+                <option value="250K / mo">250K / mo</option>
+                <option value="500K / mo">500K / mo</option>
                 <option value="1M / mo">1 Million / mo</option>
                 <option value="5M / mo">5 Million / mo</option>
                 <option value="10M / mo">10 Million / mo</option>

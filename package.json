@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "generate:countries": "npx tsx scripts/generate-countries.ts",
-    "generate:sql": "node scripts/generate-seed-sql.js"
+    "generate:sql": "npx tsx scripts/generate-seed-sql.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

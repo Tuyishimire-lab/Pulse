@@ -2,10 +2,17 @@
 
 :root {
   --bg-primary: #02020a;
-  --bg-navy: #000080;
+  --surface-base: #070b14;
+  --surface-elevated: #0c1220;
+  --surface-border: rgba(255, 255, 255, 0.08);
+
   --color-cobalt: #0047AB;
   --color-sky: #82C8E5;
-  --color-slate: #6D8196;
+  --color-slate: #8EA1B4;
+
+  --signal-green: #10B981;
+  --signal-green-light: #34D399;
+  --signal-red: #F87171;
 
   --text-primary: #ffffff;
   --text-secondary: var(--color-slate);

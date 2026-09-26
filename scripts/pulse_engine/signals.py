@@ -139,6 +139,10 @@ DOMAIN_ALIASES = {
     "claude.ai": ["claude.ai", "anthropic.com"],
     "reddit.com": ["reddit.com", "redd.it"],
     "youtube.com": ["youtube.com", "youtu.be"],
+    "deepseek.com": ["deepseek.com", "chat.deepseek.com"],
+    "temu.com": ["temu.com", "us.temu.com"],
+    "notion.so": ["notion.so", "notion.site"],
+    "character.ai": ["character.ai", "characterai.com"],
 }
 
 def merge_rank_sources(cf_ranks: Dict[str, int], tranco_ranks: Dict[str, int]) -> Dict[str, int]:
@@ -171,29 +175,36 @@ def fetch_open_pagerank(domains: List[str]) -> Dict[str, Dict[str, Any]]:
     if not OPENPAGERANK_API_KEY or not domains:
         return {}
 
-    query_str = "&".join([f"domains[]={d}" for d in domains[:100]])
-    url = f"https://openpagerank.com/api/v1.0/getPageRank?{query_str}"
-    headers = {"API-OPR": OPENPAGERANK_API_KEY}
+    url = "https://openpagerank.keywordseverywhere.com/v1/domains/bulk"
+    headers = {
+        "Authorization": f"Bearer {OPENPAGERANK_API_KEY}",
+        "Content-Type": "application/json",
+    }
 
+    result_map = {}
     try:
-        with httpx.Client(timeout=10.0) as client:
-            res = client.get(url, headers=headers)
-            if res.status_code == 200:
-                data = res.json()
-                result_map = {}
-                for item in data.get("response", []):
-                    domain = item.get("domain")
-                    if domain:
-                        pr_val = float(item.get("page_rank_decimal") or 0.0)
-                        rank_val = int(item.get("rank") or 9999999)
-                        result_map[domain] = {
-                            "page_rank": pr_val,
-                            "global_rank": rank_val
-                        }
-                return result_map
+        with httpx.Client(timeout=12.0) as client:
+            chunk_size = 100
+            for i in range(0, len(domains), chunk_size):
+                chunk = domains[i:i + chunk_size]
+                res = client.post(url, headers=headers, json={"domains": chunk})
+                if res.status_code == 200:
+                    data = res.json()
+                    for item in data.get("results", []):
+                        domain = item.get("domain")
+                        if domain:
+                            pr_val = float(item.get("open_page_rank") or 0.0)
+                            rank_val = int(item.get("rank") or 9999999)
+                            result_map[domain] = {
+                                "page_rank": pr_val,
+                                "global_rank": rank_val,
+                            }
+                else:
+                    print(f"[Signals] Open PageRank chunk HTTP {res.status_code}")
+        return result_map
     except Exception as e:
         print(f"[Signals] Open PageRank fetch error: {e}")
-    return {}
+        return result_map
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SIGNAL 4: Groq AI Momentum - ALL 100 sites in batches of 30

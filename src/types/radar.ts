@@ -45,6 +45,7 @@ export interface SiteDbRow {
   progress: number;
   updated_at?: string;
   keywords?: string[];
+  rank_history?: { rank: number; date: string }[];
 }
 
 export interface MarqueeItem {

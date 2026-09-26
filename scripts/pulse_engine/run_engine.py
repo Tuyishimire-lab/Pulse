@@ -1,18 +1,18 @@
 """
-run_engine.py - Pulse Traffic Index Engine v2.0 (Static-First)
+run_engine.py - Pulse Traffic Index Engine v2.1 (Radar-Modulated)
 
-Architecture change from v1.x:
-  - rank, baseline, rate  → derived from STATIC_BASELINES (not computed)
-  - volatility, trend     → still computed from CF Radar + Google Trends signals
-  - rate display          → static rate ± small noise band for visual realism
+Architecture:
+  - rank, baseline       → derived from STATIC_BASELINES (immutable anchor)
+  - rate                 → static baseline × CF Radar volatility modulator (±15%)
+  - volatility, trend    → computed from CF Radar + Google Trends signals
 
-This eliminates the Zipf formula multiplication bomb and the rank_arbiter
-collision that was causing ChatGPT to appear at #1 with 114B/mo.
+v2.1 change: rate is now modulated by the live CF Radar DNS rank signal
+instead of random ±4% cosmetic noise. The volatility field that was already
+being computed and stored now directly drives the displayed rate.
 """
 
 import os
 import sys
-import random
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -41,17 +41,29 @@ from scripts.pulse_engine.validation import run_validation, print_validation_rep
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# RATE NOISE BAND
-# Adds ±NOISE_PCT variation to the static rate for visual realism on the
-# live counter. Purely cosmetic - does not affect rank or baseline.
+# RADAR-DRIVEN RATE MODULATION
+# Uses the CF Radar volatility signal to modulate the static base rate.
+# Replaces the old ±4% random noise band with real DNS-derived signals.
+# Clamped to ±15% to prevent wild swings when CF rank diverges heavily.
 # ─────────────────────────────────────────────────────────────────────────────
-NOISE_PCT = 0.04  # ±4% band
+RADAR_DAMPEN = 0.75   # scale factor: prevents raw volatility from overdriving
+RADAR_CLAMP  = 0.15   # max ±15% deviation from static baseline
 
 
-def apply_noise(base_rate: int) -> int:
-    """Apply ±NOISE_PCT random variation to a static rate."""
-    factor = 1.0 + random.uniform(-NOISE_PCT, NOISE_PCT)
-    return max(1, int(round(base_rate * factor)))
+def apply_radar_modulation(base_rate: int, volatility: float) -> int:
+    """Modulate static rate using live CF Radar volatility signal.
+
+    Args:
+        base_rate:   visits/sec derived from static monthly baseline.
+        volatility:  CF Radar rank deviation (%), positive = CF sees MORE
+                     traffic than static estimate, negative = LESS.
+
+    Returns:
+        Modulated rate, clamped to [base * 0.85, base * 1.15].
+    """
+    modulator = 1.0 + (volatility / 100.0) * RADAR_DAMPEN
+    modulator = max(1.0 - RADAR_CLAMP, min(1.0 + RADAR_CLAMP, modulator))
+    return max(1, int(round(base_rate * modulator)))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -149,12 +161,12 @@ def run_pulse_engine(run_validation_report: bool = True):
         base_rate = get_rate(monthly_visits)
         progress = round((monthly_visits / google_monthly) * 100.0, 2)
 
-        # ── Dynamic rate: static ± noise band ──────────────────────────────
-        display_rate = apply_noise(base_rate)
-
         # ── Volatility: CF Radar rank vs. static rank ───────────────────────
         cf_rank = cf_ranks.get(domain) if domain else None
         volatility = compute_volatility(static_rank, cf_rank)
+
+        # ── Dynamic rate: static × radar modulator ─────────────────────────
+        display_rate = apply_radar_modulation(base_rate, volatility)
 
         # ── Trend: combine CF rank delta + Google Trends ────────────────────
         old_cf_rank = db_row.get("rank", static_rank)  # previous DB rank as proxy

@@ -49,7 +49,8 @@ export async function GET(req: Request) {
     Authorization: `Bearer ${token}`,
     Accept: 'application/json',
   };
-  const asnParam = `asn=AS${asn}`;
+  const cleanAsn = asn.replace(/^as/i, '').trim();
+  const asnParam = `asn=${cleanAsn}`;
 
   const results: {
     source: string;

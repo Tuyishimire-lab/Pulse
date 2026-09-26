@@ -37,10 +37,10 @@ export default function TermsPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white">2. Pulse Traffic Index (PTI) Disclaimer</h2>
             <p>
-              Pulse metrics, live visitor counters, and country rankings are probabilistic statistical estimations calculated via the <strong className="text-white">Pulse Traffic Index (PTI v1.2)</strong>. PTI combines public network telemetry (Cloudflare Radar, Tranco List, Open PageRank) and Groq AI contextual momentum analysis.
+              Pulse metrics, visitor velocity counters, and country rankings are probabilistic statistical estimations calculated via the <strong className="text-white">Pulse Traffic Index (PTI v2.1)</strong>. PTI derives base traffic from verified public disclosures (SEC filings, investor reports, Wikimedia analytics) and modulates displayed velocity in real time using Cloudflare Radar 1.1.1.1 DNS rank signals (±15%).
             </p>
             <p>
-              Pulse data is not a direct server tap into internal corporate load balancers. No third-party platform on the internet has access to private internal server logs of third-party companies. Like Similarweb, Worldometer, or Statista, Pulse utilizes statistical modeling and real-time rate physics to visualize global web scale.
+              Pulse data is not a direct server tap into internal corporate load balancers. No third-party platform on the internet has access to private internal server logs of third-party companies. Like Similarweb, Worldometer, or Statista, Pulse utilizes statistical modeling combined with live network telemetry to visualize global web scale.
             </p>
           </section>
 

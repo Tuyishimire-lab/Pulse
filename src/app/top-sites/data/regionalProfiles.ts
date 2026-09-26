@@ -1,4 +1,4 @@
-﻿// Regional profiles for country-specific site rankings.
+// Regional profiles for country-specific site rankings.
 // Used as Tier-2 fallback when Cloudflare Radar has no data for a country.
 // Each region has a curated 20-site list appropriate to that region's internet habits.
 
@@ -12,61 +12,61 @@ export const GLOBALLY_IRRELEVANT = new Set([
 // 6 Regional Profiles - curated for each region's actual internet mix
 // -------------------------------------------------------------------
 export const REGIONAL_PROFILES: Record<string, string[]> = {
-  // Sub-Saharan Africa: Facebook/WhatsApp dominant, TikTok rising, no Baidu
+  // Sub-Saharan Africa: Facebook/WhatsApp dominant, TikTok rising, Temu/Shein expanding
   'sub-saharan-africa': [
     'google', 'youtube', 'facebook', 'instagram', 'tiktok',
     'x', 'chatgpt', 'wikipedia', 'whatsapp', 'reddit',
-    'netflix', 'microsoft', 'spotify', 'discord', 'linkedin',
-    'amazon', 'pinterest', 'twitch', 'github', 'bing',
+    'netflix', 'microsoft', 'spotify', 'discord', 'temu',
+    'amazon', 'shein', 'twitch', 'github', 'bing',
   ],
-  // Middle East & North Africa: Snapchat/Instagram high, WhatsApp primary messaging
+  // Middle East & North Africa: Snapchat/Instagram high, Shein/Temu heavy ecommerce
   'middle-east-north-africa': [
     'google', 'youtube', 'facebook', 'instagram', 'x',
     'tiktok', 'chatgpt', 'wikipedia', 'snapchat', 'whatsapp',
-    'netflix', 'amazon', 'microsoft', 'reddit', 'linkedin',
-    'spotify', 'discord', 'ebay', 'pinterest', 'bing',
+    'netflix', 'amazon', 'shein', 'temu', 'linkedin',
+    'spotify', 'discord', 'microsoft', 'deepseek', 'bing',
   ],
-  // South & Southeast Asia: mobile-first, WhatsApp/TikTok/Facebook dominant
+  // South & Southeast Asia: mobile-first, WhatsApp/TikTok/Facebook dominant, DeepSeek breakout
   'south-southeast-asia': [
     'google', 'youtube', 'facebook', 'instagram', 'tiktok',
-    'chatgpt', 'wikipedia', 'x', 'whatsapp', 'reddit',
-    'netflix', 'amazon', 'microsoft', 'discord', 'spotify',
-    'linkedin', 'pinterest', 'ebay', 'twitch', 'bing',
+    'chatgpt', 'deepseek', 'x', 'whatsapp', 'reddit',
+    'netflix', 'amazon', 'temu', 'shein', 'spotify',
+    'linkedin', 'microsoft', 'notion', 'twitch', 'bing',
   ],
-  // Eastern Europe: close to global but no Baidu; Yandex only relevant in Russia/CIS
+  // Eastern Europe: close to global mix with DeepSeek & Temu growth
   'eastern-europe': [
     'google', 'youtube', 'facebook', 'instagram', 'chatgpt',
-    'wikipedia', 'amazon', 'x', 'netflix', 'microsoft',
-    'linkedin', 'discord', 'spotify', 'reddit', 'twitch',
-    'github', 'ebay', 'bing', 'tiktok', 'pinterest',
+    'wikipedia', 'amazon', 'temu', 'netflix', 'microsoft',
+    'linkedin', 'discord', 'spotify', 'deepseek', 'twitch',
+    'github', 'shein', 'bing', 'tiktok', 'notion',
   ],
   // Russia & CIS: Yandex and VK ARE relevant here
   'russia-cis': [
     'google', 'yandex', 'youtube', 'vk', 'facebook',
     'instagram', 'x', 'chatgpt', 'wikipedia', 'tiktok',
     'netflix', 'microsoft', 'discord', 'reddit', 'spotify',
-    'linkedin', 'twitch', 'github', 'bing', 'amazon',
+    'deepseek', 'twitch', 'github', 'bing', 'telegram',
   ],
-  // East Asia (non-China): YouTube, LINE, KakaoTalk, Naver - no Baidu
+  // East Asia (non-China): YouTube, LINE, KakaoTalk, Naver, DeepSeek & Notion
   'east-asia': [
     'google', 'youtube', 'instagram', 'facebook', 'tiktok',
-    'x', 'chatgpt', 'wikipedia', 'netflix', 'naver',
-    'microsoft', 'discord', 'reddit', 'spotify', 'linkedin',
-    'twitch', 'github', 'amazon', 'bing', 'bilibili',
+    'x', 'chatgpt', 'deepseek', 'netflix', 'naver',
+    'microsoft', 'discord', 'notion', 'spotify', 'linkedin',
+    'twitch', 'github', 'amazon', 'temu', 'bilibili',
   ],
-  // Latin America: WhatsApp primary, TikTok/Instagram high, MercadoLibre e-commerce
+  // Latin America: WhatsApp primary, TikTok/Instagram high, Temu/Shein surge
   'latin-america': [
     'google', 'youtube', 'facebook', 'instagram', 'tiktok',
     'chatgpt', 'x', 'wikipedia', 'whatsapp', 'reddit',
-    'amazon', 'netflix', 'microsoft', 'linkedin', 'discord',
-    'spotify', 'pinterest', 'twitch', 'ebay', 'bing',
+    'amazon', 'netflix', 'temu', 'shein', 'discord',
+    'spotify', 'microsoft', 'twitch', 'deepseek', 'bing',
   ],
-  // Western Europe / Oceania / North America: global mix, no Baidu/Yandex
+  // Western Europe / Oceania / North America: global mix with Temu, Notion, Cloudflare, DeepSeek
   'western-world': [
     'google', 'youtube', 'facebook', 'instagram', 'chatgpt',
     'wikipedia', 'amazon', 'reddit', 'x', 'netflix',
-    'microsoft', 'linkedin', 'discord', 'spotify', 'twitch',
-    'github', 'ebay', 'bing', 'tiktok', 'pinterest',
+    'microsoft', 'temu', 'discord', 'spotify', 'cloudflare',
+    'github', 'notion', 'deepseek', 'tiktok', 'shein',
   ],
 };
 

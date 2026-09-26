@@ -107,6 +107,17 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Reset any local theme caching back to native dark mode */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                localStorage.removeItem('pulse-theme');
+                document.documentElement.removeAttribute('data-theme');
+              } catch (e) {}
+            `,
+          }}
+        />
         {/* OmniRoute Tag - AI Crawler Detection (native tag required for server-rendered HTML detection) */}
         <script async src="https://omni-route-rho.vercel.app/api/v1/track.js?site=www.pulstraffic.com"></script>
       </head>
