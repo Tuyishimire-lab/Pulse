@@ -7,6 +7,9 @@ import FaviconImage from './ui/FaviconImage';
 import VisitsCounter from './ui/VisitsCounter';
 import { getMostSearchedTopics } from '../../utils/searchTopics';
 import { RadarStatsData } from '../../types/radar';
+import WebVitalsPanel from './ui/WebVitalsPanel';
+import WikiInterestPanel from './ui/WikiInterestPanel';
+import SecurityPanel from './ui/SecurityPanel';
 
 interface SiteDetailModalProps {
   site: SiteConfig;
@@ -294,6 +297,20 @@ export default function SiteDetailModal({
     return raw.length > 0 ? raw : getMostSearchedTopics({ name: site.name, category: site.category });
   }, [details.keywords, site.name, site.category]);
 
+  const [enrichment, setEnrichment] = useState<{
+    webVitals: Record<string, unknown> | null;
+    wikiViews: Record<string, unknown> | null;
+    security: Record<string, unknown> | null;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!site?.id) return;
+    fetch(`/api/site-enrichment?id=${site.id}`)
+      .then((r) => r.json())
+      .then(setEnrichment)
+      .catch(() => {});
+  }, [site?.id]);
+
   return (
     <div
       className="modal-overlay animate-fadeIn"
@@ -500,6 +517,17 @@ export default function SiteDetailModal({
               ))}
             </div>
           </div>
+
+          {/* -- Enrichment Panels (CrUX + Wikipedia + Security) -- */}
+          {enrichment?.webVitals && (
+            <WebVitalsPanel data={enrichment.webVitals as any} color={site.color} />
+          )}
+          {enrichment?.wikiViews && (
+            <WikiInterestPanel data={enrichment.wikiViews as any} color={site.color} />
+          )}
+          {enrichment?.security && (
+            <SecurityPanel data={enrichment.security as any} />
+          )}
 
           {/* Market & Traffic Intelligence Card */}
           <div 
