@@ -82,9 +82,9 @@ export default function HomeClient({
   const [showCompareModal, setShowCompareModal] = useState<boolean>(false);
 
   // ── Marquee - seed with server-fetched data ───────────────────────────────
-  const [marqueeItems, setMarqueeItems] = useState<
-    { text: string; type: string; asns?: number[]; locations?: string[] }[]
-  >(initialMarquee.length > 0 ? initialMarquee : STATIC_TRAFFIC_FACTS);
+  const [marqueeItems, setMarqueeItems] = useState<MarqueeItem[]>(
+    initialMarquee.length > 0 ? initialMarquee : STATIC_TRAFFIC_FACTS
+  );
 
   // ── Legal Modals ──────────────────────────────────────────────────────────
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -122,31 +122,19 @@ export default function HomeClient({
   };
 
   // ── Incident detection from marquee ──────────────────────────────────────
+  // ONLY flag sites whose own Statuspage API confirms a live incident.
+  // We no longer keyword-match from HN/Reddit/CF Radar — those sources are
+  // great for the scrolling news ticker but unreliable for per-site badges
+  // (a week-old Reddit post mentioning "OpenAI" would create a false positive).
   const sitesWithIncidents = useMemo(() => {
     const incidentIds = new Set<string>();
-    // Always use live Supabase data - never fall back to the static file.
-    // If dbSites is empty (Supabase not yet loaded) we simply detect no incidents
-    // rather than risk serving stale ASN/name data from the static file.
-    const allBaseSites = [...dbSites, ...customSites];
-
     marqueeItems.forEach((item) => {
-      if (item.type !== 'outage') return;
-      const itemAsns = item.asns;
-      allBaseSites.forEach((site) => {
-        const hasAsnMatch =
-          site.asn &&
-          Array.isArray(itemAsns) &&
-          site.asn.some((asn) => itemAsns.includes(asn));
-        const nameRegex = new RegExp(`\\b${site.name}\\b`, 'i');
-        const idRegex = new RegExp(`\\b${site.id}\\b`, 'i');
-        const hasKeywordMatch = nameRegex.test(item.text) || idRegex.test(item.text);
-        if (hasAsnMatch || hasKeywordMatch) {
-          incidentIds.add(site.id);
-        }
-      });
+      if (item.confirmedSiteId) {
+        incidentIds.add(item.confirmedSiteId);
+      }
     });
     return incidentIds;
-  }, [marqueeItems, dbSites, customSites]);
+  }, [marqueeItems]);
 
   // ── Load persisted state on mount ─────────────────────────────────────────
   useEffect(() => {

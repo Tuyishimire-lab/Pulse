@@ -85,6 +85,26 @@ const STATUS_SITES = [
   { name: 'Atlassian',  url: 'https://jira-software.status.atlassian.com/api/v2/status.json' },
 ];
 
+// Maps Statuspage display names to our internal site IDs.
+// ONLY sites in this map can receive the OUTAGE badge on their card.
+const STATUSPAGE_TO_SITE_ID: Record<string, string> = {
+  'GitHub':     'github',
+  'OpenAI':     'openai',
+  'Reddit':     'reddit',
+  'Discord':    'discord',
+  'Slack':      'slack',
+  'Zoom':       'zoom',
+  'Cloudflare': 'cloudflare',
+  'Vercel':     'vercel',
+  'Twitch':     'twitch',
+  'Shopify':    'shopify',
+  'Stripe':     'stripe',
+  'Notion':     'notion',
+  'Figma':      'figma',
+  'Linear':     'linear',
+  'Atlassian':  'atlassian',
+};
+
 const IMPACT_LABELS: Record<string, string> = {
   critical: 'CRITICAL',
   major:    'MAJOR',
@@ -97,7 +117,7 @@ export async function GET(req: Request) {
   const location = rawLocation.toLowerCase() === 'global' ? 'global' : rawLocation.toUpperCase();
   const hasLocation = location !== 'global';
 
-  const feedItems: { text: string; type: string; asns?: number[]; locations?: string[] }[] = [];
+  const feedItems: { text: string; type: string; asns?: number[]; locations?: string[]; confirmedSiteId?: string }[] = [];
   const token = process.env.CLOUDFLARE_API_TOKEN;
 
   // ── 1. Cloudflare Radar: real network outage annotations ─────────────────
@@ -213,6 +233,7 @@ export async function GET(req: Request) {
       feedItems.push({
         text,
         type: indicator === 'critical' || indicator === 'major' ? 'outage' : 'surge',
+        confirmedSiteId: STATUSPAGE_TO_SITE_ID[site.name],
       });
     });
   } catch (e) {

@@ -53,4 +53,5 @@ export interface MarqueeItem {
   type: string;
   asns?: number[];
   locations?: string[];
+  confirmedSiteId?: string;  // set only when the platform's own Statuspage API confirms a live incident
 }
