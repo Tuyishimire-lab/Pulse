@@ -10,6 +10,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { getSites } from '../../../lib/getSites';
+import { SITE_COUNT } from '../../data/sites';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -526,7 +527,7 @@ function generateDynamicStories(
 
     stories.push({
       title: `Global internet traffic ${direction} ${Math.abs(parseFloat(changePercent))}% this week`,
-      summary: `Combined traffic across all 100 monitored sites is ${direction} from last week, with a current aggregate rate of ${currentSnapshot.total_rate.toLocaleString()} requests per second.`,
+      summary: `Combined traffic across all ${SITE_COUNT} monitored sites is ${direction} from last week, with a current aggregate rate of ${currentSnapshot.total_rate.toLocaleString()} requests per second.`,
       tag: 'Traffic',
       tagColor: '#82c8e5',
     });

@@ -39,7 +39,7 @@ export default function Footer() {
               <span className="footer-logo-text">Pulse</span>
             </Link>
             <p className="footer-tagline">
-              The transparent, model-driven index of global web traffic. Visualizing the top 100+ most visited websites with statistical estimates.
+              The transparent, model-driven index of global web traffic. Visualizing the top 137+ most visited websites with statistical estimates.
             </p>
             <p className="footer-source">
               Powered by the Pulse Traffic Index (PTI): Cloudflare Radar DNS telemetry, Tranco rankings, Open PageRank, and Groq AI momentum signals.

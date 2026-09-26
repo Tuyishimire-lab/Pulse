@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { generateWeeklyReport, parsReportSlug } from '../data/reportGenerator';
+import { SITE_COUNT } from '../../data/sites';
 
 export const runtime = 'edge';
 export const alt = 'Pulse Weekly Internet Traffic Intelligence Report';
@@ -130,7 +131,7 @@ export default async function Image({ params }: Props) {
               {headline}
             </h1>
             <p style={{ fontSize: '18px', color: '#94a3b8', margin: 0 }}>
-              Global outage analysis, rank volatility, and traffic trends across top 100 domains
+              Global outage analysis, rank volatility, and traffic trends across top {SITE_COUNT} domains
             </p>
           </div>
 

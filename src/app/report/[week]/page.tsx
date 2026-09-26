@@ -6,6 +6,7 @@ import {
   parsReportSlug,
 } from '../data/reportGenerator';
 import ReportPageClient from './ReportPageClient';
+import { SITE_COUNT } from '../../data/sites';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const report = await generateWeeklyReport(slug);
   const title = `${report.headline} | Pulse`;
-  const description = `${report.subheadline}. Track internet traffic trends, outage summaries, AI platform growth, and the top 100 most visited websites globally.`;
+  const description = `${report.subheadline}. Track internet traffic trends, outage summaries, AI platform growth, and the top ${SITE_COUNT} most visited websites globally.`;
   const url = `${BASE_URL}/report/${slug}`;
 
   return {

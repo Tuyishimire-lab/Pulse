@@ -297,7 +297,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Query Open PageRank API for all domains in batches of 100 (covering all 136 domains)
+    // 3. Query Open PageRank API for all domains in batches of 100 (covering all cataloged domains)
     const domainsList = sites.map((s) => parseDomain(s.url));
     const rankMap: Record<string, { pageRank: number; globalRank: number }> = {};
     const OPR_CHUNK_SIZE = 100;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { WeeklyReport } from '../data/reportGenerator';
 import NavHeader from '../../components/NavHeader';
+import { SITE_COUNT } from '../../data/sites';
 
 interface Props {
   report: WeeklyReport;
@@ -223,14 +224,14 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
               </summary>
               <p className="text-xs text-[#8ea1b4] leading-relaxed mt-2 pl-3 border-l border-white/10">
                 Score = <strong className="text-white">100 - (8 × outage count)</strong>, minimum 40.
-                An outage is any tracked site returning sustained 5xx errors during the week. Baseline tracks the 8-week rolling mean across all 100 tracked sites.
+                An outage is any tracked site returning sustained 5xx errors during the week. Baseline tracks the 8-week rolling mean across all {SITE_COUNT} tracked sites.
               </p>
             </details>
             <div className="mt-3">
               <span className="text-xs text-[#8ea1b4]">
                 Combined rate:{' '}
                 <strong className="text-white">{report.totalTopSitesVisitsPerSec.toLocaleString()} req/s</strong>
-                {' '}across all 100 tracked sites.
+                {' '}across all {SITE_COUNT} tracked sites.
               </span>
             </div>
           </div>

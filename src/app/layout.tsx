@@ -26,7 +26,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.pulstraffic.com"),
   title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
-  description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates, monthly visits, and rankings for 100+ top websites worldwide, powered by the Pulse Traffic Index (PTI).",
+  description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates, monthly visits, and rankings for 137+ top websites worldwide, powered by the Pulse Traffic Index (PTI).",
   applicationName: "Pulse",
   authors: [{ name: "Pulse", url: "https://www.pulstraffic.com" }],
   creator: "Pulse",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
-    description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates and monthly visits for 100+ top websites worldwide.",
+    description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates and monthly visits for 137+ top websites worldwide.",
     url: "https://www.pulstraffic.com",
     siteName: "Pulse",
     images: [

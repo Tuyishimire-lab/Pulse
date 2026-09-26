@@ -50,11 +50,11 @@ export default function MethodologyPage() {
               </div>
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
                 <div className="text-xs font-bold text-[#82c8e5] uppercase mb-1">Signal 2 · Open PageRank</div>
-                <div className="text-xs text-white/80">Logarithmic backlink authority score (0–10) validating structural web domain presence.</div>
+                <div className="text-xs text-white/80">Logarithmic backlink authority score (0-10) validating structural web domain presence.</div>
               </div>
               <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
                 <div className="text-xs font-bold text-[#82c8e5] uppercase mb-1">Signal 3 · Groq AI Momentum</div>
-                <div className="text-xs text-white/80">Llama 3.3 70B AI contextual momentum classification (Surging, Growing, Stable, Cooling) across all 100+ domains.</div>
+                <div className="text-xs text-white/80">Llama 3.3 70B AI contextual momentum classification (Surging, Growing, Stable, Cooling) across all 137+ domains.</div>
               </div>
             </div>
           </section>
@@ -96,7 +96,7 @@ export default function MethodologyPage() {
               </div>
             </div>
             <p className="text-xs text-[#94a3b8] pt-1">
-              Overall aggregate mean error margin across all 100 monitored domains sits at approximately 34.6%, directly in line with commercial market intelligence standards.
+              Overall aggregate mean error margin across all 137 monitored domains sits at approximately 34.6%, directly in line with commercial market intelligence standards.
             </p>
           </section>
 

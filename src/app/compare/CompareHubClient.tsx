@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { SiteConfig, CATEGORIES } from '../data/sites';
+import { SiteConfig, CATEGORIES, SITE_COUNT } from '../data/sites';
 import { ComparePair } from './data/pairs';
 import NavHeader from '../components/NavHeader';
 import { CURRENT_YEAR } from '../../lib/currentYear';
@@ -165,7 +165,7 @@ export default function CompareHubClient({ sites, pairs }: Props) {
           <div className="flex gap-3 items-stretch">
             <div className="w-0.5 rounded-full bg-gradient-to-b from-[#82c8e5]/60 to-transparent flex-shrink-0" />
             <p className="text-sm sm:text-base text-[#94a3b8] leading-relaxed">
-              Select any two platforms from our top 100 directory to compare monthly traffic, global rank, and visitor velocity side-by-side.
+              Select any two platforms from our top {SITE_COUNT} directory to compare monthly traffic, global rank, and visitor velocity side-by-side.
             </p>
           </div>
         </header>

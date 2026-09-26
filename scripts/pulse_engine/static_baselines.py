@@ -134,6 +134,32 @@ STATIC_BASELINES: dict[str, int] = {
     "suno":             55_000_000,   # #109 Suno AI Music
     "cursor":           48_000_000,   # #110 Cursor AI IDE
     "supabase":         42_000_000,   # #111 Supabase Cloud
+    "deepseek":        185_000_000,   # #112 DeepSeek
+    "temu":            620_000_000,   # #113 Temu
+    "characterai":     220_000_000,   # #114 Character.ai
+    "notion":          180_000_000,   # #115 Notion
+    "cloudflare":      165_000_000,   # #116 Cloudflare
+    "shein":           290_000_000,   # #117 Shein
+    "elevenlabs":       42_000_000,   # #118 ElevenLabs
+    "poe":              65_000_000,   # #119 Poe
+    "linear":           28_000_000,   # #120 Linear
+    "replit":           45_000_000,   # #121 Replit
+    "mistral":          35_000_000,   # #122 Mistral AI
+    "chess":           250_000_000,   # #123 Chess.com
+    "crunchyroll":     140_000_000,   # #124 Crunchyroll
+    "epicgames":       110_000_000,   # #125 Epic Games
+    "civitai":          52_000_000,   # #126 Civitai
+    "postman":          38_000_000,   # #127 Postman
+    "runwayml":         30_000_000,   # #128 Runway
+    "revolut":          40_000_000,   # #129 Revolut
+    "coinmarketcap":   120_000_000,   # #130 CoinMarketCap
+    "wise":             55_000_000,   # #131 Wise
+    "bybit":            60_000_000,   # #132 Bybit
+    "letterboxd":       45_000_000,   # #133 Letterboxd
+    "digitalocean":     32_000_000,   # #134 DigitalOcean
+    "sentry":           25_000_000,   # #135 Sentry
+    "luma":             22_000_000,   # #136 Luma AI
+    "jira":             68_000_000,   # #137 Jira
 }
 
 # Seconds in a calendar month (30.4167 days)
@@ -284,5 +310,31 @@ SITE_META: dict[str, dict] = {
     "suno":          {"name": "Suno",             "category": "ai",            "color": "#ff3366", "logo": "Su"},
     "cursor":        {"name": "Cursor",           "category": "dev",           "color": "#00f0ff", "logo": "Cr"},
     "supabase":      {"name": "Supabase",         "category": "dev",           "color": "#3ecf8e", "logo": "Sb"},
+    "deepseek":      {"name": "DeepSeek",         "category": "ai",            "color": "#1e88e5", "logo": "DS"},
+    "temu":          {"name": "Temu",             "category": "ecommerce",     "color": "#ff6600", "logo": "Tm"},
+    "characterai":   {"name": "Character.ai",     "category": "ai",            "color": "#6366f1", "logo": "CA"},
+    "notion":        {"name": "Notion",           "category": "dev",           "color": "#ffffff", "logo": "No"},
+    "cloudflare":    {"name": "Cloudflare",       "category": "dev",           "color": "#f38020", "logo": "CF"},
+    "shein":         {"name": "Shein",            "category": "ecommerce",     "color": "#ffffff", "logo": "Sh"},
+    "elevenlabs":    {"name": "ElevenLabs",       "category": "ai",            "color": "#ffffff", "logo": "11"},
+    "poe":           {"name": "Poe",              "category": "ai",            "color": "#6d28d9", "logo": "Po"},
+    "linear":        {"name": "Linear",           "category": "dev",           "color": "#5e6ad2", "logo": "Ln"},
+    "replit":        {"name": "Replit",           "category": "dev",           "color": "#f26207", "logo": "Rp"},
+    "mistral":       {"name": "Mistral AI",       "category": "ai",            "color": "#fd531e", "logo": "Ms"},
+    "chess":         {"name": "Chess.com",        "category": "entertainment", "color": "#81b64c", "logo": "Ch"},
+    "crunchyroll":   {"name": "Crunchyroll",      "category": "entertainment", "color": "#f47521", "logo": "Cr"},
+    "epicgames":     {"name": "Epic Games",       "category": "entertainment", "color": "#ffffff", "logo": "EG"},
+    "civitai":       {"name": "Civitai",          "category": "ai",            "color": "#2563eb", "logo": "Cv"},
+    "postman":       {"name": "Postman",          "category": "dev",           "color": "#ff6c37", "logo": "Pm"},
+    "runwayml":      {"name": "Runway",           "category": "ai",            "color": "#00ff87", "logo": "Rw"},
+    "revolut":       {"name": "Revolut",          "category": "finance",       "color": "#0075eb", "logo": "Rv"},
+    "coinmarketcap": {"name": "CoinMarketCap",    "category": "finance",       "color": "#3861fb", "logo": "CM"},
+    "wise":          {"name": "Wise",             "category": "finance",       "color": "#9fe870", "logo": "Ws"},
+    "bybit":         {"name": "Bybit",            "category": "finance",       "color": "#f7a600", "logo": "By"},
+    "letterboxd":    {"name": "Letterboxd",       "category": "entertainment", "color": "#00e054", "logo": "Lb"},
+    "digitalocean":  {"name": "DigitalOcean",     "category": "dev",           "color": "#0080ff", "logo": "DO"},
+    "sentry":        {"name": "Sentry",           "category": "dev",           "color": "#362d59", "logo": "Sn"},
+    "luma":          {"name": "Luma AI",          "category": "ai",            "color": "#ff3b30", "logo": "Lu"},
+    "jira":          {"name": "Jira",             "category": "dev",           "color": "#0052cc", "logo": "Jr"},
 }
 
