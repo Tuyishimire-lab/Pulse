@@ -96,7 +96,7 @@ export default function MethodologyPage() {
               </div>
             </div>
             <p className="text-xs text-[#94a3b8] pt-1">
-              Overall aggregate mean error margin across all 137 monitored domains sits at approximately 34.6%, directly in line with commercial market intelligence standards.
+              Top global web properties operate within high-confidence bounds (±8% to 12%), while mid-tier and long-tail growth sites scale predictably to ±18% to 35%, directly in line with commercial market intelligence standards.
             </p>
           </section>
 
