@@ -57,7 +57,7 @@ export default function SitePageClient({ id }: { id: string }) {
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
   const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
 
-  // Enrichment data (CrUX, Wikipedia, Security) — fetched from cached Supabase tables
+  // Enrichment data (CrUX, Wikipedia, Security) - fetched from cached Supabase tables
   const [enrichment, setEnrichment] = useState<{
     webVitals: Record<string, unknown> | null;
     wikiViews: Record<string, unknown> | null;
@@ -69,7 +69,7 @@ export default function SitePageClient({ id }: { id: string }) {
     fetch(`/api/site-enrichment?id=${site.id}`)
       .then((r) => r.json())
       .then(setEnrichment)
-      .catch(() => {}); // graceful — panels simply don't render
+      .catch(() => {}); // graceful - panels simply don't render
   }, [site]);
 
 
@@ -661,7 +661,7 @@ export default function SitePageClient({ id }: { id: string }) {
               </div>
             )}
 
-            {/* ── Enrichment Panels (CrUX + Wikipedia + Security) ──────── */}
+            {/* -- Enrichment Panels (CrUX + Wikipedia + Security) -- */}
             {enrichment?.webVitals && (
               <WebVitalsPanel data={enrichment.webVitals as any} color={site.color} />
             )}
@@ -723,7 +723,7 @@ export default function SitePageClient({ id }: { id: string }) {
               </p>
             </div>
             <SocialShareBar
-              title={`📈 ${site.name} Real-Time Traffic & Analytics`}
+              title={`${site.name} Real-Time Traffic & Analytics`}
               url={`https://www.pulstraffic.com/sites/${site.id}`}
               summary={`Ranked #${liveRank ?? site.rank} globally with ${liveBaseline ?? site.baseline} visits/mo and ${site.rate.toLocaleString()} req/s.`}
               hashtags={['WebTraffic', site.name.replace(/[^a-zA-Z0-9]/g, ''), 'PulseAnalytics']}

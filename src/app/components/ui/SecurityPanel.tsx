@@ -29,7 +29,7 @@ const GRADE_COLORS: Record<string, string> = {
 };
 
 function GradeItem({ icon, label, grade, detail }: {
-  icon: string;
+  icon?: React.ReactNode;
   label: string;
   grade: string | null;
   detail?: string;
@@ -46,8 +46,9 @@ function GradeItem({ icon, label, grade, detail }: {
       border: '1px solid rgba(255,255,255,0.05)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          {icon} {label}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {icon}
+          <span>{label}</span>
         </span>
         <span style={{
           fontSize: 16,
@@ -116,8 +117,27 @@ export default function SecurityPanel({ data }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: 12 }}>
-        <GradeItem icon="🔒" label="SSL/TLS" grade={data.ssl_grade} detail={sslDetail} />
-        <GradeItem icon="🛡️" label="Headers" grade={data.obs_grade} detail={obsDetail} />
+        <GradeItem
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          }
+          label="SSL/TLS"
+          grade={data.ssl_grade}
+          detail={sslDetail}
+        />
+        <GradeItem
+          icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          }
+          label="Headers"
+          grade={data.obs_grade}
+          detail={obsDetail}
+        />
       </div>
     </div>
   );

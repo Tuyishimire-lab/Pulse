@@ -1,14 +1,14 @@
 """
-enrichment.py — Site Enrichment Pipeline v1.0
+enrichment.py - Site Enrichment Pipeline v1.1
 
-Fetches supplementary data for all tracked sites:
+Fetches supplementary data for ALL tracked sites (from Supabase):
   1. Google CrUX (Core Web Vitals)
   2. Wikipedia Pageviews (brand interest proxy)
   3. SSL Labs + Mozilla Observatory (Security grading)
 
 Designed to run daily after run_engine.py.
-Each enrichment is independent and fault-tolerant —
-a failure in one does not block the others.
+Each enrichment is independent and fault-tolerant.
+A failure in one does not block the others.
 """
 
 import os
@@ -25,12 +25,11 @@ root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
 from scripts.pulse_engine.config import SUPABASE_URL, SUPABASE_KEY
-from scripts.pulse_engine.static_baselines import STATIC_BASELINES, SITE_META
 from supabase import create_client, Client
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 # Configuration
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 CRUX_API_KEY = os.getenv("GOOGLE_CRUX_API_KEY", "")
 CRUX_ENDPOINT = "https://chromeuxreport.googleapis.com/v1/records:queryRecord"
 
@@ -152,6 +151,29 @@ def get_origin(site_id: str) -> str:
         "suno": "https://suno.com",
         "cursor": "https://www.cursor.com",
         "supabase": "https://supabase.com",
+        "deepseek": "https://www.deepseek.com",
+        "temu": "https://www.temu.com",
+        "characterai": "https://character.ai",
+        "shein": "https://www.shein.com",
+        "elevenlabs": "https://elevenlabs.io",
+        "poe": "https://poe.com",
+        "replit": "https://replit.com",
+        "mistral": "https://mistral.ai",
+        "chess": "https://www.chess.com",
+        "crunchyroll": "https://www.crunchyroll.com",
+        "epicgames": "https://www.epicgames.com",
+        "civitai": "https://civitai.com",
+        "postman": "https://www.postman.com",
+        "runwayml": "https://runwayml.com",
+        "revolut": "https://www.revolut.com",
+        "coinmarketcap": "https://coinmarketcap.com",
+        "wise": "https://wise.com",
+        "bybit": "https://www.bybit.com",
+        "letterboxd": "https://letterboxd.com",
+        "digitalocean": "https://www.digitalocean.com",
+        "sentry": "https://sentry.io",
+        "luma": "https://lumalabs.ai",
+        "jira": "https://www.atlassian.com",
     }
     return ORIGIN_MAP.get(site_id, f"https://{site_id}.com")
 
@@ -185,12 +207,45 @@ WIKI_ARTICLE_MAP = {
     "cloudflare": "Cloudflare", "hulu": "Hulu", "disneyplus": "Disney%2B",
     "perplexity": "Perplexity_AI", "cursor": "Cursor_(text_editor)",
     "supabase": "Supabase", "substack": "Substack",
+    "deepseek": "DeepSeek", "temu": "Temu",
+    "characterai": "Character.ai", "shein": "Shein",
+    "elevenlabs": "ElevenLabs", "poe": "Poe_(chatbot)",
+    "replit": "Replit", "mistral": "Mistral_AI",
+    "chess": "Chess.com", "crunchyroll": "Crunchyroll",
+    "epicgames": "Epic_Games", "postman": "Postman_(software)",
+    "revolut": "Revolut", "coinmarketcap": "CoinMarketCap",
+    "wise": "Wise_(company)", "bybit": "Bybit",
+    "letterboxd": "Letterboxd", "digitalocean": "DigitalOcean",
+    "sentry": "Sentry_(software)", "jira": "Jira_(software)",
+    "accuweather": "AccuWeather", "aliexpress": "AliExpress",
+    "bestbuy": "Best_Buy", "booking": "Booking.com",
+    "bsky": "Bluesky_(social_network)", "civitai": "Civitai",
+    "craigslist": "Craigslist", "dailymail": "Daily_Mail",
+    "deviantart": "DeviantArt", "fandom": "Fandom_(website)",
+    "forbes": "Forbes", "globo": "TV_Globo",
+    "ign": "IGN_(website)", "ikea": "IKEA",
+    "imgur": "Imgur", "indeed": "Indeed",
+    "investing": "Investing.com", "kick": "Kick_(service)",
+    "linear": "Linear_(company)", "luma": "Luma_AI",
+    "mailru": "Mail.ru", "max": "Max_(streaming_service)",
+    "merriamwebster": "Merriam-Webster", "midjourney": "Midjourney",
+    "naver": "Naver_(corporation)", "netlify": "Netlify",
+    "npm": "Npm", "office": "Microsoft_Office",
+    "patreon": "Patreon", "reuters": "Reuters",
+    "runwayml": "Runway_(company)", "salesforce": "Salesforce",
+    "soundcloud": "SoundCloud", "speedtest": "Speedtest.net",
+    "stackexchange": "Stack_Exchange", "suno": "Suno_AI",
+    "target": "Target_Corporation", "techcrunch": "TechCrunch",
+    "theguardian": "The_Guardian", "threads": "Threads_(social_network)",
+    "tradingview": "TradingView", "vimeo": "Vimeo",
+    "weather": "The_Weather_Channel", "wikihow": "WikiHow",
+    "wired": "Wired_(magazine)", "wunderground": "Weather_Underground_(weather_service)",
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 1. Google CrUX — Core Web Vitals
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# 1. Google CrUX - Core Web Vitals
+# ---------------------------------------------------------------------------
 def compute_cwv_grade(lcp_rating: str, inp_rating: str, cls_rating: str) -> str:
     """
     Compute a letter grade from CrUX metric ratings.
@@ -299,17 +354,17 @@ def fetch_crux_for_site(client: httpx.Client, origin: str) -> dict | None:
 
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 429:
-            print(f"  ⚠ CrUX rate limited, pausing 30s...")
+            print(f"  [WARN] CrUX rate limited, pausing 30s...")
             time.sleep(30)
         return None
     except Exception as e:
-        print(f"  ✗ CrUX error: {e}")
+        print(f"  [FAIL] CrUX error: {e}")
         return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 # 2. Wikipedia Pageviews
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 def fetch_wiki_views(client: httpx.Client, article: str) -> dict | None:
     """Fetch Wikipedia daily pageviews for last 60 days."""
     try:
@@ -352,13 +407,13 @@ def fetch_wiki_views(client: httpx.Client, article: str) -> dict | None:
         }
 
     except Exception as e:
-        print(f"  ✗ Wiki error for {article}: {e}")
+        print(f"  [FAIL] Wiki error for {article}: {e}")
         return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 3. Security — SSL Labs + Mozilla Observatory
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# 3. Security - SSL Labs + Mozilla Observatory
+# ---------------------------------------------------------------------------
 def fetch_ssl_grade(client: httpx.Client, domain: str) -> dict | None:
     """
     Fetch SSL grade from SSL Labs using cached results only.
@@ -386,13 +441,13 @@ def fetch_ssl_grade(client: httpx.Client, domain: str) -> dict | None:
                         if ep.get("details", {}).get("protocols") else "TLS",
                 }
         elif status == "DNS":
-            # Not in cache — don't wait, skip
+            # Not in cache -- don't wait, skip
             return None
 
         return None
 
     except Exception as e:
-        print(f"  ✗ SSL Labs error for {domain}: {e}")
+        print(f"  [FAIL] SSL Labs error for {domain}: {e}")
         return None
 
 
@@ -423,7 +478,7 @@ def fetch_observatory(client: httpx.Client, domain: str) -> dict | None:
         return None
 
     except Exception as e:
-        print(f"  ✗ Observatory error for {domain}: {e}")
+        print(f"  [FAIL] Observatory error for {domain}: {e}")
         return None
 
 
@@ -453,20 +508,26 @@ def compute_security_grade(ssl_grade: str | None, obs_grade: str | None) -> str:
     return "F"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 # Main Pipeline
-# ─────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 def run_enrichment():
     print("=" * 70)
-    print(f"  Site Enrichment Pipeline v1.0 — {datetime.now(timezone.utc).isoformat()}")
+    print(f"  Site Enrichment Pipeline v1.1 -- {datetime.now(timezone.utc).isoformat()}")
     print("=" * 70)
 
     if not SUPABASE_URL or not SUPABASE_KEY:
-        print("✗ Missing Supabase credentials. Aborting.")
+        print("[ERROR] Missing Supabase credentials. Aborting.")
         return
 
     sb: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    site_ids = list(STATIC_BASELINES.keys())
+
+    # Fetch ALL site IDs from Supabase (not just STATIC_BASELINES)
+    sites_res = sb.table("sites").select("id").execute()
+    site_ids = [row["id"] for row in (sites_res.data or [])]
+    if not site_ids:
+        print("[WARN] No sites found in Supabase. Aborting.")
+        return
     print(f"\n  Processing {len(site_ids)} sites...\n")
 
     crux_results = {}
@@ -478,9 +539,9 @@ def run_enrichment():
         follow_redirects=True,
     ) as client:
 
-        # ── Pass 1: CrUX ────────────────────────────────────────────────────
+        # -- Pass 1: CrUX --
         if CRUX_API_KEY:
-            print("── 1/3: Google CrUX (Core Web Vitals) ──")
+            print("-- 1/3: Google CrUX (Core Web Vitals) --")
             batch_count = 0
             for i, sid in enumerate(site_ids):
                 origin = get_origin(sid)
@@ -489,13 +550,13 @@ def run_enrichment():
                     crux_results[sid] = result
                     grade = result.get("cwv_grade", "?")
                     lcp = result.get("lcp_p75", "?")
-                    print(f"  ✓ {sid:20s}  Grade: {grade}  LCP: {lcp}ms")
+                    print(f"  [OK] {sid:20s}  Grade: {grade}  LCP: {lcp}ms")
                 else:
-                    print(f"  · {sid:20s}  (no CrUX data)")
+                    print(f"  [--] {sid:20s}  (no CrUX data)")
 
                 batch_count += 1
                 if batch_count >= 50:
-                    print(f"    … pausing 20s (rate limit)")
+                    print(f"    ... pausing 20s (rate limit)")
                     time.sleep(20)
                     batch_count = 0
                 else:
@@ -503,10 +564,10 @@ def run_enrichment():
 
             print(f"  CrUX: {len(crux_results)}/{len(site_ids)} sites have data\n")
         else:
-            print("── 1/3: CrUX SKIPPED (no GOOGLE_CRUX_API_KEY) ──\n")
+            print("-- 1/3: CrUX SKIPPED (no GOOGLE_CRUX_API_KEY) --\n")
 
-        # ── Pass 2: Wikipedia ────────────────────────────────────────────────
-        print("── 2/3: Wikipedia Pageviews ──")
+        # -- Pass 2: Wikipedia --
+        print("-- 2/3: Wikipedia Pageviews --")
         for sid in site_ids:
             article = WIKI_ARTICLE_MAP.get(sid)
             if not article:
@@ -514,15 +575,15 @@ def run_enrichment():
             result = fetch_wiki_views(client, article)
             if result:
                 wiki_results[sid] = {**result, "article_title": article}
-                print(f"  ✓ {sid:20s}  avg: {result['monthly_avg']:,}/day  trend: {result['trend_pct']:+.1f}%")
+                print(f"  [OK] {sid:20s}  avg: {result['monthly_avg']:,}/day  trend: {result['trend_pct']:+.1f}%")
             else:
-                print(f"  · {sid:20s}  (no Wikipedia article)")
+                print(f"  [--] {sid:20s}  (no Wikipedia article)")
             time.sleep(0.1)
 
         print(f"  Wiki: {len(wiki_results)}/{len(site_ids)} sites have data\n")
 
-        # ── Pass 3: Security ─────────────────────────────────────────────────
-        print("── 3/3: Security (SSL Labs + Mozilla Observatory) ──")
+        # -- Pass 3: Security --
+        print("-- 3/3: Security (SSL Labs + Mozilla Observatory) --")
         for sid in site_ids:
             origin = get_origin(sid)
             domain = origin.replace("https://", "").replace("http://", "").rstrip("/")
@@ -543,13 +604,13 @@ def run_enrichment():
                     combined.get("ssl_grade"), combined.get("obs_grade")
                 )
                 security_results[sid] = combined
-                print(f"  ✓ {sid:20s}  SSL: {combined.get('ssl_grade', '?')}  Obs: {combined.get('obs_grade', '?')}  Combined: {combined['security_grade']}")
+                print(f"  [OK] {sid:20s}  SSL: {combined.get('ssl_grade', '?')}  Obs: {combined.get('obs_grade', '?')}  Combined: {combined['security_grade']}")
             else:
-                print(f"  · {sid:20s}  (no security data)")
+                print(f"  [--] {sid:20s}  (no security data)")
 
         print(f"  Security: {len(security_results)}/{len(site_ids)} sites have data\n")
 
-    # ── Write to Supabase ────────────────────────────────────────────────────
+    # -- Write to Supabase --
     now = datetime.now(timezone.utc).isoformat()
 
     # CrUX upserts
@@ -571,7 +632,7 @@ def run_enrichment():
             try:
                 sb.table("site_webvitals").upsert(row, on_conflict="site_id").execute()
             except Exception as e:
-                print(f"  ✗ CrUX write failed for {sid}: {e}")
+                print(f"  [FAIL] CrUX write failed for {sid}: {e}")
 
     # Wiki upserts
     if wiki_results:
@@ -588,7 +649,7 @@ def run_enrichment():
             try:
                 sb.table("site_wiki_views").upsert(row, on_conflict="site_id").execute()
             except Exception as e:
-                print(f"  ✗ Wiki write failed for {sid}: {e}")
+                print(f"  [FAIL] Wiki write failed for {sid}: {e}")
 
     # Security upserts
     if security_results:
@@ -606,9 +667,9 @@ def run_enrichment():
             try:
                 sb.table("site_security").upsert(row, on_conflict="site_id").execute()
             except Exception as e:
-                print(f"  ✗ Security write failed for {sid}: {e}")
+                print(f"  [FAIL] Security write failed for {sid}: {e}")
 
-    # ── Summary ──────────────────────────────────────────────────────────────
+    # -- Summary --
     print("\n" + "=" * 70)
     print(f"  Enrichment complete at {datetime.now(timezone.utc).isoformat()}")
     print(f"  CrUX:     {len(crux_results):3d} sites")
@@ -619,3 +680,4 @@ def run_enrichment():
 
 if __name__ == "__main__":
     run_enrichment()
+

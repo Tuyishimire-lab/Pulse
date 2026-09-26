@@ -95,6 +95,18 @@ export default function WebVitalsPanel({ data, color }: Props) {
   const grade = data.cwv_grade || '?';
   const gradeColor = GRADE_COLORS[grade] || '#6366f1';
 
+  const formFactors = React.useMemo<Record<string, Record<string, number>> | null>(() => {
+    if (!data.form_factors) return null;
+    try {
+      const parsed = typeof data.form_factors === 'string'
+        ? JSON.parse(data.form_factors)
+        : data.form_factors;
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }, [data.form_factors]);
+
   return (
     <div style={{
       background: 'rgba(255,255,255,0.02)',
@@ -141,7 +153,7 @@ export default function WebVitalsPanel({ data, color }: Props) {
       <MetricBar label="CLS (Cumulative Layout Shift)" value={data.cls_p75} unit="" rating={data.cls_rating} maxVal={0.5} />
 
       {/* Form factor breakdown */}
-      {data.form_factors && Object.keys(data.form_factors).length > 0 && (
+      {formFactors && Object.keys(formFactors).length > 0 && (
         <div style={{
           display: 'flex',
           gap: 12,
@@ -149,7 +161,7 @@ export default function WebVitalsPanel({ data, color }: Props) {
           paddingTop: 14,
           borderTop: '1px solid rgba(255,255,255,0.05)',
         }}>
-          {Object.entries(data.form_factors).map(([ff, metrics]) => (
+          {Object.entries(formFactors).map(([ff, metrics]) => (
             <div key={ff} style={{
               flex: 1,
               padding: '8px 12px',
@@ -158,7 +170,7 @@ export default function WebVitalsPanel({ data, color }: Props) {
               border: '1px solid rgba(255,255,255,0.05)',
             }}>
               <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {ff === 'phone' ? '📱 Mobile' : '🖥️ Desktop'}
+                {ff === 'phone' ? 'Mobile' : 'Desktop'}
               </span>
               <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
                 {metrics.lcp !== undefined && (

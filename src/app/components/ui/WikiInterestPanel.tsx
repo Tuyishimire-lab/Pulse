@@ -16,12 +16,15 @@ interface Props {
 
 export default function WikiInterestPanel({ data, color }: Props) {
   const views = useMemo(() => {
-    if (!data.daily_views || !Array.isArray(data.daily_views)) return [];
-    // Parse if stored as JSON string
-    const parsed = typeof data.daily_views === 'string'
-      ? JSON.parse(data.daily_views)
-      : data.daily_views;
-    return parsed as { date: string; views: number }[];
+    if (!data.daily_views) return [];
+    try {
+      const parsed = typeof data.daily_views === 'string'
+        ? JSON.parse(data.daily_views)
+        : data.daily_views;
+      return Array.isArray(parsed) ? (parsed as { date: string; views: number }[]) : [];
+    } catch {
+      return [];
+    }
   }, [data.daily_views]);
 
   const sparklinePath = useMemo(() => {
@@ -46,7 +49,6 @@ export default function WikiInterestPanel({ data, color }: Props) {
 
   const trendPct = data.trend_pct ?? 0;
   const trendColor = trendPct >= 0 ? '#22c55e' : '#ef4444';
-  const trendIcon = trendPct >= 0 ? '▲' : '▼';
 
   const avgFormatted = useMemo(() => {
     const avg = data.monthly_avg ?? 0;
@@ -75,7 +77,7 @@ export default function WikiInterestPanel({ data, color }: Props) {
             Public Interest
           </h4>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2, display: 'block' }}>
-            Wikipedia daily pageviews · Last 30 days
+            Wikipedia daily pageviews - Last 30 days
           </span>
         </div>
         <div style={{
@@ -87,8 +89,17 @@ export default function WikiInterestPanel({ data, color }: Props) {
           backgroundColor: `${trendColor}12`,
           border: `1px solid ${trendColor}25`,
         }}>
+          {trendPct >= 0 ? (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={trendColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          ) : (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={trendColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          )}
           <span style={{ fontSize: 11, color: trendColor, fontWeight: 700 }}>
-            {trendIcon} {Math.abs(trendPct).toFixed(1)}%
+            {Math.abs(trendPct).toFixed(1)}%
           </span>
         </div>
       </div>
@@ -123,6 +134,9 @@ export default function WikiInterestPanel({ data, color }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
             fontSize: 10,
             color: 'rgba(255,255,255,0.3)',
             textDecoration: 'none',
@@ -134,7 +148,11 @@ export default function WikiInterestPanel({ data, color }: Props) {
           onMouseOver={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
           onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)')}
         >
-          Wikipedia →
+          <span>Wikipedia</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
         </a>
       </div>
     </div>
