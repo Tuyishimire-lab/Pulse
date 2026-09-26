@@ -56,7 +56,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install supabase httpx python-dotenv pytrends
 
-      - name: Run Pulse Engine v2.0
+      - name: Run Pulse Engine v2.1
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -64,6 +64,14 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           python scripts/pulse_engine/run_engine.py
+
+      - name: Run Site Enrichment (CrUX + Wiki + Security)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_CRUX_API_KEY: ${{ secrets.GOOGLE_CRUX_API_KEY }}
+        run: |
+          python scripts/pulse_engine/enrichment.py
 
   # ── JOB 2: Update Baselines (monthly — 1st of each month) ───────────────────
   update-baselines:

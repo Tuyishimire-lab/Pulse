@@ -79,6 +79,44 @@ CREATE TABLE IF NOT EXISTS public.country_rankings (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Site Enrichment: CrUX Core Web Vitals cache
+-- Written daily by enrichment.py; read by /api/site-enrichment
+CREATE TABLE IF NOT EXISTS public.site_webvitals (
+  site_id     TEXT PRIMARY KEY REFERENCES public.sites(id) ON DELETE CASCADE,
+  lcp_p75     NUMERIC,           -- Largest Contentful Paint p75 (ms)
+  inp_p75     NUMERIC,           -- Interaction to Next Paint p75 (ms)
+  cls_p75     NUMERIC,           -- Cumulative Layout Shift p75 (unitless)
+  lcp_rating  TEXT,              -- 'good' | 'needs-improvement' | 'poor'
+  inp_rating  TEXT,
+  cls_rating  TEXT,
+  form_factors JSONB,            -- { desktop: {...}, mobile: {...} }
+  cwv_grade   TEXT,              -- 'A' | 'B' | 'C' | 'D' | 'F'
+  fetched_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Site Enrichment: Wikipedia Pageviews cache
+-- Written daily by enrichment.py; read by /api/site-enrichment
+CREATE TABLE IF NOT EXISTS public.site_wiki_views (
+  site_id        TEXT PRIMARY KEY REFERENCES public.sites(id) ON DELETE CASCADE,
+  article_title  TEXT NOT NULL,           -- e.g. 'Google' or 'YouTube'
+  daily_views    JSONB,                   -- last 30 days: [{ date, views }]
+  monthly_avg    INTEGER,                 -- average daily views over 30 days
+  trend_pct      NUMERIC,                -- % change vs previous 30 days
+  fetched_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Site Enrichment: Security grading cache (SSL Labs + Mozilla Observatory)
+-- Written daily by enrichment.py; read by /api/site-enrichment
+CREATE TABLE IF NOT EXISTS public.site_security (
+  site_id         TEXT PRIMARY KEY REFERENCES public.sites(id) ON DELETE CASCADE,
+  ssl_grade       TEXT,           -- 'A+' | 'A' | 'B' | 'C' | 'F'
+  ssl_protocol    TEXT,           -- 'TLSv1.3' etc.
+  obs_grade       TEXT,           -- Mozilla Observatory grade 'A+' to 'F'
+  obs_score       INTEGER,        -- Observatory numeric score 0-100
+  security_grade  TEXT,           -- Combined grade: 'A+' to 'F'
+  fetched_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.traffic_history ENABLE ROW LEVEL SECURITY;

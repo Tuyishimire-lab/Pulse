@@ -10,6 +10,9 @@ import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
 import FaviconImage from '../../components/ui/FaviconImage';
+import WebVitalsPanel from '../../components/ui/WebVitalsPanel';
+import WikiInterestPanel from '../../components/ui/WikiInterestPanel';
+import SecurityPanel from '../../components/ui/SecurityPanel';
 
 // Helper to generate dynamic fallback search topics based on domain name & category
 export function getMostSearchedTopics(site: { name: string; category: string }) {
@@ -53,6 +56,21 @@ export default function SitePageClient({ id }: { id: string }) {
   const liveBaseline = site?.baseline ?? null;
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
   const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
+
+  // Enrichment data (CrUX, Wikipedia, Security) — fetched from cached Supabase tables
+  const [enrichment, setEnrichment] = useState<{
+    webVitals: Record<string, unknown> | null;
+    wikiViews: Record<string, unknown> | null;
+    security: Record<string, unknown> | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!site) return;
+    fetch(`/api/site-enrichment?id=${site.id}`)
+      .then((r) => r.json())
+      .then(setEnrichment)
+      .catch(() => {}); // graceful — panels simply don't render
+  }, [site]);
 
 
   useEffect(() => {
@@ -641,6 +659,17 @@ export default function SitePageClient({ id }: { id: string }) {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* ── Enrichment Panels (CrUX + Wikipedia + Security) ──────── */}
+            {enrichment?.webVitals && (
+              <WebVitalsPanel data={enrichment.webVitals as any} color={site.color} />
+            )}
+            {enrichment?.wikiViews && (
+              <WikiInterestPanel data={enrichment.wikiViews as any} color={site.color} />
+            )}
+            {enrichment?.security && (
+              <SecurityPanel data={enrichment.security as any} />
             )}
 
             {/* Market & Traffic Intelligence Card */}
