@@ -230,10 +230,16 @@ export async function GET(req: Request) {
         text = `${label}: ${site.name} is currently ${description.toLowerCase()}.`;
       }
 
+      const isSevere = indicator === 'critical' || indicator === 'major';
+
       feedItems.push({
         text,
-        type: indicator === 'critical' || indicator === 'major' ? 'outage' : 'surge',
-        confirmedSiteId: STATUSPAGE_TO_SITE_ID[site.name],
+        type: isSevere ? 'outage' : 'surge',
+        // Only flag the site card as "OUTAGE" for critical/major incidents.
+        // Minor degradations (e.g. Zoom Polycom phones, Cloudflare WARP geo)
+        // still appear in the marquee ticker but don't put a red badge on the
+        // card or inflate the Disrupted count.
+        confirmedSiteId: isSevere ? STATUSPAGE_TO_SITE_ID[site.name] : undefined,
       });
     });
   } catch (e) {
