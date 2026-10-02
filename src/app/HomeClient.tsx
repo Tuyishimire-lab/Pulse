@@ -653,11 +653,9 @@ export default function HomeClient({
   };
 
   // Keep pagination within valid bounds if filters change
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(1);
-    }
-  }, [currentPage, totalPages]);
+  if (totalPages > 0 && currentPage > totalPages) {
+    setCurrentPage(1);
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -719,7 +717,6 @@ export default function HomeClient({
             getRankChange={getRankChange}
             activeCategory={activeCategory}
             onCategoryChange={(id) => { setActiveCategory(id); setCurrentPage(1); }}
-            pageLoadTime={pageLoadTime}
             onViewLayoutChange={setViewLayout}
           />
         ) : (

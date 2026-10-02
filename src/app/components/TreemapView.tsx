@@ -10,7 +10,6 @@ interface TreemapViewProps {
   getRankChange: (site: SiteConfig) => number | null;
   activeCategory: string;
   onCategoryChange: (cat: string) => void;
-  pageLoadTime: number;
   onViewLayoutChange?: (layout: 'grid' | 'list' | 'treemap') => void;
 }
 
@@ -97,7 +96,7 @@ function layoutRow(
     return;
   }
 
-  let row = [items[0]];
+  const row = [items[0]];
   let rem = items.slice(1);
   const side = Math.min(container.w, container.h);
 
@@ -186,7 +185,6 @@ export default function TreemapView({
   getRankChange,
   activeCategory,
   onCategoryChange,
-  pageLoadTime,
   onViewLayoutChange,
 }: TreemapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);

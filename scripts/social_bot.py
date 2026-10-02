@@ -1,7 +1,5 @@
 import os
 import sys
-import json
-import httpx
 from pathlib import Path
 
 # Add project root to python path
@@ -9,11 +7,12 @@ root_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root_dir))
 
 from dotenv import load_dotenv
+
 env_path = root_dir / '.env.local'
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "")

@@ -3,7 +3,7 @@ import { SITES, CATEGORIES } from './data/sites';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { COUNTRY_SLUGS } from './top-sites/data/countries';
 import { getAllCompareSlugs } from './compare/data/pairs';
-import { getReportSlugs, parsReportSlug } from './report/data/reportGenerator';
+import { getReportSlugs, parseReportSlug } from './report/data/reportGenerator';
 
 export const revalidate = 86400;
 
@@ -61,7 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const reportSlugs = await getReportSlugs();
   const reportUrls = reportSlugs.map((slug) => {
-    const reportDate = parsReportSlug(slug) || now;
+    const reportDate = parseReportSlug(slug) || now;
     return {
       url: `${baseUrl}/report/${slug}`,
       lastModified: reportDate,
@@ -88,6 +88,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/trending`,
       lastModified: now,
       changeFrequency: 'daily' as const,
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/report`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
       priority: 0.95,
     },
     {

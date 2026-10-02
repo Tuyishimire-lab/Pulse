@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-interface WikiViewsData {
+export interface WikiViewsData {
   article_title: string;
   daily_views: { date: string; views: number }[] | null;
   monthly_avg: number | null;

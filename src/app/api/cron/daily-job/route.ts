@@ -25,11 +25,7 @@ interface CronSiteRow {
   rank_history?: { rank: number; date: string }[];
 }
 
-interface OpenPageRankResponseItem {
-  domain: string;
-  page_rank_decimal?: string;
-  rank?: string;
-}
+
 
 interface HistoryInsertionRow {
   site_id: string;
@@ -608,20 +604,51 @@ export async function GET(request: Request) {
 
           const totalRate = sitesSnapshot.reduce((sum: number, s) => sum + s.rate, 0);
 
-          // Count outages from marquee (if available)
+          // Count 7-day cumulative outages (Cloudflare Radar Annotations API or /api/outages)
           let outageCount = 0;
-          try {
-            const baseUrl = process.env.VERCEL_URL
-              ? `https://${process.env.VERCEL_URL}`
-              : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-            const outageRes = await fetch(`${baseUrl}/api/marquee`, { signal: AbortSignal.timeout(5000) });
-            if (outageRes.ok) {
-              const marqueeData = await outageRes.json();
-              if (Array.isArray(marqueeData)) {
-                outageCount = (marqueeData as { type?: string }[]).filter((m) => m.type === 'outage').length;
+          if (cfRadarToken) {
+            try {
+              const cfOutageRes = await fetch(
+                'https://api.cloudflare.com/client/v4/radar/annotations/outages?limit=50&dateRange=7d&format=json',
+                {
+                  headers: { 'Authorization': `Bearer ${cfRadarToken}`, 'Accept': 'application/json' },
+                  signal: AbortSignal.timeout(8000),
+                }
+              );
+              if (cfOutageRes.ok) {
+                const cfOutageData = await cfOutageRes.json();
+                if (cfOutageData.success && cfOutageData.result?.annotations && Array.isArray(cfOutageData.result.annotations)) {
+                  outageCount = cfOutageData.result.annotations.length;
+                }
               }
+            } catch (cfOutageErr) {
+              console.warn('Unified Cron: Cloudflare Radar 7-day outage count failed:', cfOutageErr);
             }
-          } catch { /* non-critical */ }
+          }
+
+          // Fallback to /api/outages or marquee if radar call was not configured or returned zero
+          if (outageCount === 0) {
+            try {
+              const baseUrl = process.env.VERCEL_URL
+                ? `https://${process.env.VERCEL_URL}`
+                : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+              const outageRes = await fetch(`${baseUrl}/api/outages`, { signal: AbortSignal.timeout(5000) });
+              if (outageRes.ok) {
+                const outData = await outageRes.json();
+                if (Array.isArray(outData.outages)) {
+                  outageCount = outData.outages.length;
+                }
+              } else {
+                const marqueeRes = await fetch(`${baseUrl}/api/marquee`, { signal: AbortSignal.timeout(5000) });
+                if (marqueeRes.ok) {
+                  const marqueeData = await marqueeRes.json();
+                  if (Array.isArray(marqueeData)) {
+                    outageCount = (marqueeData as { type?: string }[]).filter((m) => m.type === 'outage').length;
+                  }
+                }
+              }
+            } catch { /* non-critical */ }
+          }
 
           const mondayDate = new Date(now);
           const diff = mondayDate.getUTCDate() - (mondayDate.getUTCDay() || 7) + 1;

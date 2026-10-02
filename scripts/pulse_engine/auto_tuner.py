@@ -1,17 +1,21 @@
-import sys
 import math
-import time
+import sys
 from pathlib import Path
 
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from scripts.pulse_engine.validation import KNOWN_BENCHMARKS, run_validation
-from scripts.pulse_engine.pti_model import normalize_category
-from scripts.pulse_engine.config import SUPABASE_URL, SUPABASE_KEY
-from scripts.pulse_engine.signals import fetch_cloudflare_radar_ranks, fetch_tranco_ranks, merge_rank_sources, parse_domain
-
 from supabase import create_client
+
+from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
+from scripts.pulse_engine.pti_model import normalize_category
+from scripts.pulse_engine.signals import (
+    fetch_cloudflare_radar_ranks,
+    fetch_tranco_ranks,
+    merge_rank_sources,
+    parse_domain,
+)
+from scripts.pulse_engine.validation import KNOWN_BENCHMARKS, run_validation
 
 ANCHOR_MONTHLY = 85_000_000_000
 
@@ -52,7 +56,7 @@ def run_auto_tuner():
     # Initial parameters
     from scripts.pulse_engine.config import ZIPF_EXPONENT
     from scripts.pulse_engine.pti_model import CATEGORY_MULTIPLIERS
-    
+
     best_zipf = ZIPF_EXPONENT
     best_multipliers = CATEGORY_MULTIPLIERS.copy()
 
@@ -67,7 +71,7 @@ def run_auto_tuner():
             monthly_visits = int(round(monthly_visits * cat_multiplier))
             rate = max(1, int(round((monthly_visits / 30.4) / 86400)))
             updated_sites.append({'id': item['site_id'], 'rate': rate})
-        
+
         report = run_validation(updated_sites)
         return report["mean_error_pct"]
 
@@ -82,7 +86,7 @@ def run_auto_tuner():
 
     for epoch in range(epochs):
         improved = False
-        
+
         # Tune Zipf
         for step in zipf_steps:
             test_zipf = best_zipf + step
@@ -92,7 +96,7 @@ def run_auto_tuner():
                 best_error = err
                 best_zipf = test_zipf
                 improved = True
-                
+
         # Tune Multipliers
         for cat in best_multipliers.keys():
             if cat in ['search', 'general']: continue # keep anchor fixed
@@ -104,7 +108,7 @@ def run_auto_tuner():
                     best_error = err
                     best_multipliers = test_mults
                     improved = True
-                    
+
         if not improved:
             break # Local minima reached
 
@@ -116,7 +120,7 @@ def run_auto_tuner():
     print("CATEGORY_MULTIPLIERS :")
     for cat, val in best_multipliers.items():
         print(f"  '{cat}': {round(val, 2)},")
-    
+
     if best_error < current_error - 1.0:
         print("\nRecommendation: The optimized parameters offer a significant improvement.")
         print("Review the above values and manually update `config.py` and `pti_model.py` if acceptable.")

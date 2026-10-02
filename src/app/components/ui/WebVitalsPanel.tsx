@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-interface WebVitalsData {
+export interface WebVitalsData {
   lcp_p75: number | null;
   inp_p75: number | null;
   cls_p75: number | null;
@@ -15,7 +15,6 @@ interface WebVitalsData {
 
 interface Props {
   data: WebVitalsData;
-  color: string;
 }
 
 const RATING_COLORS: Record<string, string> = {
@@ -91,7 +90,7 @@ function MetricBar({ label, value, unit, rating, maxVal }: {
   );
 }
 
-export default function WebVitalsPanel({ data, color }: Props) {
+export default function WebVitalsPanel({ data }: Props) {
   const grade = data.cwv_grade || '?';
   const gradeColor = GRADE_COLORS[grade] || '#6366f1';
 

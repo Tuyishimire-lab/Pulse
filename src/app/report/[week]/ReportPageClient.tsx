@@ -117,6 +117,186 @@ function ShareRow({ report }: { report: WeeklyReport }) {
   );
 }
 
+function TrajectoryChart({ trajectory }: { trajectory: WeeklyReport['trajectory'] }) {
+  const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
+
+  if (!trajectory || trajectory.length < 2) return null;
+
+  const width = 640;
+  const height = 175;
+  const padding = { top: 22, right: 28, bottom: 28, left: 54 };
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom;
+
+  const rates = trajectory.map((t) => t.totalRate);
+  const minRate = Math.min(...rates) * 0.985;
+  const maxRate = Math.max(...rates) * 1.015;
+  const rateRange = maxRate - minRate || 1;
+
+  const points = trajectory.map((t, idx) => {
+    const x = padding.left + (idx / (trajectory.length - 1)) * chartW;
+    const yRate = padding.top + chartH - ((t.totalRate - minRate) / rateRange) * chartH;
+    const yHealth = padding.top + chartH - ((Math.min(100, Math.max(60, t.healthScore)) - 60) / 40) * chartH;
+    return { ...t, x, yRate, yHealth };
+  });
+
+  const lineD = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.yRate.toFixed(1)}`, '');
+  const areaD = `${lineD} L ${points[points.length - 1].x.toFixed(1)} ${(padding.top + chartH).toFixed(1)} L ${points[0].x.toFixed(1)} ${(padding.top + chartH).toFixed(1)} Z`;
+  const healthLineD = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.yHealth.toFixed(1)}`, '');
+
+  const activePoint = hoveredIdx !== null ? points[hoveredIdx] : points[points.length - 1];
+
+  return (
+    <section className="mb-8 rounded-2xl border border-white/[0.08] bg-[#0c1220] p-5 shadow-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold text-[#82c8e5] uppercase tracking-wider bg-[#82c8e5]/10 border border-[#82c8e5]/20 px-2 py-0.5 rounded-full">
+              Multi-Week Trajectory
+            </span>
+            <span className="text-xs font-semibold text-white">8-Week Momentum</span>
+          </div>
+          <div className="text-xs text-[#8ea1b4]">
+            {activePoint ? (
+              <span>
+                <strong className="text-white">{activePoint.label}</strong> ({new Date(activePoint.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}):{' '}
+                <span className="font-mono text-[#82c8e5] font-semibold">{activePoint.totalRate.toLocaleString()} req/s</span>
+                {' · '}
+                <span className="text-[#10b981] font-semibold">Health {activePoint.healthScore}/100</span>
+              </span>
+            ) : (
+              'Hover over data points to inspect past weekly baselines'
+            )}
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 text-[11px] text-[#8ea1b4]">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#82c8e5]" />
+            <span>Traffic Velocity</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-[#10b981]" />
+            <span>Health Score</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full overflow-x-auto">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="w-full h-auto min-w-[500px] select-none"
+        >
+          <defs>
+            <linearGradient id="trajGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#82c8e5" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#82c8e5" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          <line
+            x1={padding.left}
+            y1={padding.top}
+            x2={padding.left + chartW}
+            y2={padding.top}
+            stroke="rgba(255,255,255,0.05)"
+            strokeDasharray="3 3"
+          />
+          <line
+            x1={padding.left}
+            y1={padding.top + chartH * 0.5}
+            x2={padding.left + chartW}
+            y2={padding.top + chartH * 0.5}
+            stroke="rgba(255,255,255,0.05)"
+            strokeDasharray="3 3"
+          />
+          <line
+            x1={padding.left}
+            y1={padding.top + chartH}
+            x2={padding.left + chartW}
+            y2={padding.top + chartH}
+            stroke="rgba(255,255,255,0.1)"
+          />
+
+          {/* Area & line for Traffic Rate */}
+          <path d={areaD} fill="url(#trajGradient)" />
+          <path d={lineD} fill="none" stroke="#82c8e5" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Health Score line */}
+          <path
+            d={healthLineD}
+            fill="none"
+            stroke="#10b981"
+            strokeWidth="1.75"
+            strokeDasharray="4 4"
+            opacity="0.8"
+          />
+
+          {/* Data Points */}
+          {points.map((p, i) => (
+            <g
+              key={p.weekSlug}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+              className="cursor-pointer"
+            >
+              {/* Invisible touch target */}
+              <circle cx={p.x} cy={p.yRate} r={14} fill="transparent" />
+
+              {/* Visible circle */}
+              <circle
+                cx={p.x}
+                cy={p.yRate}
+                r={hoveredIdx === i ? 5.5 : 3.5}
+                fill="#070b14"
+                stroke="#82c8e5"
+                strokeWidth={hoveredIdx === i ? 2.5 : 2}
+                className="transition-all"
+              />
+
+              {/* Bottom week label */}
+              <text
+                x={p.x}
+                y={padding.top + chartH + 18}
+                textAnchor="middle"
+                fontSize="10"
+                fill={hoveredIdx === i ? '#ffffff' : '#8ea1b4'}
+                fontWeight={hoveredIdx === i ? '700' : '500'}
+              >
+                {p.label}
+              </text>
+            </g>
+          ))}
+
+          {/* Left Axis label */}
+          <text
+            x={padding.left - 8}
+            y={padding.top + 4}
+            textAnchor="end"
+            fontSize="9"
+            fill="#6d8196"
+            fontFamily="monospace"
+          >
+            {(maxRate / 1e6).toFixed(1)}M
+          </text>
+          <text
+            x={padding.left - 8}
+            y={padding.top + chartH}
+            textAnchor="end"
+            fontSize="9"
+            fill="#6d8196"
+            fontFamily="monospace"
+          >
+            {(minRate / 1e6).toFixed(1)}M
+          </text>
+        </svg>
+      </div>
+    </section>
+  );
+}
+
 export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) {
   const publishedDate = new Date(report.publishedDate).toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -132,7 +312,7 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
         <nav className="flex items-center gap-2 text-xs text-[#8ea1b4] mb-8" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-white transition-colors">Pulse</Link>
           <span>/</span>
-          <span className="text-[#82c8e5]">Weekly Report</span>
+          <Link href="/report" className="text-[#82c8e5] hover:underline transition-colors">Weekly Reports</Link>
           <span>/</span>
           <span className="text-white">Week {report.weekNumber}, {report.year}</span>
         </nav>
@@ -184,6 +364,11 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
             ))}
           </div>
         </section>
+
+        {/* 8-Week Historical Trajectory Chart */}
+        {report.trajectory && report.trajectory.length > 1 && (
+          <TrajectoryChart trajectory={report.trajectory} />
+        )}
 
         {/* Internet Health Score */}
         <section className="mb-10 rounded-2xl border border-white/[0.08] bg-[#0c1220] p-6 flex flex-col sm:flex-row items-center gap-6">
@@ -302,23 +487,31 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
 
         {/* Top Movers */}
         <section className="mb-10">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2 flex-wrap">
-             {report.hasRealMovers
-               ? 'Top Rank Movers This Week'
-               : report.isLive
-                 ? 'Top Sites by Traffic This Week'
-                 : 'Top Sites This Week'}
-             {!report.hasRealMovers && report.isLive && (
-               <span className="text-[10px] font-normal text-[#6d8196] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
-                 No significant rank changes in the top 30 this week
-               </span>
-             )}
-             {!report.isLive && (
-               <span className="text-[10px] font-normal text-[#6d8196] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
-                 No comparison data available
-               </span>
-             )}
-          </h2>
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2 flex-wrap">
+               {report.hasRealMovers
+                 ? 'Top Rank Movers This Week'
+                 : report.isLive
+                   ? 'Top Sites by Traffic This Week'
+                   : 'Top Sites This Week'}
+               {!report.hasRealMovers && report.isLive && (
+                 <span className="text-[10px] font-normal text-[#6d8196] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
+                   No significant rank changes in the top 30 this week
+                 </span>
+               )}
+               {!report.isLive && (
+                 <span className="text-[10px] font-normal text-[#6d8196] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full">
+                   No comparison data available
+                 </span>
+               )}
+            </h2>
+            <Link
+              href="/trending"
+              className="text-xs font-semibold text-[#82c8e5] hover:text-white transition-colors flex items-center gap-1"
+            >
+              View live rank shifts on Trending &rarr;
+            </Link>
+          </div>
 
           <div className="space-y-3">
             {report.topMovers.map((mover) => (

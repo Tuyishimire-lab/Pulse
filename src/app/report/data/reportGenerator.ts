@@ -67,6 +67,28 @@ export interface TopMover {
   confidence: ConfidenceBand;
 }
 
+export interface TrajectoryPoint {
+  weekSlug: string;
+  label: string;
+  totalRate: number;
+  healthScore: number;
+  date: string;
+}
+
+export interface ReportArchiveItem {
+  slug: string;
+  weekNumber: number;
+  year: number;
+  publishedDate: string;
+  headline: string;
+  subheadline: string;
+  totalRate: number;
+  healthScore: number;
+  leadStoryTitle?: string;
+  outageCount: number;
+  isLive: boolean;
+}
+
 export interface WeeklyReport {
   weekNumber: number;
   year: number;
@@ -78,6 +100,7 @@ export interface WeeklyReport {
   healthContext: HealthContext;
   aiSearchConvergence: AiSearchConvergence;
   regionalSpotlight: RegionalSpotlight;
+  trajectory: TrajectoryPoint[];
   totalTopSitesVisitsPerSec: number;
   trafficChangePercent: number;
   outageCount: number;
@@ -167,7 +190,7 @@ function weekSlugFromDate(date: Date): string {
 }
 
 function prevWeekSlug(slug: string): string | null {
-  const date = parsReportSlug(slug);
+  const date = parseReportSlug(slug);
   if (!date) return null;
   const prevMonday = new Date(date);
   prevMonday.setDate(prevMonday.getDate() - 7);
@@ -348,15 +371,122 @@ export function computeAiSearchConvergence(
   };
 }
 
-export function computeRegionalSpotlight(currentSites: SiteSummary[]): RegionalSpotlight {
-  const entertainmentAndSocial = currentSites.filter((s) => s.category === 'entertainment' || s.category === 'social');
-  const videoVolume = entertainmentAndSocial.reduce((sum, s) => sum + s.rate, 0);
+interface RegionCluster {
+  id: string;
+  name: string;
+  keywords: string[];
+  keyDriver: string;
+  defaultDetail: string;
+}
+
+const REGION_CLUSTERS: RegionCluster[] = [
+  {
+    id: 'apac',
+    name: 'Asia-Pacific Digital Ecosystem',
+    keywords: ['baidu', 'bilibili', 'naver', 'yahoo.co.jp', 'tiktok', 'bytedance', 'alibaba', 'aliexpress', 'tencent', 'qq', 'weibo', 'taobao', 'jd.com', 'shopee', 'rakuten'],
+    keyDriver: 'Mobile Streaming & Video Commerce Surges',
+    defaultDetail: 'Mobile traffic across East and Southeast Asian digital clusters sustained accelerated velocity across streaming video and interactive marketplace nodes.',
+  },
+  {
+    id: 'na',
+    name: 'North American Cloud & Enterprise',
+    keywords: ['google', 'apple', 'microsoft', 'amazon', 'meta', 'openai', 'netflix', 'x', 'twitter', 'github', 'linkedin', 'reddit'],
+    keyDriver: 'Enterprise SaaS & Conversational AI Workloads',
+    defaultDetail: 'Concentrated compute and generative AI queries anchored high mid-week request volumes across primary North American edge routing regions.',
+  },
+  {
+    id: 'eu',
+    name: 'European Digital Media & Search',
+    keywords: ['spotify', 'bbc', 'telegram', 'booking', 'dailymail', 'spiegel', 'lefigaro', 'reuters', 'theguardian'],
+    keyDriver: 'Public Information, News & Audio Consumption',
+    defaultDetail: 'Cross-border digital media networks and streaming platforms led consistent weekday traffic stability across Western and Northern European exchange points.',
+  },
+  {
+    id: 'latam',
+    name: 'Latin America & Emerging Markets',
+    keywords: ['mercadolibre', 'globo', 'uol', 'infobae'],
+    keyDriver: 'Regional Fintech & E-Commerce Expansion',
+    defaultDetail: 'Regional payment infrastructure and high-intent retail discovery generated double-digit engagement velocity across Latin American edge caches.',
+  },
+];
+
+export function computeRegionalSpotlight(
+  currentSites: SiteSummary[] = [],
+  previousSites: SiteSummary[] | null = null
+): RegionalSpotlight {
+  if (!currentSites || currentSites.length === 0) {
+    return {
+      region: 'Asia-Pacific & Latin America',
+      keyDriver: 'Mobile Edge & Video Streaming Surge',
+      growthRate: '+3.8% WoW',
+      detail: 'Mobile traffic across emerging regional nodes drove disproportionate weekend velocity for video and interactive media platforms.',
+    };
+  }
+
+  const prevMap = previousSites ? new Map(previousSites.map((s) => [s.id, s])) : null;
+
+  // Score each cluster based on current sites and WoW deltas
+  const clusterMetrics = REGION_CLUSTERS.map((cluster) => {
+    const matchingSites = currentSites.filter((site) => {
+      const urlLower = (site.url || '').toLowerCase();
+      const idLower = (site.id || '').toLowerCase();
+      return cluster.keywords.some((kw) => urlLower.includes(kw) || idLower.includes(kw));
+    });
+
+    const currentTotalRate = matchingSites.reduce((sum, s) => sum + s.rate, 0);
+
+    let growthPercent = 0;
+    if (prevMap && matchingSites.length > 0) {
+      let prevTotalRate = 0;
+      matchingSites.forEach((s) => {
+        const prev = prevMap.get(s.id);
+        if (prev) prevTotalRate += prev.rate;
+      });
+      if (prevTotalRate > 0) {
+        growthPercent = Math.round(((currentTotalRate - prevTotalRate) / prevTotalRate) * 1000) / 10;
+      }
+    }
+
+    const topSite = matchingSites.slice().sort((a, b) => b.rate - a.rate)[0];
+
+    return {
+      cluster,
+      matchingSites,
+      currentTotalRate,
+      growthPercent,
+      topSite,
+    };
+  });
+
+  const validClusters = clusterMetrics.filter((c) => c.matchingSites.length > 0);
+  if (validClusters.length === 0) {
+    return {
+      region: 'Global Edge & Regional Nodes',
+      keyDriver: 'Distributed Cloud Caching Velocity',
+      growthRate: '+2.4% WoW',
+      detail: 'Global CDN edge caches absorbed steady query distributions with nominal regional variances across monitored international traffic corridors.',
+    };
+  }
+
+  let selected = validClusters[0];
+  if (previousSites) {
+    selected = validClusters.slice().sort((a, b) => Math.abs(b.growthPercent) - Math.abs(a.growthPercent))[0];
+  } else {
+    selected = validClusters.slice().sort((a, b) => b.currentTotalRate - a.currentTotalRate)[0];
+  }
+
+  const growthSign = selected.growthPercent >= 0 ? '+' : '';
+  const growthRateStr = previousSites ? `${growthSign}${selected.growthPercent.toFixed(1)}% WoW` : '+3.2% Est.';
+  
+  const siteHighlight = selected.topSite 
+    ? `${selected.topSite.name} anchored regional volume at ${selected.topSite.rate.toLocaleString()} req/s (${selected.topSite.baseline}/mo).`
+    : '';
 
   return {
-    region: 'Asia-Pacific & Latin America',
-    keyDriver: 'Mobile Edge & Video Streaming Surge',
-    growthRate: '+3.8% WoW',
-    detail: 'Mobile traffic across emerging regional nodes drove disproportionate weekend velocity for video and interactive media platforms, counterbalancing seasonal European enterprise lulls.',
+    region: selected.cluster.name,
+    keyDriver: selected.topSite ? `${selected.topSite.name} & ${selected.cluster.keyDriver}` : selected.cluster.keyDriver,
+    growthRate: growthRateStr,
+    detail: `${selected.cluster.defaultDetail} ${siteHighlight}`.trim(),
   };
 }
 
@@ -595,7 +725,33 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
   const healthScore = computeHealthScore(currentSnapshot.outage_count);
   const healthContext = computeHealthContext(currentSnapshot.outage_count, recentSnapshots);
   const aiSearchConvergence = computeAiSearchConvergence(currentSites, previousSites);
-  const regionalSpotlight = computeRegionalSpotlight(currentSites);
+  const regionalSpotlight = computeRegionalSpotlight(currentSites, previousSites);
+
+  // 8-week trajectory points (chronological: oldest to newest)
+  const trajectory: TrajectoryPoint[] = recentSnapshots
+    .slice()
+    .reverse()
+    .map((s) => {
+      const match = s.week_slug.match(/-w(\d{2})$/);
+      const label = match ? `W${parseInt(match[1], 10)}` : s.week_slug;
+      return {
+        weekSlug: s.week_slug,
+        label,
+        totalRate: s.total_rate,
+        healthScore: computeHealthScore(s.outage_count || 0),
+        date: s.snapshot_date,
+      };
+    });
+
+  if (!trajectory.some((t) => t.weekSlug === slug)) {
+    trajectory.push({
+      weekSlug: slug,
+      label: `W${week}`,
+      totalRate: currentSnapshot.total_rate,
+      healthScore,
+      date: monday.toISOString(),
+    });
+  }
 
   // Category breakdown with week-over-week change + traffic share bar
   const totalCatRateForBreakdown = Object.values(currentSnapshot.category_totals)
@@ -678,6 +834,7 @@ export async function generateWeeklyReport(dateOrSlug: Date | string): Promise<W
     healthContext,
     aiSearchConvergence,
     regionalSpotlight,
+    trajectory,
     totalTopSitesVisitsPerSec: currentSnapshot.total_rate,
     trafficChangePercent: Math.round(trafficChangePercent * 10) / 10,
     outageCount: currentSnapshot.outage_count,
@@ -738,7 +895,23 @@ async function generateStaticReport(monday: Date, week: number, year: number, sl
 
   const healthContext = computeHealthContext(0, []);
   const aiSearchConvergence = computeAiSearchConvergence(sites, null);
-  const regionalSpotlight = computeRegionalSpotlight(sites);
+  const regionalSpotlight = computeRegionalSpotlight(sites as SiteSummary[], null);
+
+  // Generate 6-week baseline trajectory for fallback
+  const trajectory: TrajectoryPoint[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() - i * 7);
+    const { week: w, year: y } = getISOWeek(d);
+    const factor = 1 + Math.sin(w) * 0.025;
+    trajectory.push({
+      weekSlug: `${y}-w${String(w).padStart(2, '0')}`,
+      label: `W${w}`,
+      totalRate: Math.round(totalRate * factor),
+      healthScore: Math.min(100, Math.max(88, Math.round(94 + Math.cos(w) * 3))),
+      date: d.toISOString(),
+    });
+  }
 
   return {
     weekNumber: week,
@@ -751,6 +924,7 @@ async function generateStaticReport(monday: Date, week: number, year: number, sl
     healthContext,
     aiSearchConvergence,
     regionalSpotlight,
+    trajectory,
     totalTopSitesVisitsPerSec: totalRate,
     trafficChangePercent: 0,
     outageCount: 0,
@@ -827,7 +1001,7 @@ function getDateBasedSlugs(): string[] {
 }
 
 /** Parse a slug like "2026-w31" into a Date for the Monday of that week */
-export function parsReportSlug(slug: string): Date | null {
+export function parseReportSlug(slug: string): Date | null {
   const match = slug.match(/^(\d{4})-w(\d{2})$/);
   if (!match) return null;
   const year = parseInt(match[1], 10);
@@ -839,4 +1013,96 @@ export function parsReportSlug(slug: string): Date | null {
   const monday = new Date(weekOneMonday);
   monday.setDate(weekOneMonday.getDate() + (week - 1) * 7);
   return monday;
+}
+
+// Backwards-compatible alias for existing callers
+export const parsReportSlug = parseReportSlug;
+
+/** Retrieve summarized metadata for report archive listings */
+export async function getReportSummaries(limit = 12): Promise<ReportArchiveItem[]> {
+  const sb = getSupabase();
+  const slugs = await getReportSlugs();
+  const targetSlugs = slugs.slice(0, limit);
+
+  if (sb) {
+    try {
+      const { data, error } = await sb
+        .from('weekly_snapshots')
+        .select('week_slug, snapshot_date, total_rate, outage_count, ai_stories')
+        .in('week_slug', targetSlugs)
+        .order('snapshot_date', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        const snapshotMap = new Map(data.map((d: { week_slug: string }) => [d.week_slug, d]));
+        return targetSlugs.map((slug) => {
+          const parsed = parseReportSlug(slug);
+          const monday = parsed || new Date();
+          const { week, year } = getISOWeek(monday);
+          const snap = snapshotMap.get(slug) as {
+            snapshot_date?: string;
+            total_rate?: number;
+            outage_count?: number;
+            ai_stories?: string | { title: string }[];
+          } | undefined;
+
+          if (snap) {
+            let leadStory: string | undefined;
+            if (snap.ai_stories) {
+              const parsedStories = typeof snap.ai_stories === 'string' ? JSON.parse(snap.ai_stories) : snap.ai_stories;
+              if (Array.isArray(parsedStories) && parsedStories.length > 0) {
+                leadStory = parsedStories[0].title;
+              }
+            }
+
+            return {
+              slug,
+              weekNumber: week,
+              year,
+              publishedDate: snap.snapshot_date || monday.toISOString(),
+              headline: `The Weekly Internet Pulse: Week ${week}, ${year}`,
+              subheadline: `Real-time traffic insights for the week of ${formatDate(monday)}`,
+              totalRate: snap.total_rate || 0,
+              healthScore: computeHealthScore(snap.outage_count || 0),
+              leadStoryTitle: leadStory,
+              outageCount: snap.outage_count || 0,
+              isLive: true,
+            };
+          }
+
+          return {
+            slug,
+            weekNumber: week,
+            year,
+            publishedDate: monday.toISOString(),
+            headline: `The Weekly Internet Pulse: Week ${week}, ${year}`,
+            subheadline: `Real-time traffic insights for the week of ${formatDate(monday)}`,
+            totalRate: 15400000,
+            healthScore: 94,
+            outageCount: 0,
+            isLive: false,
+          };
+        });
+      }
+    } catch {
+      // Fall through to fallback
+    }
+  }
+
+  return targetSlugs.map((slug) => {
+    const parsed = parseReportSlug(slug);
+    const monday = parsed || new Date();
+    const { week, year } = getISOWeek(monday);
+    return {
+      slug,
+      weekNumber: week,
+      year,
+      publishedDate: monday.toISOString(),
+      headline: `The Weekly Internet Pulse: Week ${week}, ${year}`,
+      subheadline: `Real-time traffic insights for the week of ${formatDate(monday)}`,
+      totalRate: 15400000,
+      healthScore: 94,
+      outageCount: 0,
+      isLive: false,
+    };
+  });
 }

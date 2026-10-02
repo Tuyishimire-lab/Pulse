@@ -7,11 +7,11 @@ Ground truths are sourced from SEC 10-K/10-Q filings, Wikimedia Foundation
 dumps, official investor decks, and audited publisher statistics.
 """
 
-from typing import Dict, List, Any
+from typing import Any
 
 # Ground truth benchmarks - monthly visits in billions (or fractions of billion)
 # Conservative estimates from public disclosures, SEC filings, or widely cited industry benchmarks.
-KNOWN_BENCHMARKS: Dict[str, Dict[str, Any]] = {
+KNOWN_BENCHMARKS: dict[str, dict[str, Any]] = {
     # ── Search & Portals ───────────────────────────────────────────────────────
     "google": {
         "name": "Google",
@@ -307,7 +307,7 @@ KNOWN_BENCHMARKS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-def run_validation(sites_with_estimates: List[Dict[str, Any]]) -> Dict[str, Any]:
+def run_validation(sites_with_estimates: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Compare PTI model estimates against 45+ known ground-truth benchmarks.
     Calculates overall Mean Absolute Percentage Error (MAPE), error distributions,
@@ -315,7 +315,7 @@ def run_validation(sites_with_estimates: List[Dict[str, Any]]) -> Dict[str, Any]
     """
     results = []
     errors_pct = []
-    category_errors: Dict[str, List[float]] = {}
+    category_errors: dict[str, list[float]] = {}
 
     rate_map = {s["id"]: s.get("rate", 0) for s in sites_with_estimates}
 
@@ -383,7 +383,7 @@ def run_validation(sites_with_estimates: List[Dict[str, Any]]) -> Dict[str, Any]
     }
     return report
 
-def print_validation_report(report: Dict[str, Any]) -> None:
+def print_validation_report(report: dict[str, Any]) -> None:
     """Pretty-print the validation report to console."""
     print()
     print("=" * 70)

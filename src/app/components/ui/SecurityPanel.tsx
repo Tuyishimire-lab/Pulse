@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-interface SecurityData {
+export interface SecurityData {
   ssl_grade: string | null;
   ssl_protocol: string | null;
   obs_grade: string | null;

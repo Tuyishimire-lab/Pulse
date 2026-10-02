@@ -1,11 +1,14 @@
-import re
 import csv
 import json
+import re
 import time
-import httpx
 from io import StringIO
-from typing import Dict, Any, List
-from .config import CLOUDFLARE_API_TOKEN, OPENPAGERANK_API_KEY, GROQ_API_KEY
+from typing import Any
+
+import httpx
+
+from .config import CLOUDFLARE_API_TOKEN, GROQ_API_KEY, OPENPAGERANK_API_KEY
+
 
 def parse_domain(url: str) -> str:
     """Clean URL to root domain (e.g. 'https://www.google.com/search' -> 'google.com')."""
@@ -20,7 +23,7 @@ def parse_root_domain(url: str) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # SIGNAL 1a: Cloudflare Radar (top 100, real-time DNS volume)
 # ─────────────────────────────────────────────────────────────────────────────
-def fetch_cloudflare_radar_ranks() -> Dict[str, int]:
+def fetch_cloudflare_radar_ranks() -> dict[str, int]:
     """Fetch top 100 domain rankings from Cloudflare Radar 1.1.1.1 DNS analytics.
     Note: Free tier limit is 100. Enterprise tier supports up to 500."""
     if not CLOUDFLARE_API_TOKEN:
@@ -32,7 +35,7 @@ def fetch_cloudflare_radar_ranks() -> Dict[str, int]:
         "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
         "Accept": "application/json"
     }
-    
+
     try:
         with httpx.Client(timeout=15.0) as client:
             res = client.get(url, headers=headers)
@@ -59,7 +62,7 @@ def fetch_cloudflare_radar_ranks() -> Dict[str, int]:
 # SIGNAL 1b: Tranco List (aggregated from CF Radar + Cisco Umbrella + Majestic)
 # Fills the gap where CF Radar free tier only covers top 100
 # ─────────────────────────────────────────────────────────────────────────────
-def fetch_tranco_ranks(top_n: int = 5000) -> Dict[str, int]:
+def fetch_tranco_ranks(top_n: int = 5000) -> dict[str, int]:
     """
     Fetch Tranco rank list - an aggregated ranking combining Cloudflare Radar,
     Cisco Umbrella, Majestic, Farsight, and Google CrUX. Updated daily.
@@ -145,7 +148,7 @@ DOMAIN_ALIASES = {
     "character.ai": ["character.ai", "characterai.com"],
 }
 
-def merge_rank_sources(cf_ranks: Dict[str, int], tranco_ranks: Dict[str, int]) -> Dict[str, int]:
+def merge_rank_sources(cf_ranks: dict[str, int], tranco_ranks: dict[str, int]) -> dict[str, int]:
     """
     Merge Cloudflare Radar (high-precision, top 100) and Tranco (broader coverage, top 5000).
     CF Radar takes precedence for domains it covers; Tranco fills the rest.
@@ -170,7 +173,7 @@ def merge_rank_sources(cf_ranks: Dict[str, int], tranco_ranks: Dict[str, int]) -
 # ─────────────────────────────────────────────────────────────────────────────
 # SIGNAL 2: Open PageRank (Link Authority)
 # ─────────────────────────────────────────────────────────────────────────────
-def fetch_open_pagerank(domains: List[str]) -> Dict[str, Dict[str, Any]]:
+def fetch_open_pagerank(domains: list[str]) -> dict[str, dict[str, Any]]:
     """Query Open PageRank API for domain authority and global rank."""
     if not OPENPAGERANK_API_KEY or not domains:
         return {}
@@ -209,7 +212,7 @@ def fetch_open_pagerank(domains: List[str]) -> Dict[str, Dict[str, Any]]:
 # ─────────────────────────────────────────────────────────────────────────────
 # SIGNAL 4: Groq AI Momentum - ALL 100 sites in batches of 30
 # ─────────────────────────────────────────────────────────────────────────────
-def _call_groq_batch(batch: List[Dict], client: httpx.Client) -> Dict[str, Dict[str, Any]]:
+def _call_groq_batch(batch: list[dict], client: httpx.Client) -> dict[str, dict[str, Any]]:
     """Call Groq AI for a single batch of sites. Returns momentum map."""
     site_summaries = [
         {
@@ -228,7 +231,7 @@ Domains to analyze:
 
 Consider current global trends:
 - AI tools (ChatGPT, Claude, Gemini, Midjourney, HuggingFace) are seeing rapid user growth
-- Social media platforms face varying regulatory and user-engagement pressures  
+- Social media platforms face varying regulatory and user-engagement pressures
 - Streaming wars continue with Disney+, Netflix, Max, Hulu, Twitch competing
 - E-commerce shifts with Amazon, Etsy, AliExpress, eBay seeing different trajectories
 - Crypto is volatile - Binance, Coinbase facing regulatory pressure
@@ -282,7 +285,7 @@ Example: [{{"id": "google", "momentum_score": 0.05, "trend_label": "stable", "re
             }
     return result
 
-def fetch_groq_momentum(sites_snapshot: List[Dict[str, Any]], batch_size: int = 30) -> Dict[str, Dict[str, Any]]:
+def fetch_groq_momentum(sites_snapshot: list[dict[str, Any]], batch_size: int = 30) -> dict[str, dict[str, Any]]:
     """
     Signal 4: Use Groq AI to analyze internet momentum trends across ALL domains.
     Processes in batches of `batch_size` to stay within Groq's token limits.
@@ -296,7 +299,7 @@ def fetch_groq_momentum(sites_snapshot: List[Dict[str, Any]], batch_size: int = 
     sorted_sites = sorted(sites_snapshot, key=lambda s: s.get("rank", 9999))
     batches = [sorted_sites[i:i + batch_size] for i in range(0, len(sorted_sites), batch_size)]
 
-    momentum_map: Dict[str, Dict[str, Any]] = {}
+    momentum_map: dict[str, dict[str, Any]] = {}
     print(f"[Signals] Groq AI: processing {len(sorted_sites)} domains in {len(batches)} batches...")
 
     with httpx.Client(timeout=60.0) as client:
@@ -318,15 +321,15 @@ def fetch_groq_momentum(sites_snapshot: List[Dict[str, Any]], batch_size: int = 
 # ─────────────────────────────────────────────────────────────────────────────
 # SIGNAL 5: Google Trends (Human Search Momentum)
 # ─────────────────────────────────────────────────────────────────────────────
-def fetch_google_trends_momentum(domains: List[str], batch_size: int = 5) -> Dict[str, float]:
+def fetch_google_trends_momentum(domains: list[str], batch_size: int = 5) -> dict[str, float]:
     """
     Fetch Google Trends interest over the last 90 days for given domains.
     Computes a linear slope and normalizes it to a momentum score (-1.0 to +1.0).
     Processes in small batches to avoid rate limits.
     """
     try:
-        from pytrends.request import TrendReq
         import numpy as np
+        from pytrends.request import TrendReq
     except ImportError:
         print("[Signals] Warning: pytrends or numpy not installed. Skipping Google Trends.")
         return {}
@@ -335,15 +338,15 @@ def fetch_google_trends_momentum(domains: List[str], batch_size: int = 5) -> Dic
     momentum_map = {}
 
     print(f"[Signals] Google Trends: querying {len(domains)} domains...")
-    
+
     # Process in small batches (Google Trends limits to 5 keywords per request)
     batches = [domains[i:i + batch_size] for i in range(0, len(domains), batch_size)]
-    
+
     for idx, batch in enumerate(batches):
         try:
             pytrends.build_payload(batch, cat=0, timeframe='today 3-m', geo='', gprop='')
             df = pytrends.interest_over_time()
-            
+
             if not df.empty:
                 for kw in batch:
                     if kw in df.columns:
@@ -356,7 +359,7 @@ def fetch_google_trends_momentum(domains: List[str], batch_size: int = 5) -> Dic
                             # Normalize slope (heuristic: +/- 1.0 slope over 90 days is a max score of 1.0)
                             score = max(-1.0, min(1.0, slope))
                             momentum_map[kw] = round(score, 2)
-            
+
             # Rate limiting prevention
             if idx < len(batches) - 1:
                 import random
@@ -380,7 +383,7 @@ def fetch_cloudflare_outage_count() -> int:
         "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
         "Accept": "application/json"
     }
-    
+
     try:
         with httpx.Client(timeout=10.0) as client:
             res = client.get(url, headers=headers)

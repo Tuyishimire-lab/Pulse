@@ -10,9 +10,9 @@ import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
 import FaviconImage from '../../components/ui/FaviconImage';
-import WebVitalsPanel from '../../components/ui/WebVitalsPanel';
-import WikiInterestPanel from '../../components/ui/WikiInterestPanel';
-import SecurityPanel from '../../components/ui/SecurityPanel';
+import WebVitalsPanel, { WebVitalsData } from '../../components/ui/WebVitalsPanel';
+import WikiInterestPanel, { WikiViewsData } from '../../components/ui/WikiInterestPanel';
+import SecurityPanel, { SecurityData } from '../../components/ui/SecurityPanel';
 
 // Helper to generate dynamic fallback search topics based on domain name & category
 export function getMostSearchedTopics(site: { name: string; category: string }) {
@@ -663,13 +663,13 @@ export default function SitePageClient({ id }: { id: string }) {
 
             {/* -- Enrichment Panels (CrUX + Wikipedia + Security) -- */}
             {enrichment?.webVitals && (
-              <WebVitalsPanel data={enrichment.webVitals as any} color={site.color} />
+              <WebVitalsPanel data={enrichment.webVitals as unknown as WebVitalsData} />
             )}
             {enrichment?.wikiViews && (
-              <WikiInterestPanel data={enrichment.wikiViews as any} color={site.color} />
+              <WikiInterestPanel data={enrichment.wikiViews as unknown as WikiViewsData} color={site.color} />
             )}
             {enrichment?.security && (
-              <SecurityPanel data={enrichment.security as any} />
+              <SecurityPanel data={enrichment.security as unknown as SecurityData} />
             )}
 
             {/* Market & Traffic Intelligence Card */}

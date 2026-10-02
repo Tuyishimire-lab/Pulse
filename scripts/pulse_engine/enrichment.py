@@ -11,12 +11,11 @@ Each enrichment is independent and fault-tolerant.
 A failure in one does not block the others.
 """
 
+import json
 import os
 import sys
 import time
-import json
-import traceback
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -24,8 +23,9 @@ import httpx
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from scripts.pulse_engine.config import SUPABASE_URL, SUPABASE_KEY
-from supabase import create_client, Client
+from supabase import Client, create_client
+
+from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -321,7 +321,7 @@ def fetch_crux_for_site(client: httpx.Client, origin: str) -> dict | None:
             result["cwv_grade"] = compute_cwv_grade(
                 result["lcp_rating"], result["inp_rating"], result["cls_rating"]
             )
-        
+
         # Fetch form factor breakdown
         form_factors = {}
         for ff in ["DESKTOP", "PHONE"]:
@@ -354,7 +354,7 @@ def fetch_crux_for_site(client: httpx.Client, origin: str) -> dict | None:
 
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 429:
-            print(f"  [WARN] CrUX rate limited, pausing 30s...")
+            print("  [WARN] CrUX rate limited, pausing 30s...")
             time.sleep(30)
         return None
     except Exception as e:
@@ -556,7 +556,7 @@ def run_enrichment():
 
                 batch_count += 1
                 if batch_count >= 50:
-                    print(f"    ... pausing 20s (rate limit)")
+                    print("    ... pausing 20s (rate limit)")
                     time.sleep(20)
                     batch_count = 0
                 else:

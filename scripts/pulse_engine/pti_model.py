@@ -1,5 +1,5 @@
 import math
-from typing import Dict, Any, Tuple
+
 from .config import ANCHOR_MONTHLY, ZIPF_EXPONENT
 
 # Category Density Multipliers (Cm)
@@ -41,7 +41,7 @@ def estimate_traffic_and_pti(
     previous_rate: int = 0,
     category: str = "general",
     site_id: str = ""
-) -> Tuple[int, int, int, float, str]:
+) -> tuple[int, int, int, float, str]:
     """
     Computes Pulse Traffic Index (PTI) metrics using 4 signals:
       Signal 1: Cloudflare Radar DNS rank & Tranco rank (via `rank`)

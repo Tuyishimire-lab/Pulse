@@ -7,9 +7,9 @@ import FaviconImage from './ui/FaviconImage';
 import VisitsCounter from './ui/VisitsCounter';
 import { getMostSearchedTopics } from '../../utils/searchTopics';
 import { RadarStatsData } from '../../types/radar';
-import WebVitalsPanel from './ui/WebVitalsPanel';
-import WikiInterestPanel from './ui/WikiInterestPanel';
-import SecurityPanel from './ui/SecurityPanel';
+import WebVitalsPanel, { WebVitalsData } from './ui/WebVitalsPanel';
+import WikiInterestPanel, { WikiViewsData } from './ui/WikiInterestPanel';
+import SecurityPanel, { SecurityData } from './ui/SecurityPanel';
 
 interface SiteDetailModalProps {
   site: SiteConfig;
@@ -520,13 +520,13 @@ export default function SiteDetailModal({
 
           {/* -- Enrichment Panels (CrUX + Wikipedia + Security) -- */}
           {enrichment?.webVitals && (
-            <WebVitalsPanel data={enrichment.webVitals as any} color={site.color} />
+            <WebVitalsPanel data={enrichment.webVitals as unknown as WebVitalsData} />
           )}
           {enrichment?.wikiViews && (
-            <WikiInterestPanel data={enrichment.wikiViews as any} color={site.color} />
+            <WikiInterestPanel data={enrichment.wikiViews as unknown as WikiViewsData} color={site.color} />
           )}
           {enrichment?.security && (
-            <SecurityPanel data={enrichment.security as any} />
+            <SecurityPanel data={enrichment.security as unknown as SecurityData} />
           )}
 
           {/* Market & Traffic Intelligence Card */}

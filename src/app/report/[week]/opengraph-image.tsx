@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { generateWeeklyReport, parsReportSlug } from '../data/reportGenerator';
+import { generateWeeklyReport, parseReportSlug } from '../data/reportGenerator';
 import { SITE_COUNT } from '../../data/sites';
 
 export const runtime = 'edge';
@@ -16,7 +16,7 @@ interface Props {
 
 export default async function Image({ params }: Props) {
   const { week: slug } = await params;
-  const date = parsReportSlug(slug);
+  const date = parseReportSlug(slug);
 
   let headline = 'Weekly Internet Traffic Intelligence Report';
   let weekLabel = slug.toUpperCase();

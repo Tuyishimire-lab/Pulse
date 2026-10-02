@@ -24,13 +24,12 @@ We use these as calibration anchors for a log-linear interpolation.
 This is NOT the old Zipf model - it's bounded by real observed data.
 """
 
+import json
+import math
 import os
 import re
-import sys
-import math
-import json
 from pathlib import Path
-from typing import Optional
+
 from dotenv import load_dotenv
 
 # Load .env.local from project root
@@ -41,7 +40,7 @@ if env_path.exists():
 # ─── Try to import httpx, fall back to urllib ────────────────────────────────
 try:
     import httpx
-    def get_url(url: str, headers: dict = {}, timeout: int = 10) -> Optional[dict]:
+    def get_url(url: str, headers: dict = {}, timeout: int = 10) -> dict | None:
         try:
             r = httpx.get(url, headers=headers, timeout=timeout)
             r.raise_for_status()
@@ -50,8 +49,9 @@ try:
             print(f"  [HTTP] {url} failed: {e}")
             return None
 except ImportError:
-    import urllib.request, urllib.error
-    def get_url(url: str, headers: dict = {}, timeout: int = 10) -> Optional[dict]:
+    import urllib.error
+    import urllib.request
+    def get_url(url: str, headers: dict = {}, timeout: int = 10) -> dict | None:
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=timeout) as resp:

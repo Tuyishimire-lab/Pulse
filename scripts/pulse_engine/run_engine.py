@@ -11,7 +11,6 @@ instead of random ±4% cosmetic noise. The volatility field that was already
 being computed and stored now directly drives the displayed rate.
 """
 
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,26 +18,23 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from supabase import create_client, Client
-from scripts.pulse_engine.config import SUPABASE_URL, SUPABASE_KEY
+from supabase import Client, create_client
+
+from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
 from scripts.pulse_engine.signals import (
-    parse_domain,
+    fetch_cloudflare_outage_count,
     fetch_cloudflare_radar_ranks,
     fetch_google_trends_momentum,
-    fetch_cloudflare_outage_count,
+    parse_domain,
 )
 from scripts.pulse_engine.static_baselines import (
-    STATIC_BASELINES,
     SITE_META,
-    get_rank_map,
+    STATIC_BASELINES,
     get_baseline_str,
+    get_rank_map,
     get_rate,
-    SECONDS_PER_MONTH,
 )
-from scripts.pulse_engine.validation import run_validation, print_validation_report
-
-
-
+from scripts.pulse_engine.validation import print_validation_report, run_validation
 
 # ─────────────────────────────────────────────────────────────────────────────
 # RADAR-DRIVEN RATE MODULATION
@@ -238,7 +234,7 @@ def run_pulse_engine(run_validation_report: bool = True):
                 "volatility": volatility,
                 "pti_score": 0.0,
             }).execute()
-        except Exception as e:
+        except Exception:
             pass  # site_history is optional telemetry - don't block on schema mismatches
 
 

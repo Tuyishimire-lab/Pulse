@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import {
   generateWeeklyReport,
   getReportSlugs,
-  parsReportSlug,
+  parseReportSlug,
 } from '../data/reportGenerator';
 import ReportPageClient from './ReportPageClient';
 import { SITE_COUNT } from '../../data/sites';
@@ -21,7 +21,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { week: slug } = await params;
-  const date = parsReportSlug(slug);
+  const date = parseReportSlug(slug);
   if (!date) return { title: 'Report Not Found | Pulse' };
 
   const report = await generateWeeklyReport(slug);
@@ -57,7 +57,7 @@ export const revalidate = 3600; // ISR: re-check hourly to pick up new snapshots
 
 export default async function ReportPage({ params }: PageProps) {
   const { week: slug } = await params;
-  const date = parsReportSlug(slug);
+  const date = parseReportSlug(slug);
   if (!date) notFound();
 
   const report = await generateWeeklyReport(slug);

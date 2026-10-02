@@ -19,9 +19,6 @@ Source priority ladder (lower = higher priority):
 
 from __future__ import annotations
 
-import math
-
-
 # ── Source priority constants ─────────────────────────────────────────────────
 _PRI_OVERRIDE  = 0
 _PRI_CF_RADAR  = 1
