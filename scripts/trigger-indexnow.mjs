@@ -1,6 +1,7 @@
 import { SITES, CATEGORIES } from '../src/app/data/sites.ts';
 import { COUNTRY_SLUGS } from '../src/app/top-sites/data/countries.ts';
 import { getAllCompareSlugs } from '../src/app/compare/data/pairs.ts';
+import { getReportSlugs } from '../src/app/report/data/reportGenerator.ts';
 
 const API_KEY = '14eac490de1941d88e198247a1246901';
 const HOST = 'www.pulstraffic.com';
@@ -31,6 +32,7 @@ async function main() {
   urlSet.add(`${BASE_URL}/map`);
   urlSet.add(`${BASE_URL}/compare`);
   urlSet.add(`${BASE_URL}/category`);
+  urlSet.add(`${BASE_URL}/report`);
   urlSet.add(`${BASE_URL}/methodology`);
   urlSet.add(`${BASE_URL}/about`);
   urlSet.add(`${BASE_URL}/privacy`);
@@ -48,6 +50,15 @@ async function main() {
 
   // Site pages
   SITES.forEach(s => urlSet.add(`${BASE_URL}/sites/${s.id}`));
+
+  // Weekly Report pages
+  try {
+    const reportSlugs = await getReportSlugs();
+    reportSlugs.forEach(slug => urlSet.add(`${BASE_URL}/report/${slug}`));
+  } catch {
+    // fallback if DB not reachable
+    urlSet.add(`${BASE_URL}/report/2026-w41`);
+  }
 
   const urls = Array.from(urlSet);
   console.log(`[IndexNow] Prepared ${urls.length} unique URLs to submit.`);
