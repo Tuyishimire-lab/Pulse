@@ -170,7 +170,7 @@ export default function HomeClient({
 
     // Fetch authoritative last-sync timestamp from /api/health
     fetch('/api/health')
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error("API Error")))
       .then((data) => {
         if (data?.lastSyncedAt) setLastSynced(data.lastSyncedAt);
       })
@@ -229,7 +229,7 @@ export default function HomeClient({
       `/api/marquee${selectedCountry !== 'global' ? `?location=${selectedCountry}` : ''}`,
       { cache: 'no-store' },
     )
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error("API Error")))
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setMarqueeItems(data);
@@ -253,7 +253,7 @@ export default function HomeClient({
     fetch(
       `/api/radar-stats${selectedCountry !== 'global' ? `?location=${selectedCountry}` : ''}`,
     )
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error("API Error")))
       .then((data) => {
         if (ignore) return;
         if (data && data.success) { setRadarStats(data); }
@@ -267,7 +267,7 @@ export default function HomeClient({
 
     if (selectedCountry !== 'global') {
       fetch(`/api/sync-rankings?location=${selectedCountry}`, { next: { revalidate: 3600 } })
-        .then((res) => res.json())
+        .then((res) => res.ok ? res.json() : Promise.reject(new Error("API Error")))
         .then((data) => {
           if (ignore) return;
           if (data && data.success && data.ranks) { setLocalRanks(data.ranks); }
@@ -442,7 +442,7 @@ export default function HomeClient({
     const primaryAsn = site.asn?.[0];
     if (primaryAsn) {
       fetch(`/api/radar-site?asn=${primaryAsn}`)
-        .then((r) => r.json())
+        .then((r) => r.ok ? r.json() : Promise.reject(new Error("API Error")))
         .then((data) => {
           if (!data || data.source === 'unavailable') return;
           setSelectedDetails((prev) => {

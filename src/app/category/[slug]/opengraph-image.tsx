@@ -3,7 +3,7 @@ import { CATEGORIES, SITES } from '../../data/sites';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
 import { getSites } from '../../../lib/getSites';
 
-export const runtime = 'edge';
+
 export const alt = 'Website Category Traffic Rankings';
 export const size = {
   width: 1200,

@@ -17,39 +17,13 @@ const supabase = createClient(
   supabaseKey || 'placeholder'
 );
 
-function authorizeCronRequest(request: Request, url: URL): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  const isDev = process.env.NODE_ENV !== 'production';
-
-  // In development, allow testing without credentials if requested
-  if (isDev && (url.searchParams.get('test') === 'true' || url.searchParams.get('dryRun') === 'true')) {
-    return true;
-  }
-
-  // If secret is set, authorize via header or query param
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader === `Bearer ${cronSecret}`) return true;
-    if (url.searchParams.get('secret') === cronSecret) return true;
-  }
-
-  // Allow local requests in development
-  if (isDev) {
-    return true;
-  }
-
-  return false;
-}
+import { cronAuthError } from '../../../../lib/auth';
 
 async function handleWeeklyDigest(request: Request) {
   const url = new URL(request.url);
-
-  if (!authorizeCronRequest(request, url)) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized: invalid or missing CRON_SECRET' },
-      { status: 401 }
-    );
-  }
+  
+  const authError = cronAuthError(request);
+  if (authError) return authError;
 
   if (!isSupabaseConfigured) {
     return NextResponse.json(

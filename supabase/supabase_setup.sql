@@ -117,6 +117,17 @@ CREATE TABLE IF NOT EXISTS public.site_security (
   fetched_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Sync Log: health monitoring and cron run auditing
+-- Written by daily-job route; read by /api/health
+CREATE TABLE IF NOT EXISTS public.sync_log (
+  id            BIGSERIAL PRIMARY KEY,
+  completed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sites_count   INTEGER,
+  status        TEXT NOT NULL DEFAULT 'success',
+  error_message TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_sync_log_completed_at ON public.sync_log (completed_at DESC);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.sites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.traffic_history ENABLE ROW LEVEL SECURITY;
@@ -124,6 +135,7 @@ ALTER TABLE public.traffic_daily_aggregation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.weekly_snapshots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.compare_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sync_log ENABLE ROW LEVEL SECURITY;
 
 -- Allow Public Read Access
 CREATE POLICY "Allow public read access to sites" ON public.sites FOR SELECT USING (true);
@@ -132,6 +144,8 @@ CREATE POLICY "Allow public read access to traffic_daily_aggregation" ON public.
 CREATE POLICY "Allow public read access to weekly_snapshots" ON public.weekly_snapshots FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to site_history" ON public.site_history FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to compare_cache" ON public.compare_cache FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to sync_log" ON public.sync_log FOR SELECT USING (true);
+CREATE POLICY "Allow service_role full access to sync_log" ON public.sync_log FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Sync trigger function to update dynamic daily metrics
 CREATE OR REPLACE FUNCTION public.sync_traffic_daily_aggregation()

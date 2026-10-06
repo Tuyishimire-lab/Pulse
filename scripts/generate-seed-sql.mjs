@@ -54,6 +54,6 @@ const output = [
   lines.join('\n')
 ].join('\n');
 
-const outPath = path.resolve(process.cwd(), 'supabase_seed_generated.sql');
+const outPath = path.resolve(process.cwd(), 'supabase', 'supabase_seed_generated.sql');
 fs.writeFileSync(outPath, output, 'utf8');
 console.log(`Successfully generated SQL seed file with ${SITES.length} domains at: ${outPath}`);

@@ -306,7 +306,7 @@ export default function SiteDetailModal({
   React.useEffect(() => {
     if (!site?.id) return;
     fetch(`/api/site-enrichment?id=${site.id}`)
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("API Error")))
       .then(setEnrichment)
       .catch(() => {});
   }, [site?.id]);

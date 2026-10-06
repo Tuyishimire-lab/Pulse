@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
 import { SITES } from '../../data/sites';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 export const revalidate = 3600; // Revalidate at most once per hour
 
@@ -18,6 +19,9 @@ interface SyncSiteItem {
 }
 
 export async function GET(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, 10);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(req.url);
   const rawLocation = searchParams.get('location') || 'global';
   const location = rawLocation.toLowerCase() === 'global' ? 'global' : rawLocation.toUpperCase();

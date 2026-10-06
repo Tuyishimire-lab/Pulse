@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { STATIC_TRAFFIC_FACTS } from '../../../data/marquee';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 export const revalidate = 60;
 
@@ -112,6 +113,9 @@ const IMPACT_LABELS: Record<string, string> = {
 };
 
 export async function GET(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, 20);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(req.url);
   const rawLocation = searchParams.get('location') || 'global';
   const location = rawLocation.toLowerCase() === 'global' ? 'global' : rawLocation.toUpperCase();

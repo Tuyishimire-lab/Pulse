@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
+
 export const alt = 'Pulse - Live Global Web Traffic Visualizer';
 export const size = {
   width: 1200,

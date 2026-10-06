@@ -37,7 +37,7 @@
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16.2.10 (App Router, Turbopack) |
+| Framework | Next.js 16.3.8 (App Router, Turbopack) |
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 |
 | Runtime | React 19 |
@@ -86,6 +86,7 @@
 ---
 
 ## 4. Database Schema (Supabase)
+Schemas and migrations are maintained under the `supabase/` directory (`supabase_setup.sql`, `supabase_migration_new_tables.sql`, `supabase_seed_generated.sql`).
 
 ### `public.sites`
 Core site data. Updated by the PTI engine every 6 hours.

@@ -108,14 +108,23 @@ pip install httpx supabase python-dotenv
 Create `.env.local` in the root directory:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_key
+CRON_SECRET=your_cron_secret
 OPENPAGERANK_API_KEY=your_openpagerank_key
 KEYWORDSEVERYWHERE_API_KEY=your_keywordseverywhere_key
 CLOUDFLARE_API_TOKEN=your_cloudflare_token
 GROQ_API_KEY=your_groq_api_key
 ```
 
-### 3. Run Development Server
+### 3. Database Initialization
+Database setup scripts are located in the `supabase/` directory:
+- Run `supabase/supabase_setup.sql` in your Supabase SQL Editor to initialize schemas and tables.
+- Run `supabase/supabase_migration_new_tables.sql` for supplemental tables.
+- Run `supabase/supabase_migration_sync_log.sql` for health check logging.
+- Run `supabase/supabase_seed_generated.sql` or `npm run generate:sql` to populate initial baseline domains.
+
+### 4. Run Development Server
 ```bash
 npm run dev
 ```

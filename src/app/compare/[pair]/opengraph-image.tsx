@@ -3,7 +3,7 @@ import { SITES } from '../../data/sites';
 import { getPairBySlug, parsePairSlug } from '../data/pairs';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
 
-export const runtime = 'edge';
+
 export const alt = 'Pulse Platform VS Traffic Comparison';
 export const size = {
   width: 1200,

@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -13,25 +11,37 @@
 # testing
 /coverage
 
-# next.js
+# next.js & turbopack
 /.next/
 /out/
+/.turbo/
 
 # production
 /build
 
-# misc
+# misc & OS
 .DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
 *.pem
 
-# debug
+# IDEs & editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# debug & logs
+*.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (NEVER commit secrets)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -42,8 +52,14 @@ next-env.d.ts
 
 # python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+.ruff_cache/
+.pytest_cache/
+.venv/
+venv/
+env/
+ENV/
 
-# cache
+# cache & generated data
 scripts/.countries-cache.json

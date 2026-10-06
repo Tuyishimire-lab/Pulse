@@ -72,7 +72,7 @@ export const COUNTRIES: CountryData[] = [
         internetUsers: '75 million',
     internetPenetration: '90%',
     insight:
-      'Germany is Europe\'s largest internet market with 75 million users and a strong emphasis on data privacy. DuckDuckGo\'s market share in Germany is roughly 3× higher than the global average, reflecting German users\' preference for privacy-respecting alternatives to Google.',
+      'Germany is Europe\'s largest internet market with 75 million users and a strong emphasis on data privacy. DuckDuckGo\'s market share in Germany is roughly 3� higher than the global average, reflecting German users\' preference for privacy-respecting alternatives to Google.',
     localNote:
       'Privacy is a cultural priority in Germany. DuckDuckGo, ProtonMail, and VPN services are disproportionately popular compared to global benchmarks.',
     pinnedSiteIds: ['google', 'youtube', 'wikipedia', 'facebook', 'instagram', 'chatgpt', 'amazon', 'reddit', 'x', 'duckduckgo', 'netflix', 'microsoft', 'linkedin', 'spotify', 'discord', 'ebay', 'twitch', 'github', 'tiktok', 'bing'],
@@ -186,7 +186,7 @@ export const COUNTRIES: CountryData[] = [
     pinnedSiteIds: ['google', 'youtube', 'facebook', 'instagram', 'chatgpt', 'x', 'wikipedia', 'tiktok', 'reddit', 'amazon', 'whatsapp', 'netflix', 'microsoft', 'linkedin', 'discord', 'spotify', 'mercadolibre', 'pinterest', 'twitch', 'bing'],
   },
 
-  // ── 10 New International Expansion Markets ─────────────────────────────
+  // -- 10 New International Expansion Markets -----------------------------
   {
     slug: 'spain',
     name: 'Spain',

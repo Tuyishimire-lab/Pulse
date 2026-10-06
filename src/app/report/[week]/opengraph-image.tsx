@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 import { generateWeeklyReport, parseReportSlug } from '../data/reportGenerator';
 import { SITE_COUNT } from '../../data/sites';
 
-export const runtime = 'edge';
+
 export const alt = 'Pulse Weekly Internet Traffic Intelligence Report';
 export const size = {
   width: 1200,

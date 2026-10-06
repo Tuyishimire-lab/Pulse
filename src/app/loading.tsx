@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Next.js loading UI - shown while page.tsx JS bundle downloads.
  * Only the site card grid shimmers; header renders from static HTML immediately.
  */

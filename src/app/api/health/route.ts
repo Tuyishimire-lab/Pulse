@@ -40,7 +40,11 @@ function supabaseClient() {
   return createClient(url, key);
 }
 
-export async function GET() {
+import { checkRateLimit } from '../../../lib/rateLimit';
+
+export async function GET(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, 10);
+  if (rateLimitResponse) return rateLimitResponse;
   const sb = supabaseClient();
 
   if (!sb) {
@@ -58,15 +62,40 @@ export async function GET() {
       .limit(1)
       .single();
 
-    if (error || !data) {
-      // Table exists but is empty, or query failed - treat as never-synced
-      return NextResponse.json(
-        { ok: false, degraded: true, message: 'No sync records found' },
-        { status: 503 },
-      );
+    let completedAt: Date;
+    let sitesCount: number | null = null;
+    let status = 'success';
+    let source = 'sync_log';
+
+    if (data && !error) {
+      completedAt = new Date(data.completed_at);
+      sitesCount = data.sites_count ?? null;
+      status = data.status ?? 'success';
+    } else {
+      // Fallback: check the latest updated_at in the sites table
+      const { data: latestSite, error: siteError } = await sb
+        .from('sites')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (siteError || !latestSite?.updated_at) {
+        return NextResponse.json(
+          { ok: false, degraded: true, message: 'No sync records or site data found' },
+          { status: 503 },
+        );
+      }
+
+      const { count: totalSites } = await sb
+        .from('sites')
+        .select('id', { count: 'exact', head: true });
+
+      completedAt = new Date(latestSite.updated_at);
+      sitesCount = totalSites ?? null;
+      source = 'sites_table';
     }
 
-    const completedAt = new Date(data.completed_at);
     const ageSeconds = Math.floor((Date.now() - completedAt.getTime()) / 1000);
     const degraded   = ageSeconds > CRON_INTERVAL_SECONDS * DEGRADED_MULTIPLIER;
 
@@ -75,8 +104,9 @@ export async function GET() {
       lastSyncedAt:  completedAt.toISOString(),
       ageSeconds,
       degraded,
-      sitesCount:    data.sites_count ?? null,
-      status:        data.status      ?? 'success',
+      sitesCount,
+      status,
+      source,
       message:       degraded
         ? `Data frozen - last sync was ${Math.round(ageSeconds / 3600)}h ago`
         : 'Sync healthy',

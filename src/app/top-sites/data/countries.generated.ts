@@ -197,12 +197,12 @@ export const GENERATED_COUNTRIES: CountryData[] = [
   },
   {
     slug: 'cote-divoire',
-    name: 'Côte d\'Ivoire',
+    name: 'C�te d\'Ivoire',
     cfCode: 'CI',
     internetUsers: '16 million',
     internetPenetration: 'N/A',
-    insight: "Côte d'Ivoire has approximately 16 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in Côte d'Ivoire are Facebook, WhatsApp, and Instagram.",
-    localNote: "The use of French and local languages online is prevalent in Côte d'Ivoire, reflecting the country's linguistic diversity.",
+    insight: "C�te d'Ivoire has approximately 16 million internet users, with 50% penetration, and the country has seen significant growth in the use of social media and e-commerce platforms. The most popular social media platforms in C�te d'Ivoire are Facebook, WhatsApp, and Instagram.",
+    localNote: "The use of French and local languages online is prevalent in C�te d'Ivoire, reflecting the country's linguistic diversity.",
   },
   {
     slug: 'croatia',

@@ -3,7 +3,7 @@ import { SITES } from '../../data/sites';
 import { getCountryBySlug } from '../data/countries';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
 
-export const runtime = 'edge';
+
 export const alt = 'Most Visited Websites by Country Analytics';
 export const size = {
   width: 1200,

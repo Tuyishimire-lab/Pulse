@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,10 @@ interface CloudflareOutage {
   };
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const rateLimitResponse = checkRateLimit(req, 10);
+  if (rateLimitResponse) return rateLimitResponse;
+
   const token = process.env.CLOUDFLARE_API_TOKEN;
 
   // Fallback mock outage reports if no token is configured

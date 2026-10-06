@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useMemo } from 'react';
 
@@ -42,9 +42,9 @@ export default function RankSparkline({ history, color }: RankSparklineProps) {
 
     const tooltipStr =
       delta > 0
-        ? `Rank improved: #${first} → #${last} (+${delta})`
+        ? `Rank improved: #${first} ? #${last} (+${delta})`
         : delta < 0
-          ? `Rank declined: #${first} → #${last} (${delta})`
+          ? `Rank declined: #${first} ? #${last} (${delta})`
           : `Rank stable: #${last}`;
 
     return { path: points.join(' '), strokeColor: color || sc, tooltip: tooltipStr };

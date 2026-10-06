@@ -8,7 +8,7 @@
  *   or:  npx tsx scripts/generate-seed-sql.js
  *
  * Output goes to stdout - pipe to a file:
- *   npx tsx scripts/generate-seed-sql.js > supabase_seed_generated.sql
+ *   npx tsx scripts/generate-seed-sql.js > supabase/supabase_seed_generated.sql
  */
 
 // ESM-compatible dynamic import of the TypeScript source via tsx

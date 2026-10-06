@@ -1,8 +1,8 @@
-﻿import { ImageResponse } from 'next/og';
+import { ImageResponse } from 'next/og';
 import { createClient } from '@supabase/supabase-js';
 import { SITES } from '../../data/sites';
 
-export const runtime = 'edge';
+
 export const alt = 'Pulse Website Traffic Analytics Details';
 export const size = {
   width: 1200,

@@ -67,7 +67,7 @@ export default function SitePageClient({ id }: { id: string }) {
   useEffect(() => {
     if (!site) return;
     fetch(`/api/site-enrichment?id=${site.id}`)
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("API Error")))
       .then(setEnrichment)
       .catch(() => {}); // graceful - panels simply don't render
   }, [site]);
