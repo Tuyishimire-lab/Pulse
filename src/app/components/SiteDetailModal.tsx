@@ -563,6 +563,33 @@ export default function SiteDetailModal({
               </span>
             </div>
           </div>
+
+          {/* AI Search & Generative Engine Optimization (GEO) via CiteRoute */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#05AD98]/10 via-[#05AD98]/5 to-transparent border border-[#05AD98]/25 mt-6 text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#05AD98] animate-pulse" />
+                <span className="text-xs font-bold text-white tracking-wide">
+                  AI Search &amp; GEO Observability
+                </span>
+                <span className="text-[9px] font-mono font-bold text-[#05AD98] bg-[#05AD98]/15 border border-[#05AD98]/30 px-1.5 py-0.5 rounded">
+                  via CiteRoute
+                </span>
+              </div>
+              <p className="text-[11px] text-[#8fa2b2] leading-relaxed max-w-md">
+                Audit how {site.name} is cited across ChatGPT, Perplexity, and Claude, and inspect machine-readable <code className="text-[#05AD98] font-mono">agent.json</code> endpoints.
+              </p>
+            </div>
+            <a
+              href={`https://www.citeroute.com/audit?domain=${encodeURIComponent(site.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#05AD98] hover:bg-[#038a79] text-white shadow-lg shadow-[#05AD98]/20 transition-all shrink-0 group"
+            >
+              <span>Scan on CiteRoute</span>
+              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
         </div>
       </div>
     </div>

@@ -123,7 +123,7 @@ export default function HomeClient({
 
   // ── Incident detection from marquee ──────────────────────────────────────
   // ONLY flag sites whose own Statuspage API confirms a live incident.
-  // We no longer keyword-match from HN/Reddit/CF Radar — those sources are
+  // We no longer keyword-match from HN/Reddit/CF Radar (those sources are
   // great for the scrolling news ticker but unreliable for per-site badges
   // (a week-old Reddit post mentioning "OpenAI" would create a false positive).
   const sitesWithIncidents = useMemo(() => {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Static real-world traffic facts used as marquee fallback content
  * when no live outage or news data is available.
  *
@@ -25,4 +25,6 @@ export const STATIC_TRAFFIC_FACTS: { text: string; type: string }[] = [
   { text: "TRAFFIC INSIGHT: The global internet carries approximately 5 exabytes of data every day.", type: "insight" },
   { text: "TRAFFIC INSIGHT: X (Twitter) sees over 500 million posts per day from its active user base.", type: "insight" },
   { text: "TRAFFIC INSIGHT: Amazon Web Services powers approximately 31% of the global cloud infrastructure market.", type: "insight" },
+  { text: "AI SEARCH SHIFT: Over 38% of web queries now trigger generative AI summaries. Optimize your citations on CiteRoute.com.", type: "insight" },
+  { text: "AGENT PROTOCOLS: Machine-readable agent.json protocols accelerate autonomous AI buyer transactions by 40x on CiteRoute.", type: "insight" },
 ];

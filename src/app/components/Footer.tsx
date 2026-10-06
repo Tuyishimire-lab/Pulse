@@ -44,6 +44,21 @@ export default function Footer() {
             <p className="footer-source">
               Powered by the Pulse Traffic Index (PTI): Cloudflare Radar DNS telemetry, Tranco rankings, Open PageRank, and Groq AI momentum signals.
             </p>
+            <div className="mt-4 pt-3 border-t border-white/[0.06]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d8196] block mb-1">
+                Ecosystem &amp; AI Search
+              </span>
+              <a
+                href="https://www.citeroute.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-[#05AD98] hover:text-[#049381] font-semibold transition-colors group"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#05AD98] animate-pulse" />
+                <span>CiteRoute: Generative Engine (GEO) &amp; Agent Observability</span>
+                <svg className="w-3 h-3 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            </div>
           </div>
 
           {/* Navigation column */}
@@ -63,6 +78,16 @@ export default function Footer() {
               {RESOURCE_LINKS.map(({ href, label }) => (
                 <li key={href}><Link href={href}>{label}</Link></li>
               ))}
+              <li>
+                <a
+                  href="https://www.citeroute.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#05AD98] hover:underline flex items-center gap-1"
+                >
+                  CiteRoute GEO ↗
+                </a>
+              </li>
             </ul>
           </div>
 

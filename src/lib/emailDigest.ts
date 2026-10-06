@@ -305,6 +305,9 @@ export function renderWeeklyDigestHtml(
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #475569; line-height: 1.45; margin-top: 6px;">
                   ${report.aiSearchConvergence?.convergenceNarrative || ''}
                 </div>
+                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #64748b;">
+                  Track AI search citations &amp; agent readiness on <a href="https://www.citeroute.com" target="_blank" style="color: #05AD98; font-weight: 700; text-decoration: none;">CiteRoute &rarr;</a>
+                </div>
               </div>
             </td>
           </tr>

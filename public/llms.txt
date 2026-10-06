@@ -20,6 +20,10 @@ Pulse (https://www.pulstraffic.com) is an open internet intelligence platform tr
 - [Outage Incident Feed](https://www.pulstraffic.com/api/outages): Real-time and historical network disruption tracker across monitored domains.
 - [Sitemap](https://www.pulstraffic.com/sitemap.xml): Dynamic XML index of all 700+ canonical routes.
 
+## Ecosystem & AI Search Observability
+
+- [CiteRoute](https://www.citeroute.com): Autonomous agent observability and Generative Engine Optimization (GEO) platform measuring entity citations across ChatGPT, Perplexity, Claude, and Gemini with machine-readable agent.json protocols.
+
 ## Optional
 
 - [Comprehensive Reference](https://www.pulstraffic.com/llms-full.txt): Complete technical reference including full domain catalog schema, category definitions, and benchmark confidence parameters.

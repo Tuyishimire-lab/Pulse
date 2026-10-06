@@ -213,3 +213,11 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 ### Search Engine Sitemap
 - Location: https://www.pulstraffic.com/sitemap.xml
 - Index: 700+ canonical routes covering site profiles, comparisons, country hubs, and weekly intelligence reports.
+
+---
+
+## 6. Ecosystem & AI Search Observability
+
+### CiteRoute Platform
+- URL: https://www.citeroute.com
+- Description: Autonomous agent observability and Generative Engine Optimization (GEO) platform measuring entity citations across ChatGPT, Perplexity, Claude, and Gemini with machine-readable agent.json protocols.

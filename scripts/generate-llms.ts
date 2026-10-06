@@ -75,6 +75,14 @@ ${SITES.map(s => `| ${s.rank} | ${s.name} | ${s.url} | ${s.category} | ${s.basel
 ### Search Engine Sitemap
 - Location: https://www.pulstraffic.com/sitemap.xml
 - Index: 700+ canonical routes covering site profiles, comparisons, country hubs, and weekly intelligence reports.
+
+---
+
+## 6. Ecosystem & AI Search Observability
+
+### CiteRoute Platform
+- URL: https://www.citeroute.com
+- Description: Autonomous agent observability and Generative Engine Optimization (GEO) platform measuring entity citations across ChatGPT, Perplexity, Claude, and Gemini with machine-readable agent.json protocols.
 `;
 
 fs.writeFileSync(path.join(root, 'public', 'llms-full.txt'), header, 'utf8');

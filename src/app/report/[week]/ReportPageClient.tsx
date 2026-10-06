@@ -483,6 +483,35 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
           <p className="text-xs text-[#94a3b8] leading-relaxed border-t border-white/[0.06] pt-3">
             {report.aiSearchConvergence.convergenceNarrative}
           </p>
+
+          {/* CiteRoute GEO Intelligence Integration */}
+          <div className="mt-4 pt-3.5 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-[#05AD98]/12 via-[#05AD98]/5 to-transparent p-3.5 rounded-xl border border-[#05AD98]/20">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#05AD98] animate-pulse" />
+                <span className="text-xs font-bold text-white tracking-wide">
+                  Optimize for AI Search &amp; GEO
+                </span>
+                <span className="text-[9px] font-mono font-bold text-[#05AD98] bg-[#05AD98]/15 border border-[#05AD98]/30 px-1.5 py-0.5 rounded">
+                  via CiteRoute
+                </span>
+              </div>
+              <p className="text-[11px] text-[#94a3b8] leading-relaxed max-w-xl">
+                As conversational models absorb query volume, track whether ChatGPT, Claude, and Perplexity cite your content. Run a real-time Generative Engine audit on CiteRoute.
+              </p>
+            </div>
+            <a
+              href="https://www.citeroute.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#05AD98] hover:bg-[#038a79] text-white text-xs font-bold transition-all shadow-md shadow-[#05AD98]/20 shrink-0 group whitespace-nowrap"
+            >
+              <span>Audit on CiteRoute</span>
+              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </a>
+          </div>
         </section>
 
         {/* Top Movers */}

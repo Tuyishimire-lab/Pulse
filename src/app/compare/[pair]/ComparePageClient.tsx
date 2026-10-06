@@ -441,6 +441,33 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           />
         </section>
 
+        {/* CiteRoute AI Search & GEO Benchmark Card */}
+        <section className="mb-10 p-5 sm:p-6 rounded-2xl border border-[#05AD98]/25 bg-gradient-to-br from-[#05AD98]/10 via-[#0A0E0E]/90 to-transparent shadow-xl relative overflow-hidden text-left">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#05AD98]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
+            <div className="space-y-1.5 max-w-xl">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#05AD98]/15 border border-[#05AD98]/30 text-[#05AD98] text-[10px] font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#05AD98] animate-pulse" />
+                Generative Engine Observability
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Benchmark {siteA.name} vs {siteB.name} in AI Search
+              </h3>
+              <p className="text-xs text-[#94a3b8] leading-relaxed">
+                While Pulse tracks live visitor volume, <strong>CiteRoute</strong> measures entity citation frequency across ChatGPT, Perplexity, and Claude, and provides autonomous <code className="text-[#05AD98] font-mono">agent.json</code> endpoints.
+              </p>
+            </div>
+            <a
+              href={`https://www.citeroute.com/benchmark?domainA=${encodeURIComponent(siteA.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}&domainB=${encodeURIComponent(siteB.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#05AD98] hover:bg-[#038a79] text-white font-bold text-xs shadow-lg shadow-[#05AD98]/25 transition-all shrink-0 group"
+            >
+              <span>Benchmark on CiteRoute</span>
+              <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+        </section>
 
         {/* FAQ */}
         <section className="mb-10">

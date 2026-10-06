@@ -68,6 +68,17 @@ export default function NavHeader() {
                 {label}
               </Link>
             ))}
+            <a
+              href="https://www.citeroute.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#05AD98]/10 text-[#05AD98] border border-[#05AD98]/25 hover:bg-[#05AD98]/20 hover:border-[#05AD98]/40 transition-all ml-1 group"
+              title="Generative Engine Optimization & AI Agent Observability"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#05AD98] animate-pulse" />
+              <span>CiteRoute GEO</span>
+              <svg className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            </a>
           </nav>
 
           {/* Mobile & Tablet hamburger (< lg) */}
@@ -102,6 +113,19 @@ export default function NavHeader() {
             ))}
             {/* Secondary resource links - ensures /about and /methodology are always reachable on mobile */}
             <div className="mt-2 pt-2 border-t border-white/[0.06] flex flex-col gap-1">
+              <a
+                href="https://www.citeroute.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-[#05AD98] bg-[#05AD98]/10 border border-[#05AD98]/20 flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#05AD98] animate-pulse" />
+                  CiteRoute: AI &amp; GEO Observability
+                </span>
+                <span className="text-[10px] text-[#05AD98]">Visit ↗</span>
+              </a>
               {RESOURCE_LINKS.map(({ href, label }) => (
                 <Link
                   key={href}
