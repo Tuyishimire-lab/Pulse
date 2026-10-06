@@ -121,7 +121,15 @@ export async function GET(req: Request) {
   const location = rawLocation.toLowerCase() === 'global' ? 'global' : rawLocation.toUpperCase();
   const hasLocation = location !== 'global';
 
-  const feedItems: { text: string; type: string; asns?: number[]; locations?: string[]; confirmedSiteId?: string }[] = [];
+  const feedItems: {
+    text: string;
+    type: string;
+    asns?: number[];
+    locations?: string[];
+    confirmedSiteId?: string;
+    incidentSeverity?: 'outage' | 'degraded';
+    incidentMessage?: string;
+  }[] = [];
   const token = process.env.CLOUDFLARE_API_TOKEN;
 
   // ── 1. Cloudflare Radar: real network outage annotations ─────────────────
@@ -234,16 +242,19 @@ export async function GET(req: Request) {
         text = `${label}: ${site.name} is currently ${description.toLowerCase()}.`;
       }
 
-      const isSevere = indicator === 'critical' || indicator === 'major';
+      const isCritical = indicator === 'critical' || activeIncident?.impact === 'critical';
+      const isDegraded = indicator === 'major' || indicator === 'minor' || activeIncident?.impact === 'major';
+      const isIncident = isCritical || isDegraded;
+      const incidentSeverity: 'outage' | 'degraded' = isCritical ? 'outage' : 'degraded';
 
       feedItems.push({
         text,
-        type: isSevere ? 'outage' : 'surge',
-        // Only flag the site card as "OUTAGE" for critical/major incidents.
-        // Minor degradations (e.g. Zoom Polycom phones, Cloudflare WARP geo)
-        // still appear in the marquee ticker but don't put a red badge on the
-        // card or inflate the Disrupted count.
-        confirmedSiteId: isSevere ? STATUSPAGE_TO_SITE_ID[site.name] : undefined,
+        type: isCritical ? 'outage' : 'surge',
+        // Differentiate critical downtime (OUTAGE) from partial/sub-service issues (DEGRADED).
+        // Critical outages flag a red card badge; major/minor degradations flag an amber badge.
+        confirmedSiteId: isIncident ? STATUSPAGE_TO_SITE_ID[site.name] : undefined,
+        incidentSeverity: isIncident ? incidentSeverity : undefined,
+        incidentMessage: activeIncident ? activeIncident.name : data.status?.description,
       });
     });
   } catch (e) {

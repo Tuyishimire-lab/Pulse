@@ -14,6 +14,7 @@ interface SiteGridProps {
   isMounted: boolean;
   pageLoadTime: number;
   sitesWithIncidents: Set<string>;
+  incidentSeverityMap?: Map<string, { severity: 'outage' | 'degraded'; message?: string }>;
   watchlistIds: string[];
   compareModeActive: boolean;
   selectedCompareIds: string[];
@@ -49,6 +50,7 @@ export default function SiteGrid({
   isMounted,
   pageLoadTime,
   sitesWithIncidents,
+  incidentSeverityMap,
   watchlistIds,
   compareModeActive,
   selectedCompareIds,
@@ -75,12 +77,20 @@ export default function SiteGrid({
     <>
       {viewLayout === 'grid' ? (
         <div className="counters-grid mt-4 w-full">
-          {displayedSites.map((site) => (
+          {displayedSites.map((site) => {
+            const incident = incidentSeverityMap?.get(site.id);
+            const hasIncident = incident ? true : sitesWithIncidents.has(site.id);
+            const isOutage = incident ? incident.severity === 'outage' : hasIncident;
+            const isDegraded = incident ? incident.severity === 'degraded' : false;
+
+            return (
             <div
               key={site.id}
               data-site-item="true"
               data-site-id={site.id}
-              className={`card card-visible cursor-pointer ${sitesWithIncidents.has(site.id) ? 'card-incident animate-pulse' : ''}`}
+              className={`card card-visible cursor-pointer ${
+                isOutage ? 'card-incident animate-pulse' : isDegraded ? 'card-degraded' : ''
+              }`}
               onClick={() => onSiteClick(site)}
               style={{
                 ...({ '--brand-color': site.color, '--brand-glow': site.glow } as React.CSSProperties),
@@ -106,9 +116,14 @@ export default function SiteGrid({
                       );
                     }
                   })()}
-                  {sitesWithIncidents.has(site.id) && (
+                  {isOutage && (
                     <span className="text-[9px] font-extrabold text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse flex items-center gap-0.5 ml-1">
                       Outage
+                    </span>
+                  )}
+                  {isDegraded && (
+                    <span className="text-[9px] font-extrabold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-0.5 ml-1">
+                      Degraded
                     </span>
                   )}
                   {site.rank_history && site.rank_history.length >= 2 && (
@@ -188,7 +203,8 @@ export default function SiteGrid({
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
 
           {!watchlistFilter && (
             <div className="add-custom-card" onClick={onShowAddCustomModal}>
@@ -208,12 +224,20 @@ export default function SiteGrid({
             <span>Progress</span>
           </div>
 
-          {displayedSites.map((site) => (
+          {displayedSites.map((site) => {
+            const incident = incidentSeverityMap?.get(site.id);
+            const hasIncident = incident ? true : sitesWithIncidents.has(site.id);
+            const isOutage = incident ? incident.severity === 'outage' : hasIncident;
+            const isDegraded = incident ? incident.severity === 'degraded' : false;
+
+            return (
             <div
               key={site.id}
               data-site-item="true"
               data-site-id={site.id}
-              className={`list-row card-visible cursor-pointer ${sitesWithIncidents.has(site.id) ? 'row-incident animate-pulse' : ''}`}
+              className={`list-row card-visible cursor-pointer ${
+                isOutage ? 'row-incident animate-pulse' : isDegraded ? 'row-degraded' : ''
+              }`}
               onClick={() => onSiteClick(site)}
               style={{
                 ...({ '--brand-color': site.color, '--brand-glow': site.glow } as React.CSSProperties),
@@ -264,9 +288,14 @@ export default function SiteGrid({
                 <div className="list-names text-left">
                   <div className="flex items-center gap-2">
                     <h2 className="list-name">{site.name}</h2>
-                    {sitesWithIncidents.has(site.id) && (
+                    {isOutage && (
                       <span className="text-[8px] font-extrabold text-[#ef4444] bg-[#ef4444]/10 border border-[#ef4444]/20 px-1 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
                         Outage
+                      </span>
+                    )}
+                    {isDegraded && (
+                      <span className="text-[8px] font-extrabold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1 py-0.5 rounded-full uppercase tracking-wider">
+                        Degraded
                       </span>
                     )}
                     <Link
@@ -322,7 +351,8 @@ export default function SiteGrid({
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
 

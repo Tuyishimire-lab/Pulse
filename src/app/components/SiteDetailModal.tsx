@@ -16,6 +16,7 @@ interface SiteDetailModalProps {
   details: SiteDetails;
   pageLoadTime: number;
   radarStats: RadarStatsData | null;
+  incidentInfo?: { severity: 'outage' | 'degraded'; message?: string };
   onClose: () => void;
 }
 
@@ -266,6 +267,7 @@ export default function SiteDetailModal({
   details,
   pageLoadTime,
   radarStats,
+  incidentInfo,
   onClose,
 }: SiteDetailModalProps) {
   const chartPoints = useMemo(() => {
@@ -354,6 +356,44 @@ export default function SiteDetailModal({
               &times;
             </button>
           </div>
+
+          {/* Active Incident / Service Degradation Advisory Banner */}
+          {incidentInfo && (
+            <div
+              className={`p-4 rounded-2xl border mb-6 text-left flex items-start gap-3.5 backdrop-blur-sm ${
+                incidentInfo.severity === 'outage'
+                  ? 'border-rose-500/30 bg-rose-500/10 text-rose-200 shadow-lg shadow-rose-500/10'
+                  : 'border-amber-500/30 bg-amber-500/10 text-amber-200 shadow-lg shadow-amber-500/10'
+              }`}
+            >
+              <span className="text-lg select-none shrink-0 mt-0.5">
+                {incidentInfo.severity === 'outage' ? '🚨' : '⚠️'}
+              </span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      incidentInfo.severity === 'outage'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    }`}
+                  >
+                    {incidentInfo.severity === 'outage' ? 'Critical Outage' : 'Service Advisory (Degraded)'}
+                  </span>
+                  <span className="text-xs font-bold text-white">
+                    {incidentInfo.severity === 'outage' ? 'Active System Disruption' : 'Partial Sub-Service Impairment'}
+                  </span>
+                </div>
+                <p className="text-xs text-white/85 leading-relaxed">
+                  {incidentInfo.message || (
+                    incidentInfo.severity === 'outage'
+                      ? `${site.name}'s official status page confirms an active critical service disruption.`
+                      : `${site.name} is reporting degraded performance on partial sub-services. Core CDN, DNS, and Edge infrastructure remain operational.`
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Executive Profile Card */}
           <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 mb-6 text-left">

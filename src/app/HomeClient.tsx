@@ -122,19 +122,25 @@ export default function HomeClient({
   };
 
   // ── Incident detection from marquee ──────────────────────────────────────
-  // ONLY flag sites whose own Statuspage API confirms a live incident.
-  // We no longer keyword-match from HN/Reddit/CF Radar (those sources are
-  // great for the scrolling news ticker but unreliable for per-site badges
-  // (a week-old Reddit post mentioning "OpenAI" would create a false positive).
-  const sitesWithIncidents = useMemo(() => {
-    const incidentIds = new Set<string>();
+  // Flag sites whose own Statuspage API confirms a live incident.
+  // We distinguish critical downtime ('outage') from partial/minor issues ('degraded').
+  const incidentSeverityMap = useMemo(() => {
+    const map = new Map<string, { severity: 'outage' | 'degraded'; message?: string }>();
     marqueeItems.forEach((item) => {
       if (item.confirmedSiteId) {
-        incidentIds.add(item.confirmedSiteId);
+        const existing = map.get(item.confirmedSiteId);
+        const severity: 'outage' | 'degraded' = item.incidentSeverity || (item.type === 'outage' ? 'outage' : 'degraded');
+        if (!existing || (existing.severity !== 'outage' && severity === 'outage')) {
+          map.set(item.confirmedSiteId, { severity, message: item.incidentMessage });
+        }
       }
     });
-    return incidentIds;
+    return map;
   }, [marqueeItems]);
+
+  const sitesWithIncidents = useMemo(() => {
+    return new Set(incidentSeverityMap.keys());
+  }, [incidentSeverityMap]);
 
   // ── Load persisted state on mount ─────────────────────────────────────────
   useEffect(() => {
@@ -726,6 +732,7 @@ export default function HomeClient({
             isMounted={isMounted}
             pageLoadTime={pageLoadTime}
             sitesWithIncidents={sitesWithIncidents}
+            incidentSeverityMap={incidentSeverityMap}
             watchlistIds={watchlistIds}
             compareModeActive={compareModeActive}
             selectedCompareIds={selectedCompareIds}
@@ -855,6 +862,7 @@ export default function HomeClient({
           details={selectedDetails}
           pageLoadTime={pageLoadTime}
           radarStats={radarStats}
+          incidentInfo={incidentSeverityMap.get(selectedSite.id)}
           onClose={() => { setSelectedSite(null); setSelectedDetails(null); }}
         />
       )}
