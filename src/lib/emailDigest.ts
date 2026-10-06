@@ -344,7 +344,7 @@ export function renderWeeklyDigestHtml(
                     <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 700; color: #0f172a;">
                       ${report.regionalSpotlight?.region || 'Global Markets'} : ${report.regionalSpotlight?.keyDriver || 'Velocity Growth'}
                     </td>
-                    <td align="right" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: #10b981;">
+                    <td align="right" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: ${(report.regionalSpotlight?.growthRate || '').startsWith('-') ? '#ef4444' : '#10b981'};">
                       ${report.regionalSpotlight?.growthRate || ''}
                     </td>
                   </tr>

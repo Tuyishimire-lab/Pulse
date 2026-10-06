@@ -646,7 +646,11 @@ export default function ReportPageClient({ report, prevSlug, nextSlug }: Props) 
               </span>
               <h2 className="text-base font-bold text-white">{report.regionalSpotlight.region}</h2>
             </div>
-            <span className="text-xs font-bold text-[#10b981] bg-[#10b981]/10 border border-[#10b981]/20 px-2.5 py-0.5 rounded-full">
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+              report.regionalSpotlight.growthRate.startsWith('-')
+                ? 'text-[#f87171] bg-[#f87171]/10 border border-[#f87171]/20'
+                : 'text-[#10b981] bg-[#10b981]/10 border border-[#10b981]/20'
+            }`}>
               {report.regionalSpotlight.growthRate}
             </span>
           </div>

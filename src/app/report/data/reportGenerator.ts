@@ -470,23 +470,42 @@ export function computeRegionalSpotlight(
 
   let selected = validClusters[0];
   if (previousSites) {
-    selected = validClusters.slice().sort((a, b) => Math.abs(b.growthPercent) - Math.abs(a.growthPercent))[0];
+    // Prefer fastest-growing clusters first; if all are negative, pick highest net growth (least negative)
+    const positiveClusters = validClusters.filter((c) => c.growthPercent > 0);
+    if (positiveClusters.length > 0) {
+      selected = positiveClusters.slice().sort((a, b) => b.growthPercent - a.growthPercent)[0];
+    } else {
+      selected = validClusters.slice().sort((a, b) => b.growthPercent - a.growthPercent)[0];
+    }
   } else {
     selected = validClusters.slice().sort((a, b) => b.currentTotalRate - a.currentTotalRate)[0];
   }
 
+  const isNegative = selected.growthPercent < 0;
   const growthSign = selected.growthPercent >= 0 ? '+' : '';
   const growthRateStr = previousSites ? `${growthSign}${selected.growthPercent.toFixed(1)}% WoW` : '+3.2% Est.';
   
-  const siteHighlight = selected.topSite 
-    ? `${selected.topSite.name} anchored regional volume at ${selected.topSite.rate.toLocaleString()} req/s (${selected.topSite.baseline}/mo).`
+  const formattedBaseline = selected.topSite?.baseline 
+    ? (selected.topSite.baseline.includes('/mo') ? selected.topSite.baseline : `${selected.topSite.baseline} / mo`) 
     : '';
+
+  const siteHighlight = selected.topSite 
+    ? `${selected.topSite.name} anchored regional volume at ${selected.topSite.rate.toLocaleString()} req/s (${formattedBaseline}).`
+    : '';
+
+  const keyDriver = isNegative
+    ? (selected.topSite ? `${selected.topSite.name} & Regional Traffic Normalization` : 'Regional Traffic Normalization')
+    : (selected.topSite ? `${selected.topSite.name} & ${selected.cluster.keyDriver}` : selected.cluster.keyDriver);
+
+  const detail = isNegative
+    ? `Regional edge cache activity contracted slightly following previous high-volume cycles, with traffic normalizing across local nodes. ${siteHighlight}`.trim()
+    : `${selected.cluster.defaultDetail} ${siteHighlight}`.trim();
 
   return {
     region: selected.cluster.name,
-    keyDriver: selected.topSite ? `${selected.topSite.name} & ${selected.cluster.keyDriver}` : selected.cluster.keyDriver,
+    keyDriver,
     growthRate: growthRateStr,
-    detail: `${selected.cluster.defaultDetail} ${siteHighlight}`.trim(),
+    detail,
   };
 }
 
