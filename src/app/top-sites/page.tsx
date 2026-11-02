@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { ALL_COUNTRIES } from './data/countries';
+import { ALL_COUNTRIES, COUNTRY_HUB } from './data/countries';
 import TopSitesHubClient from './TopSitesHubClient';
 import { CURRENT_YEAR } from '../../lib/currentYear';
 
@@ -39,5 +39,5 @@ export const revalidate = 86400;
 export default function TopSitesHubPage() {
   // Pass the full country list to the client so every country gets a card →
   // direct internal link, eliminating the orphan page problem.
-  return <TopSitesHubClient countries={ALL_COUNTRIES} />;
+  return <TopSitesHubClient countries={COUNTRY_HUB} />;
 }

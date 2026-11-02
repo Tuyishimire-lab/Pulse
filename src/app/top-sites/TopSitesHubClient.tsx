@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import NavHeader from '../components/NavHeader';
-import { CountryData } from './data/countries';
+import { CountryHubItem as CountryData } from './data/countries';
 import { getRegionalProfile } from './data/regionalProfiles';
 import { SITES, SiteConfig } from '../data/sites';
 import FaviconImage from '../components/ui/FaviconImage';

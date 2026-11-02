@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getSites } from '../../../lib/getSites';
-import { ALL_COUNTRIES, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
+import { COUNTRY_NAV, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
 import { resolveCountrySites, ensureTwentyCountrySites } from '../../../lib/getCountrySites';
 import CountryPageClient from './CountryPageClient';
 import { notFound } from 'next/navigation';
@@ -116,7 +116,7 @@ export default async function CountryPage({ params }: PageProps) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <CountryPageClient countryData={countryData} sites={orderedSites} allCountries={ALL_COUNTRIES} dataSource={dataSource} />
+      <CountryPageClient countryData={countryData} sites={orderedSites} allCountries={COUNTRY_NAV} dataSource={dataSource} />
     </>
   );
 }

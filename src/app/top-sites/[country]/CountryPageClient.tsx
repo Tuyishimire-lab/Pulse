@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SiteConfig } from '../../data/sites';
-import { CountryData } from '../data/countries';
+import { CountryData, CountryNavItem } from '../data/countries';
 import NavHeader from '../../components/NavHeader';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
 import { exportCountryRankingReport } from '../../../utils/exportCsv';
@@ -12,7 +12,7 @@ import FaviconImage from '../../components/ui/FaviconImage';
 interface Props {
   countryData: CountryData;
   sites: SiteConfig[];
-  allCountries: CountryData[];
+  allCountries: CountryNavItem[];
   dataSource?: string;
 }
 
@@ -59,7 +59,7 @@ function cfCodeToFlag(code: string): string {
   return [...code.toUpperCase()].map((c) => String.fromCodePoint(c.charCodeAt(0) + offset)).join('');
 }
 
-function CountryPicker({ current, allCountries }: { current: CountryData; allCountries: CountryData[] }) {
+function CountryPicker({ current, allCountries }: { current: CountryNavItem; allCountries: CountryNavItem[] }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);

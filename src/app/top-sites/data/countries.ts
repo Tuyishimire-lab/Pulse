@@ -353,4 +353,18 @@ export function getCountryBySlug(slug: string): CountryData | undefined {
   return ALL_COUNTRIES.find((c) => c.slug === slug);
 }
 
+/** Minimal fields for country navigation (pill strip / picker). Keeps page payloads small. */
+export type CountryNavItem = Pick<CountryData, 'slug' | 'name' | 'cfCode' | 'flag'>;
+
+/** Fields needed by the /top-sites hub cards (no long-form prose). */
+export type CountryHubItem = Omit<CountryData, 'insight' | 'localNote'>;
+
+export const COUNTRY_NAV: CountryNavItem[] = ALL_COUNTRIES.map(({ slug, name, cfCode, flag }) =>
+  flag ? { slug, name, cfCode, flag } : { slug, name, cfCode }
+);
+
+export const COUNTRY_HUB: CountryHubItem[] = ALL_COUNTRIES.map(
+  ({ insight: _insight, localNote: _localNote, ...rest }) => rest
+);
+
 export const COUNTRY_SLUGS = ALL_COUNTRIES.map((c) => c.slug);
