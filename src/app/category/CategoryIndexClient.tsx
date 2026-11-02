@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import NavHeader from '../components/NavHeader';
 import { SiteConfig } from '../data/sites';
+import { resolveFaviconUrl } from '../components/ui/FaviconImage';
 
 export interface CategorySummary {
   id: string;
@@ -25,9 +26,9 @@ interface Props {
 }
 
 function FaviconImg({ url, logo, color }: { url: string; logo: string; color: string }) {
-  const [err, setErr] = React.useState(false);
-  const domain = url.replace(/https?:\/\/(www\.)?/, '');
-  if (err) {
+  const [stage, setStage] = React.useState<'primary' | 'fallback' | 'monogram'>('primary');
+  const { domain, primarySrc, fallbackSrc } = resolveFaviconUrl(url, 64);
+  if (stage === 'monogram' || !domain) {
     return (
       <span
         className="rounded-full flex items-center justify-center font-bold flex-shrink-0 text-xs"
@@ -44,11 +45,11 @@ function FaviconImg({ url, logo, color }: { url: string; logo: string; color: st
   }
   return (
     <Image
-      src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
+      src={stage === 'primary' ? primarySrc : fallbackSrc}
       alt={`${logo} favicon`}
       width={28}
       height={28}
-      onError={() => setErr(true)}
+      onError={() => setStage(stage === 'primary' && primarySrc !== fallbackSrc ? 'fallback' : 'monogram')}
       className="rounded-full object-contain flex-shrink-0"
       style={{ backgroundColor: color + '18', padding: 2 }}
       unoptimized

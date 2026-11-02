@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { WeeklyReport } from '../data/reportGenerator';
 import NavHeader from '../../components/NavHeader';
+import { resolveFaviconUrl } from '../../components/ui/FaviconImage';
 import { SITE_COUNT } from '../../data/sites';
 
 interface Props {
@@ -14,9 +15,9 @@ interface Props {
 }
 
 function FaviconImg({ url, logo, color }: { url: string; logo: string; color: string }) {
-  const [err, setErr] = React.useState(false);
-  const domain = url.replace(/https?:\/\/(www\.)?/, '');
-  if (err) {
+  const [stage, setStage] = React.useState<'primary' | 'fallback' | 'monogram'>('primary');
+  const { domain, primarySrc, fallbackSrc } = resolveFaviconUrl(url, 64);
+  if (stage === 'monogram' || !domain) {
     return (
       <span
         className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-bold flex-shrink-0"
@@ -28,11 +29,11 @@ function FaviconImg({ url, logo, color }: { url: string; logo: string; color: st
   }
   return (
     <Image
-      src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
+      src={stage === 'primary' ? primarySrc : fallbackSrc}
       alt={`${logo} favicon`}
       width={40}
       height={40}
-      onError={() => setErr(true)}
+      onError={() => setStage(stage === 'primary' && primarySrc !== fallbackSrc ? 'fallback' : 'monogram')}
       className="w-10 h-10 rounded-xl object-contain p-0.5 flex-shrink-0"
       style={{ backgroundColor: color + '22' }}
       unoptimized

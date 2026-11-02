@@ -14,8 +14,38 @@ export interface FaviconImageProps {
   rounded?: 'full' | '2xl' | 'xl' | 'lg' | 'md';
 }
 
+// Domains where Google s2/favicons needs a canonical host alias to return the right product icon
+const FAVICON_DOMAIN_ALIASES: Record<string, string> = {
+  'gemini.com': 'gemini.google.com',
+  'copilot.microsoft.com': 'copilot.cloud.microsoft',
+};
+
+// Domains where Google s2/favicons returns a 404 default globe; serve from icon.horse instead
+const ICON_HORSE_DOMAINS = new Set([
+  'epicgames.com',
+  'store.epicgames.com',
+  'phind.com',
+]);
+
+export function resolveFaviconUrl(url: string, size = 64): { domain: string; primarySrc: string; fallbackSrc: string } {
+  const rawDomain = (url || '')
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .split('/')[0]
+    .trim()
+    .toLowerCase();
+
+  const domain = FAVICON_DOMAIN_ALIASES[rawDomain] ?? rawDomain;
+  const fallbackSrc = `https://icon.horse/icon/${rawDomain || domain}`;
+  const primarySrc = ICON_HORSE_DOMAINS.has(domain)
+    ? fallbackSrc
+    : `https://www.google.com/s2/favicons?sz=${size >= 96 ? '128' : '64'}&domain=${domain}`;
+
+  return { domain, primarySrc, fallbackSrc };
+}
+
 /**
- * Displays a site's favicon fetched from Google's favicon API.
+ * Displays a site's favicon fetched from Google's favicon API (with icon.horse fallback).
  * Falls back to a styled initial letter if the image fails to load.
  */
 export default function FaviconImage({
@@ -28,14 +58,10 @@ export default function FaviconImage({
   fallbackClassName,
   rounded = 'full',
 }: FaviconImageProps) {
-  const [error, setError] = useState(false);
+  const [stage, setStage] = useState<'primary' | 'fallback' | 'monogram'>('primary');
   const [loaded, setLoaded] = useState(false);
 
-  const domain = url
-    .replace(/^https?:\/\//, '')
-    .replace(/^www\./, '')
-    .split('/')[0]
-    .trim();
+  const { domain, primarySrc, fallbackSrc } = resolveFaviconUrl(url, size);
 
   const roundedClass =
     rounded === '2xl'
@@ -48,7 +74,7 @@ export default function FaviconImage({
       ? 'rounded-md'
       : 'rounded-full';
 
-  if (error || !domain) {
+  if (stage === 'monogram' || !domain) {
     const fallbackBg = color === '#ffffff' ? '#18181b' : color + '22';
     const fallbackTextColor = color === '#ffffff' ? '#ffffff' : color;
 
@@ -70,7 +96,7 @@ export default function FaviconImage({
     );
   }
 
-  const faviconUrl = `https://www.google.com/s2/favicons?sz=${size >= 96 ? '128' : '64'}&domain=${domain}`;
+  const faviconUrl = stage === 'primary' ? primarySrc : fallbackSrc;
 
   return (
     <Image
@@ -81,7 +107,13 @@ export default function FaviconImage({
       loading={priority ? 'eager' : 'lazy'}
       priority={priority}
       onLoad={() => setLoaded(true)}
-      onError={() => setError(true)}
+      onError={() => {
+        if (stage === 'primary' && primarySrc !== fallbackSrc) {
+          setStage('fallback');
+        } else {
+          setStage('monogram');
+        }
+      }}
       className={`object-contain transition-opacity duration-200 ${
         loaded ? 'opacity-100' : 'opacity-80'
       } ${className || `w-full h-full p-1 ${roundedClass} bg-white/10`}`}

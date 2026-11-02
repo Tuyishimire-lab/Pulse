@@ -83,7 +83,7 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 25 | GitHub | https://github.com | dev | 1.0B / mo | 380 |
 | 26 | Zoom | https://zoom.com | dev | 920.0M / mo | 350 |
 | 27 | eBay | https://ebay.com | ecommerce | 900.0M / mo | 342 |
-| 28 | Gemini | https://gemini.com | ai | 860.0M / mo | 327 |
+| 28 | Gemini | https://gemini.google.com | ai | 860.0M / mo | 327 |
 | 29 | DuckDuckGo | https://duckduckgo.com | search | 850.0M / mo | 323 |
 | 30 | Quora | https://quora.com | reference | 750.0M / mo | 285 |
 | 31 | Telegram | https://telegram.org | social | 750.0M / mo | 285 |
@@ -174,7 +174,7 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 116 | Rotten Tomatoes | https://rottentomatoes.com | entertainment | 142.0M / mo | 54 |
 | 117 | Crunchyroll | https://crunchyroll.com | entertainment | 140.0M / mo | 53 |
 | 118 | Squarespace | https://squarespace.com | dev | 140.0M / mo | 53 |
-| 119 | Claude.ai | https://claude.com | ai | 135.0M / mo | 51 |
+| 119 | Claude.ai | https://claude.ai | ai | 135.0M / mo | 51 |
 | 120 | Perplexity | https://perplexity.ai | ai | 135.0M / mo | 51 |
 | 121 | Nextdoor | https://nextdoor.com | social | 130.0M / mo | 49 |
 | 122 | Lichess | https://lichess.org | entertainment | 128.0M / mo | 48 |

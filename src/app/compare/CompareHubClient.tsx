@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { SiteConfig, CATEGORIES, SITE_COUNT } from '../data/sites';
 import { ComparePair } from './data/pairs';
 import NavHeader from '../components/NavHeader';
+import { resolveFaviconUrl } from '../components/ui/FaviconImage';
 import { CURRENT_YEAR } from '../../lib/currentYear';
 
 interface Props {
@@ -15,9 +16,9 @@ interface Props {
 }
 
 function FaviconImg({ url, logo, color, size = 32 }: { url: string; logo: string; color: string; size?: number }) {
-  const [err, setErr] = useState(false);
-  const domain = url.replace(/https?:\/\/(www\.)?/, '');
-  if (err) {
+  const [stage, setStage] = useState<'primary' | 'fallback' | 'monogram'>('primary');
+  const { domain, primarySrc, fallbackSrc } = resolveFaviconUrl(url, size);
+  if (stage === 'monogram' || !domain) {
     return (
       <span
         className="rounded-full flex items-center justify-center font-bold flex-shrink-0"
@@ -35,11 +36,11 @@ function FaviconImg({ url, logo, color, size = 32 }: { url: string; logo: string
   }
   return (
     <Image
-      src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`}
+      src={stage === 'primary' ? primarySrc : fallbackSrc}
       alt={`${logo} logo`}
       width={size}
       height={size}
-      onError={() => setErr(true)}
+      onError={() => setStage(stage === 'primary' && primarySrc !== fallbackSrc ? 'fallback' : 'monogram')}
       className="rounded-full object-contain p-0.5 bg-white/10 flex-shrink-0"
       unoptimized
     />
