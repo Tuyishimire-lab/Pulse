@@ -20,12 +20,11 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from supabase import create_client
-
 from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
 from scripts.pulse_engine.live_rank import compute_live, resolve_tranco_domains
 from scripts.pulse_engine.signals import fetch_tranco_list
 from scripts.pulse_engine.static_baselines import BASELINE_ANCHOR_DATE, STATIC_BASELINES
+from supabase import create_client
 
 MIN_CHANGE_PCT = 5.0
 BASELINES_PATH = Path(__file__).parent / "static_baselines.py"

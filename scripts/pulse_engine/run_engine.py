@@ -25,8 +25,6 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from supabase import Client, create_client
-
 from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
 from scripts.pulse_engine.live_rank import compute_live, rank_by_value, resolve_tranco_domains
 from scripts.pulse_engine.signals import fetch_cloudflare_outage_count, fetch_tranco_list
@@ -39,6 +37,7 @@ from scripts.pulse_engine.static_baselines import (
     get_rate,
 )
 from scripts.pulse_engine.validation import print_validation_report, run_validation
+from supabase import Client, create_client
 
 TRANCO_TOP_N = 100_000
 

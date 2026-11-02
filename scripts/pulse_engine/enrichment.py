@@ -23,9 +23,8 @@ import httpx
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from supabase import Client, create_client
-
 from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
+from supabase import Client, create_client
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -595,11 +594,16 @@ def compute_security_grade(ssl_grade: str | None, obs_grade: str | None) -> str:
     else:
         combined = ssl_score * 0.6 + obs_score * 0.4
 
-    if combined >= 95: return "A+"
-    if combined >= 85: return "A"
-    if combined >= 75: return "B"
-    if combined >= 60: return "C"
-    if combined >= 45: return "D"
+    if combined >= 95:
+        return "A+"
+    if combined >= 85:
+        return "A"
+    if combined >= 75:
+        return "B"
+    if combined >= 60:
+        return "C"
+    if combined >= 45:
+        return "D"
     return "F"
 
 

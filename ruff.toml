@@ -10,6 +10,7 @@ select = [
 ]
 ignore = [
     "E501", # line too long
+    "E402", # CLI scripts insert repo root into sys.path before local imports
 ]
 
 [format]

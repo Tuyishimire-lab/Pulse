@@ -5,8 +5,6 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from supabase import create_client
-
 from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
 from scripts.pulse_engine.pti_model import normalize_category
 from scripts.pulse_engine.signals import (
@@ -16,6 +14,7 @@ from scripts.pulse_engine.signals import (
     parse_domain,
 )
 from scripts.pulse_engine.validation import KNOWN_BENCHMARKS, run_validation
+from supabase import create_client
 
 ANCHOR_MONTHLY = 85_000_000_000
 
@@ -90,7 +89,8 @@ def run_auto_tuner():
         # Tune Zipf
         for step in zipf_steps:
             test_zipf = best_zipf + step
-            if test_zipf < 1.0 or test_zipf > 1.5: continue
+            if test_zipf < 1.0 or test_zipf > 1.5:
+                continue
             err = evaluate_model(test_zipf, best_multipliers)
             if err < best_error:
                 best_error = err
@@ -99,7 +99,8 @@ def run_auto_tuner():
 
         # Tune Multipliers
         for cat in best_multipliers.keys():
-            if cat in ['search', 'general']: continue # keep anchor fixed
+            if cat in ['search', 'general']:
+                continue # keep anchor fixed
             for step in mult_steps:
                 test_mults = best_multipliers.copy()
                 test_mults[cat] = max(0.1, round(test_mults[cat] + step, 2))

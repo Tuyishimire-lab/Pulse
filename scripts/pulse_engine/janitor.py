@@ -5,9 +5,8 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from supabase import create_client
-
 from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
+from supabase import create_client
 
 print("=" * 60)
 print("PTI ENGINE: Database Janitor")
