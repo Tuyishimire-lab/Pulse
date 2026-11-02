@@ -10,9 +10,8 @@
 ALTER TABLE public.site_history ADD COLUMN IF NOT EXISTS recorded_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE public.site_history ADD COLUMN IF NOT EXISTS rank INTEGER;
 
--- Backfill recorded_at for the old rows so the cron's 8-day prune can clean them up
-UPDATE public.site_history SET recorded_at = created_at
-WHERE recorded_at IS NULL AND created_at IS NOT NULL;
+-- Remove legacy pre-migration rows that lack a rank value
+DELETE FROM public.site_history WHERE rank IS NULL;
 
 CREATE INDEX IF NOT EXISTS site_history_recorded_at_idx ON public.site_history (recorded_at DESC);
 CREATE INDEX IF NOT EXISTS site_history_site_recorded_idx ON public.site_history (site_id, recorded_at DESC);

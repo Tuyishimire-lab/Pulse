@@ -144,6 +144,7 @@ async function fetchHistory(supabase: SupabaseClient): Promise<Snapshot[]> {
     const { data, error } = await supabase
       .from('site_history')
       .select('recorded_at, site_id, rank')
+      .not('rank', 'is', null)
       .gte('recorded_at', since)
       .order('recorded_at', { ascending: false })
       .order('site_id', { ascending: true })
@@ -168,7 +169,10 @@ async function fetchWeekly(supabase: SupabaseClient): Promise<Snapshot[]> {
     const time = new Date(row.snapshot_date).getTime();
     if (ranks.size > 0 && !Number.isNaN(time)) snaps.push({ at: row.snapshot_date, time, ranks });
   }
-  return snaps.sort((a, b) => a.time - b.time);
+  const maxSize = Math.max(0, ...snaps.map((s) => s.ranks.size));
+  return snaps
+    .filter((s) => s.ranks.size >= maxSize * 0.8)
+    .sort((a, b) => a.time - b.time);
 }
 
 /**
