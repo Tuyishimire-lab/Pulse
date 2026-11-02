@@ -562,7 +562,574 @@ const TOP_100_DETAILS: Record<string, SiteDossier> = {
     businessModel: "Compute Usage & Enterprise Cloud Tiers",
     primaryTech: "PostgreSQL, Elixir, & Deno Edge Runtime",
     marketIntelligence: "Functions as standard cloud infrastructure for Next.js and modern web applications, generating steady global engineering traffic."
-  }
+  },
+  copilot: {
+    description: "Microsoft Copilot is an enterprise and consumer generative AI assistant deeply integrated across Windows, Microsoft 365, Bing, and Azure OpenAI infrastructure.",
+    funFact: "Microsoft Copilot processes hundreds of millions of multimodal workspace prompts monthly across Fortune 500 enterprises.",
+    founded: "2023",
+    headquarters: "Redmond, WA",
+    businessModel: "Enterprise M365 Add-ons & Consumer Pro Tiers",
+    primaryTech: "Azure OpenAI Service & Global Edge Mesh",
+    marketIntelligence: "Exhibits heavy weekday enterprise desktop utilization driven by native Windows taskbar and Office 365 productivity workflows."
+  },
+  grok: {
+    description: "Grok is xAI’s flagship frontier reasoning and real-time conversational AI platform powered by the Colossus supercluster and live public discourse streams.",
+    funFact: "Grok was trained on xAI’s Memphis Colossus supercomputer cluster featuring over 200,000 NVIDIA Hopper GPUs.",
+    founded: "2023",
+    headquarters: "Palo Alto, CA",
+    businessModel: "SuperGrok Subscriptions & API Access",
+    primaryTech: "xAI Colossus GPU Cluster & Rust Inference Engine",
+    marketIntelligence: "Surges during breaking global news events due to its real-time synthesis of public social telemetry and reasoning models."
+  },
+  notebooklm: {
+    description: "NotebookLM is Google Labs’ source-grounded AI research and note-taking assistant capable of synthesizing complex documents into interactive audio overviews.",
+    funFact: "NotebookLM’s viral Audio Overview feature sparked massive adoption among university researchers, students, and analysts worldwide.",
+    founded: "2023",
+    headquarters: "Mountain View, CA",
+    businessModel: "Google One AI Premium & Workspace Enterprise",
+    primaryTech: "Gemini Long-Context TPU v5p Clusters",
+    marketIntelligence: "Demonstrates exceptionally high session duration as users upload PDFs, lectures, and technical repositories for grounded synthesis."
+  },
+  leonardo: {
+    description: "Leonardo.Ai is a generative visual production suite for creating concept art, game assets, textures, and cinematic AI video workflows.",
+    funFact: "Acquired by Canva in 2024, Leonardo.Ai has generated billions of visual assets for indie game studios and creative teams.",
+    founded: "2022",
+    headquarters: "Sydney, Australia",
+    businessModel: "Freemium Token Subscriptions & Enterprise Studio",
+    primaryTech: "Phoenix Foundation Model & AWS GPU Clusters",
+    marketIntelligence: "Maintains strong global creator retention across North America, Europe, and Asia-Pacific design communities."
+  },
+  kling: {
+    description: "Kling AI is a next-generation neural video and image synthesis platform developed by Kuaishou, enabling realistic 1080p motion generation.",
+    funFact: "Kling AI pioneered 3D spatiotemporal attention mechanisms capable of simulating complex physical motion up to two minutes in length.",
+    founded: "2024",
+    headquarters: "Beijing, China",
+    businessModel: "Credit Subscriptions & Pro Video Tiers",
+    primaryTech: "3D Diffusion Transformer & Custom GPU Cloud",
+    marketIntelligence: "Rapidly expanding among digital filmmakers, advertising agencies, and social video creators worldwide."
+  },
+  ollama: {
+    description: "Ollama is the standard runtime and model library for running, packaging, and deploying open-weight large language models locally.",
+    funFact: "Ollama has become the default local distribution hub for Llama, DeepSeek, Qwen, Gemma, and Mistral models across macOS, Linux, and Windows.",
+    founded: "2023",
+    headquarters: "Palo Alto, CA",
+    businessModel: "Open Source Runtime & Enterprise Cloud Tooling",
+    primaryTech: "Go, llama.cpp & GGUF Model Registry",
+    marketIntelligence: "Experiences massive traffic spikes immediately following major open-weight model releases from Meta, DeepSeek, and Alibaba."
+  },
+  v0: {
+    description: "v0 is Vercel’s generative UI and full-stack web engineering agent that turns natural language prompts into production React, Next.js, and Tailwind applications.",
+    funFact: "v0 combines frontier code models with live browser sandboxes and instant one-click Vercel deployment pipelines.",
+    founded: "2023",
+    headquarters: "San Francisco, CA",
+    businessModel: "Developer Subscriptions & Team Seats",
+    primaryTech: "Next.js, Shadcn UI & Vercel Edge Compute",
+    marketIntelligence: "Heavily utilized by frontend engineers, product designers, and startup founders prototyping production web interfaces."
+  },
+  lovable: {
+    description: "Lovable is an AI full-stack software engineer that enables builders to create, iterate, and deploy web applications with native Supabase and GitHub integration.",
+    funFact: "Lovable became one of Europe’s fastest-growing AI software startups by empowering non-technical and technical creators to ship full-stack apps.",
+    founded: "2023",
+    headquarters: "Stockholm, Sweden",
+    businessModel: "Tiered Builder Subscriptions",
+    primaryTech: "React, Vite, Supabase & Cloud Sandboxes",
+    marketIntelligence: "Exhibits high repeat daily engagement and long session times as users iteratively build and deploy SaaS products."
+  },
+  bolt: {
+    description: "Bolt.new is StackBlitz’s browser-based AI web development agent running full Node.js environments directly inside the browser via WebContainers.",
+    funFact: "Powered by WebContainers, Bolt.new boots full-stack Node.js servers in milliseconds inside the client browser without remote VM latency.",
+    founded: "2024",
+    headquarters: "San Francisco, CA",
+    businessModel: "Token-Based Developer Subscriptions",
+    primaryTech: "StackBlitz WebContainers & Frontier Code LLMs",
+    marketIntelligence: "Drives strong cross-referral traffic with Netlify, Supabase, and GitHub ecosystems."
+  },
+  phind: {
+    description: "Phind is an AI answer engine and pair programmer purpose-built for software developers, combining live documentation search with low-latency code synthesis.",
+    funFact: "Phind fine-tunes custom low-latency code models that rival frontier models on HumanEval software engineering benchmarks.",
+    founded: "2022",
+    headquarters: "San Francisco, CA",
+    businessModel: "Freemium & Phind Pro Subscriptions",
+    primaryTech: "Custom Fine-Tuned Code LLMs & TensorRT-LLM",
+    marketIntelligence: "Concentrated desktop traffic from software engineers debugging stack traces and querying framework documentation."
+  },
+  aws: {
+    description: "Amazon Web Services (AWS) is the world’s most comprehensive and broadly adopted cloud infrastructure platform, offering over 200 services from global data centers.",
+    funFact: "AWS accounts for roughly a third of the global cloud infrastructure market, powering millions of enterprise and startup workloads.",
+    founded: "2006",
+    headquarters: "Seattle, WA",
+    businessModel: "Pay-As-You-Go Cloud Compute & Enterprise Contracts",
+    primaryTech: "AWS Nitro Hypervisor, Graviton & Global Fiber Backbone",
+    marketIntelligence: "Acts as the foundational compute, storage, and CDN backbone for a vast share of the modern internet."
+  },
+  wordpress: {
+    description: "WordPress.com is Automattic’s managed web publishing, CMS, and commerce hosting platform built on the open-source WordPress ecosystem.",
+    funFact: "The broader WordPress software ecosystem powers over 43% of all websites indexed on the public internet.",
+    founded: "2005",
+    headquarters: "San Francisco, CA",
+    businessModel: "Managed Web Hosting, Domains & VIP Enterprise",
+    primaryTech: "PHP, MySQL, React & Automattic Global Edge CDN",
+    marketIntelligence: "Sustains massive global organic traffic across blogs, editorial publications, and WooCommerce storefronts."
+  },
+  wix: {
+    description: "Wix is a cloud-based web development and business management platform empowering over 250 million registered users to build and scale websites.",
+    funFact: "Wix Studio and Wix AI site generators create millions of custom responsive business websites each year without manual coding.",
+    founded: "2006",
+    headquarters: "Tel Aviv, Israel",
+    businessModel: "SaaS Website Subscriptions & Commerce Payments",
+    primaryTech: "Node.js, React & Multi-Cloud Edge Routing",
+    marketIntelligence: "Strong adoption among SMBs, agencies, and e-commerce merchants across North America and Europe."
+  },
+  godaddy: {
+    description: "GoDaddy is the world’s largest domain name registrar and web hosting provider for entrepreneurs and small businesses.",
+    funFact: "GoDaddy manages more than 84 million domain names for over 20 million customers globally.",
+    founded: "1997",
+    headquarters: "Tempe, AZ",
+    businessModel: "Domain Registration, DNS, Hosting & Commerce",
+    primaryTech: "Global Anycast DNS & Cloud Hosting Infrastructure",
+    marketIntelligence: "Serves as the primary barometer for new small-business formation and domain aftermarket demand."
+  },
+  squarespace: {
+    description: "Squarespace is an all-in-one design-driven website builder, e-commerce platform, and domain registrar for creators and brands.",
+    funFact: "Following its acquisition of Google Domains assets, Squarespace expanded its footprint by millions of registered domains.",
+    founded: "2003",
+    headquarters: "New York, NY",
+    businessModel: "SaaS Subscriptions, Domains & Scheduling",
+    primaryTech: "Java, React & Global Content Delivery Network",
+    marketIntelligence: "Highly favored by creative professionals, restaurants, photographers, and independent service brands."
+  },
+  namecheap: {
+    description: "Namecheap is an ICANN-accredited domain registrar and web infrastructure provider popular with developers, startups, and privacy advocates.",
+    funFact: "Namecheap manages over 17 million domains and pioneered free lifetime WHOIS privacy protection for registrants.",
+    founded: "2000",
+    headquarters: "Phoenix, AZ",
+    businessModel: "Domains, SSL, DNS, Email & Managed WordPress",
+    primaryTech: "Anycast PremiumDNS & Cloud Hosting Clusters",
+    marketIntelligence: "Commands strong loyalty among indie hackers, web3 builders, and software developers registering project domains."
+  },
+  datadog: {
+    description: "Datadog is the observability and security platform for cloud-scale applications, unifying infrastructure metrics, APM traces, logs, and SIEM.",
+    funFact: "Datadog ingests tens of trillions of telemetry events daily across over 750 built-in infrastructure integrations.",
+    founded: "2010",
+    headquarters: "New York, NY",
+    businessModel: "Usage-Based Enterprise SaaS Observability",
+    primaryTech: "Go, Rust, Husky Columnar Store & Multi-Cloud",
+    marketIntelligence: "Traffic spikes during major cloud provider incidents as SRE and DevOps teams monitor live service dashboards."
+  },
+  grafana: {
+    description: "Grafana Labs builds the open and composable operational dashboards, observability stack (LGTM: Loki, Grafana, Tempo, Mimir), and Grafana Cloud.",
+    funFact: "Over 20 million users worldwide rely on Grafana dashboards to visualize time-series metrics from Prometheus to industrial IoT.",
+    founded: "2014",
+    headquarters: "New York, NY",
+    businessModel: "Open Core & Grafana Cloud Managed SaaS",
+    primaryTech: "Go, TypeScript, Prometheus & Mimir",
+    marketIntelligence: "Heavy developer documentation and plugin directory traffic from Kubernetes and cloud-native engineering teams."
+  },
+  render: {
+    description: "Render is a unified cloud application platform that builds and runs web services, Postgres databases, Redis, and background workers from Git.",
+    funFact: "Render has become the primary modern cloud successor for millions of developers migrating from legacy PaaS platforms.",
+    founded: "2018",
+    headquarters: "San Francisco, CA",
+    businessModel: "Usage-Based Compute & Team Cloud Tiers",
+    primaryTech: "Kubernetes, Envoy & Automated Git Deployments",
+    marketIntelligence: "Consistent growth driven by full-stack Python, Node.js, and Docker deployments."
+  },
+  railway: {
+    description: "Railway is an instant infrastructure cloud platform designed for developers to provision databases, microservices, and cron jobs in seconds.",
+    funFact: "Railway’s visual canvas lets engineering teams deploy interconnected multi-service architectures with zero YAML configuration.",
+    founded: "2020",
+    headquarters: "San Francisco, CA",
+    businessModel: "Resource-Metered Cloud Subscriptions",
+    primaryTech: "Rust, Nixpacks & Bare-Metal Cloud Regions",
+    marketIntelligence: "High viral adoption through one-click open-source template deployments."
+  },
+  vk: {
+    description: "VK (VKontakte) is the largest social networking, messaging, music, and video ecosystem across Russia and the CIS region.",
+    funFact: "VK serves over 100 million monthly active users with integrated mini-apps, live streaming, and social commerce.",
+    founded: "2006",
+    headquarters: "Saint Petersburg, Russia",
+    businessModel: "Advertising, VK Music Subscriptions & Mini-Apps",
+    primaryTech: "KPHP, Custom Distributed Storage & Edge CDN",
+    marketIntelligence: "Dominates social and media consumption across Eastern Europe and Central Asia."
+  },
+  weibo: {
+    description: "Sina Weibo is China’s premier microblogging and public discourse platform, connecting nearly 600 million monthly active users with trending news and celebrities.",
+    funFact: "Weibo’s real-time Hot Search list is the primary barometer for breaking cultural, entertainment, and social trends across China.",
+    founded: "2009",
+    headquarters: "Beijing, China",
+    businessModel: "Brand Advertising, Promoted Feeds & VIP Memberships",
+    primaryTech: "Hybrid Cloud & High-Concurrency Feed Engine",
+    marketIntelligence: "Generates massive traffic spikes during major holidays, sports championships, and entertainment broadcasts."
+  },
+  snapchat: {
+    description: "Snapchat is Snap Inc.’s visual messaging, augmented reality (AR) lens, and Spotlight short-form video platform.",
+    funFact: "Snapchat reaches over 850 million monthly active users globally, including more than 75% of 13-to-34-year-olds in over 25 countries.",
+    founded: "2011",
+    headquarters: "Santa Monica, CA",
+    businessModel: "AR Lens Sponsorships, Video Ads & Snapchat+",
+    primaryTech: "Lens Studio AR Engine & Multi-Cloud Infrastructure",
+    marketIntelligence: "Web traffic has grown significantly following the launch of Snapchat for Web and public Spotlight story indexing."
+  },
+  tumblr: {
+    description: "Tumblr is a microblogging and social curation platform known for fandom communities, digital art, and creative multimedia blogs.",
+    funFact: "Tumblr hosts more than 550 million distinct blogs and hundreds of billions of reblogged creative posts.",
+    founded: "2007",
+    headquarters: "New York, NY",
+    businessModel: "Advertising, Tumblr Blaze & Supporter Perks",
+    primaryTech: "PHP, React & Automattic Cloud Infrastructure",
+    marketIntelligence: "Retains a deeply engaged global audience of artists, writers, and pop-culture fandom communities."
+  },
+  line: {
+    description: "LINE is the dominant super-app for instant messaging, digital payments, news, and entertainment across Japan, Taiwan, and Thailand.",
+    funFact: "Over 90% of Japan’s smartphone population uses LINE daily for communication, official brand accounts, and municipal services.",
+    founded: "2011",
+    headquarters: "Tokyo, Japan",
+    businessModel: "Business Connect, Stickers, LINE Pay & News Ads",
+    primaryTech: "Verda Private Cloud & High-Throughput Messaging",
+    marketIntelligence: "Anchors digital commerce and news distribution across East and Southeast Asian markets."
+  },
+  nextdoor: {
+    description: "Nextdoor is the hyperlocal neighborhood network connecting verified residents, local businesses, and public agencies across 330,000+ neighborhoods.",
+    funFact: "Nearly 1 in 3 households in the United States uses Nextdoor for local recommendations, safety alerts, and neighborhood classifieds.",
+    founded: "2010",
+    headquarters: "San Francisco, CA",
+    businessModel: "Hyperlocal SMB & Brand Advertising",
+    primaryTech: "Python, Go, geospatial indexing & AWS",
+    marketIntelligence: "High local search visibility for home service recommendations and community alerts."
+  },
+  mastodon: {
+    description: "Mastodon is a free, open-source decentralized social networking platform powering the interconnected ActivityPub Fediverse.",
+    funFact: "Mastodon operates across thousands of independent community-run servers that federate seamlessly without central corporate ownership.",
+    founded: "2016",
+    headquarters: "Berlin, Germany",
+    businessModel: "Non-Profit Crowdfunding & Grants",
+    primaryTech: "Ruby on Rails, Sidekiq, PostgreSQL & ActivityPub",
+    marketIntelligence: "Strong adoption among open-source developers, academics, European public institutions, and journalists."
+  },
+  mercadolibre: {
+    description: "Mercado Libre is Latin America’s largest e-commerce marketplace and fintech ecosystem, operating across 18 countries including Brazil, Mexico, and Argentina.",
+    funFact: "Mercado Libre processes over 45 items sold per second alongside hundreds of millions of Mercado Pago fintech transactions.",
+    founded: "1999",
+    headquarters: "Montevideo, Uruguay",
+    businessModel: "Marketplace Commissions, Logistics & Mercado Pago",
+    primaryTech: "Fury Internal PaaS, Go, Java & Multi-Cloud",
+    marketIntelligence: "Uncontested digital commerce and digital wallet leader across South and Central America."
+  },
+  rakuten: {
+    description: "Rakuten Ichiba is Japan’s flagship e-commerce marketplace and loyalty ecosystem, spanning retail, fintech, banking, and mobile telecom.",
+    funFact: "Rakuten has distributed trillions of Rakuten Points across Japan, tying together over 70 digital and financial services.",
+    founded: "1997",
+    headquarters: "Tokyo, Japan",
+    businessModel: "Merchant Storefronts, Fintech & Loyalty Ecosystem",
+    primaryTech: "Rakuten Cloud & Hybrid Edge Datacenters",
+    marketIntelligence: "Dominates Japanese online retail alongside Amazon Japan, with massive seasonal Super Sale traffic surges."
+  },
+  flipkart: {
+    description: "Flipkart is India’s leading homegrown e-commerce marketplace, serving over 500 million registered customers across 80+ product categories.",
+    funFact: "Flipkart’s annual Big Billion Days festival generates billions of dollars in gross merchandise value across Tier-2 and Tier-3 Indian cities.",
+    founded: "2007",
+    headquarters: "Bengaluru, India",
+    businessModel: "Marketplace Retail, Ekart Logistics & Retail Media",
+    primaryTech: "Flipkart Private Cloud & High-Scale Java Microservices",
+    marketIntelligence: "Exhibits heavily mobile-first traffic patterns driven by vernacular voice and regional language shopping in India."
+  },
+  coupang: {
+    description: "Coupang is South Korea’s largest e-commerce retailer, renowned for its Rocket Delivery logistics network that delivers orders within hours.",
+    funFact: "Over 70% of South Korea’s population lives within 10 minutes of a Coupang logistics center, enabling dawn delivery by 7 AM.",
+    founded: "2010",
+    headquarters: "Seoul, South Korea",
+    businessModel: "Direct Retail, Rocket WOW Memberships & Coupang Eats",
+    primaryTech: "AI Fulfillment Routing & AWS Cloud",
+    marketIntelligence: "Commands industry-leading purchase frequency and repeat daily visits in the East Asian retail market."
+  },
+  homedepot: {
+    description: "The Home Depot is the world’s largest home improvement retailer, blending over 2,300 physical warehouse stores with a massive digital commerce platform.",
+    funFact: "More than half of Home Depot’s online orders are fulfilled directly through its interconnected physical store network.",
+    founded: "1978",
+    headquarters: "Atlanta, GA",
+    businessModel: "Omnichannel Retail & Pro Contractor Supply",
+    primaryTech: "Google Cloud Platform & Omnichannel Inventory Mesh",
+    marketIntelligence: "Peaks during spring and summer building seasons as homeowners and contractors research inventory and local pricing."
+  },
+  costco: {
+    description: "Costco Wholesale operates an international chain of membership warehouses and a high-volume e-commerce portal for bulk goods, electronics, and travel.",
+    funFact: "Costco serves over 130 million cardholders worldwide with a membership renewal rate exceeding 90% in North America.",
+    founded: "1983",
+    headquarters: "Issaquah, WA",
+    businessModel: "Annual Membership Fees & Low-Margin Bulk Retail",
+    primaryTech: "Microsoft Azure & Akamai Edge Delivery",
+    marketIntelligence: "Generates high average order values across appliances, precious metals, electronics, and Costco Travel."
+  },
+  doordash: {
+    description: "DoorDash is the largest local commerce and on-demand food, grocery, and retail delivery marketplace in North America.",
+    funFact: "DoorDash and its Wolt subsidiary operate across more than 30 countries, fulfilling billions of local delivery orders.",
+    founded: "2013",
+    headquarters: "San Francisco, CA",
+    businessModel: "Delivery Commissions, DashPass & Sponsored Listings",
+    primaryTech: "Kotlin, gRPC, CockroachDB & Real-Time Dispatch ML",
+    marketIntelligence: "Sharp diurnal traffic spikes every day around lunch (12:00) and dinner (18:00–20:00) across local time zones."
+  },
+  wayfair: {
+    description: "Wayfair is a leading online destination for home furnishings, decor, and housewares, cataloging tens of millions of items from thousands of suppliers.",
+    funFact: "Wayfair operates its own Castlegate logistics and last-mile delivery network engineered specifically for oversized furniture.",
+    founded: "2002",
+    headquarters: "Boston, MA",
+    businessModel: "Drop-Ship & Fulfilled Home Goods Marketplace",
+    primaryTech: "Google Cloud, GraphQL & 3D Room Visualization",
+    marketIntelligence: "Strong weekend browsing sessions driven by residential moving cycles and seasonal Way Day promotions."
+  },
+  instacart: {
+    description: "Instacart is North America’s leading grocery technology company, partnering with over 1,500 retail banners across 85,000+ local stores.",
+    funFact: "Instacart powers both its own consumer marketplace and the white-label e-commerce storefronts of hundreds of major supermarket chains.",
+    founded: "2012",
+    headquarters: "San Francisco, CA",
+    businessModel: "Instacart+ Subscriptions, Delivery Fees & CPG Ads",
+    primaryTech: "Ruby, Python, Postgres & Real-Time Inventory ML",
+    marketIntelligence: "Peaks on Sundays and Mondays as households plan weekly grocery replenishment."
+  },
+  primevideo: {
+    description: "Amazon Prime Video is a global streaming television, movie, and live sports platform included with Amazon Prime memberships.",
+    funFact: "Prime Video streams exclusive live NFL Thursday Night Football, UEFA Champions League, and NBA broadcasts to tens of millions of concurrent viewers.",
+    founded: "2006",
+    headquarters: "Seattle, WA",
+    businessModel: "Prime Subscriptions, Ad-Supported Tiers & Channels",
+    primaryTech: "AWS CloudFront, Elemental Live & Low-Latency HLS",
+    marketIntelligence: "Surges during live sports broadcasts and global tentpole series premieres."
+  },
+  dailymotion: {
+    description: "Dailymotion is a global video discovery and player syndication platform owned by Vivendi, serving hundreds of millions of monthly viewers.",
+    funFact: "Dailymotion’s embedded video player is syndicated across thousands of major international news publishers and sports portals.",
+    founded: "2005",
+    headquarters: "Paris, France",
+    businessModel: "Programmatic Video Advertising & Publisher Syndication",
+    primaryTech: "Hybrid European Cloud & Custom Video CDN",
+    marketIntelligence: "Strong international footprint across Europe, Francophone markets, and South Asia."
+  },
+  myanimelist: {
+    description: "MyAnimeList (MAL) is the world’s largest anime and manga cataloging community, database, and review authority.",
+    funFact: "Over 18 million active members track, score, and debate tens of thousands of anime episodes and manga chapters on MyAnimeList.",
+    founded: "2004",
+    headquarters: "Tokyo, Japan",
+    businessModel: "Advertising, Licensing & Supporter Memberships",
+    primaryTech: "PHP, MySQL & Cloudflare Global Caching",
+    marketIntelligence: "Exhibits exceptionally high pages-per-visit as fans update watchlists during seasonal animesimulcasts."
+  },
+  applemusic: {
+    description: "Apple Music is Apple’s global music and audio streaming service offering over 100 million songs in lossless audio and Spatial Audio with Dolby Atmos.",
+    funFact: "Apple Music broadcasts live 24/7 global radio stations from studios in Los Angeles, New York, London, Paris, Berlin, and Tokyo.",
+    founded: "2015",
+    headquarters: "Cupertino, CA",
+    businessModel: "Individual, Family & Apple One Subscriptions",
+    primaryTech: "Apple Edge CDN, ALAC Lossless & MusicKit Web",
+    marketIntelligence: "Web player and catalog deep links drive strong discovery traffic alongside native iOS and macOS apps."
+  },
+  rottentomatoes: {
+    description: "Rotten Tomatoes is the entertainment industry’s leading review-aggregation authority for film and television, famous for the Tomatometer score.",
+    funFact: "A Certified Fresh rating on the Tomatometer directly influences theatrical box office turnout and streaming viewership.",
+    founded: "1998",
+    headquarters: "Beverly Hills, CA",
+    businessModel: "Entertainment Display Advertising & Fandango Ticketing",
+    primaryTech: "AWS, Next.js & Fandango Media Commerce Stack",
+    marketIntelligence: "Spikes sharply every Thursday and Friday as weekend moviegoers check critic and audience scores."
+  },
+  lichess: {
+    description: "Lichess is a free, open-source, ad-free online chess server powered by volunteers and community donations.",
+    funFact: "Lichess hosts over 5 million games of chess every single day on remarkably lean open-source Scala and Rust servers.",
+    founded: "2010",
+    headquarters: "Paris, France",
+    businessModel: "100% Free & Patron Donor Funded Non-Profit",
+    primaryTech: "Scala, Rust, MongoDB, WebSockets & Stockfish WASM",
+    marketIntelligence: "Boasts extraordinary session durations and WebSocket concurrency with zero commercial trackers."
+  },
+  itchio: {
+    description: "itch.io is an open marketplace and game jam platform for independent digital creators with a focus on indie video games, assets, and zines.",
+    funFact: "itch.io hosts nearly 1 million indie games and powers thousands of global game development jams including GMTK Game Jam.",
+    founded: "2013",
+    headquarters: "San Francisco, CA",
+    businessModel: "Creator-Defined Revenue Share Marketplace",
+    primaryTech: "MoonScript, Lua, OpenResty & HTML5 WebGL Embeds",
+    marketIntelligence: "Serves as the primary launchpad for viral experimental and browser-playable indie games."
+  },
+  foxnews: {
+    description: "Fox News Digital is one of the most visited news and political commentary destinations in the United States, operated by Fox Corporation.",
+    funFact: "FoxNews.com consistently ranks among the top three U.S. digital news properties by total multiplatform minutes spent.",
+    founded: "1996",
+    headquarters: "New York, NY",
+    businessModel: "Digital Display & Video Advertising, Fox Nation",
+    primaryTech: "Akamai Edge CDN & Cloud Publishing Stack",
+    marketIntelligence: "High direct homepage loyalty and long return-visit frequency among U.S. audiences."
+  },
+  cnbc: {
+    description: "CNBC is NBCUniversal’s global leader in business news, real-time financial market coverage, and economic analysis.",
+    funFact: "CNBC reaches hundreds of millions of monthly readers and investors tracking live Wall Street, Federal Reserve, and earnings news.",
+    founded: "1989",
+    headquarters: "Englewood Cliffs, NJ",
+    businessModel: "Financial Advertising, CNBC Pro & Investing Club",
+    primaryTech: "Real-Time Market Ticker Feeds & Akamai CDN",
+    marketIntelligence: "Traffic surges sharply between 09:00 and 16:30 EST around U.S. market open, CPI prints, and tech earnings."
+  },
+  washingtonpost: {
+    description: "The Washington Post is an American daily newspaper and digital news organization renowned for national political reporting and investigative journalism.",
+    funFact: "The Washington Post built the Arc XP publishing platform, which also powers major newsrooms around the world.",
+    founded: "1877",
+    headquarters: "Washington, D.C.",
+    businessModel: "Digital Subscriptions, Print & Arc XP Licensing",
+    primaryTech: "Arc XP, AWS & Next.js",
+    marketIntelligence: "Captures intense national and international readership during election cycles and policy debates."
+  },
+  wsj: {
+    description: "The Wall Street Journal is Dow Jones’s flagship international business, financial, and economic daily publication.",
+    funFact: "WSJ sustains over 4 million paying subscribers, making it one of the largest paid digital business publications globally.",
+    founded: "1889",
+    headquarters: "New York, NY",
+    businessModel: "Paid Digital Subscriptions & Institutional Licensing",
+    primaryTech: "AWS, React & Dow Jones Newswires",
+    marketIntelligence: "Attracts affluent institutional and executive readership during global trading hours."
+  },
+  theverge: {
+    description: "The Verge is Vox Media’s flagship technology, science, hardware review, and digital culture publication.",
+    funFact: "The Verge’s liveblog story stream format drives massive real-time engagement during Apple, Google, and CES hardware keynotes.",
+    founded: "2011",
+    headquarters: "New York, NY",
+    businessModel: "Digital Subscriptions, Advertising & Affiliate Commerce",
+    primaryTech: "Chorus Publishing Platform, Next.js & Fastly CDN",
+    marketIntelligence: "High search authority for consumer electronics reviews, AI policy, and technology journalism."
+  },
+  arstechnica: {
+    description: "Ars Technica is a premier technology, science, space, and IT policy publication serving deeply technical readers for over 25 years.",
+    funFact: "Founded in 1998, Ars Technica is famous for its multi-page architectural deep dives into CPUs, operating systems, and rocket propulsion.",
+    founded: "1998",
+    headquarters: "New York, NY",
+    businessModel: "Display Advertising & Ars Pro Subscriptions",
+    primaryTech: "WordPress VIP, Fastly CDN & Condé Nast Cloud",
+    marketIntelligence: "Exceptionally loyal readership among systems engineers, scientists, and IT decision-makers."
+  },
+  chase: {
+    description: "Chase is the U.S. consumer and commercial banking portal of JPMorgan Chase & Co., serving over 80 million American households.",
+    funFact: "JPMorgan Chase is the largest bank in the United States with over $4 trillion in total assets under management.",
+    founded: "2000",
+    headquarters: "New York, NY",
+    businessModel: "Consumer Banking, Credit Cards, Mortgages & Wealth",
+    primaryTech: "JPMorgan Private Cloud & Multi-Region Banking Core",
+    marketIntelligence: "Consistent high-intent log-in traffic peaking on bi-weekly payroll Fridays and the 1st of each month."
+  },
+  fidelity: {
+    description: "Fidelity Investments is one of the world’s largest asset managers, brokerage platforms, and 401(k) retirement plan administrators.",
+    funFact: "Fidelity administers more than $14 trillion in customer assets across tens of millions of retail brokerage and retirement accounts.",
+    founded: "1946",
+    headquarters: "Boston, MA",
+    businessModel: "Asset Management, Brokerage & Retirement Services",
+    primaryTech: "Hybrid Cloud, AWS & Low-Latency Order Routing",
+    marketIntelligence: "Heavy desktop session volume during U.S. equity trading hours and Q1 tax season."
+  },
+  schwab: {
+    description: "Charles Schwab is a leading American multinational financial services firm offering retail brokerage, banking, and wealth advisory services.",
+    funFact: "Following its integration of TD Ameritrade and thinkorswim, Schwab serves over 35 million active brokerage accounts.",
+    founded: "1971",
+    headquarters: "Westlake, TX",
+    businessModel: "Wealth Management, Net Interest Revenue & Trading",
+    primaryTech: "thinkorswim Engine & Enterprise Financial Cloud",
+    marketIntelligence: "Strong engagement from active retail traders and long-term retirement investors."
+  },
+  coingecko: {
+    description: "CoinGecko is the world’s largest independent cryptocurrency data aggregator, tracking over 15,000 digital assets across 1,000+ exchanges.",
+    funFact: "CoinGecko’s API powers price feeds for thousands of DeFi wallets, portfolio trackers, and institutional research desks.",
+    founded: "2014",
+    headquarters: "Singapore",
+    businessModel: "Crypto Data API Tiers, Advertising & GeckoTerminal",
+    primaryTech: "Ruby on Rails, Go, ClickHouse & Cloudflare Edge",
+    marketIntelligence: "24/7 global traffic that surges during Bitcoin volatility and on-chain token launches."
+  },
+  klarna: {
+    description: "Klarna is a global AI-powered payments network and shopping assistant serving 85 million active consumers across 575,000+ merchants.",
+    funFact: "Klarna processes over 2.5 million flexible payment and shopping transactions every single day across Europe and North America.",
+    founded: "2005",
+    headquarters: "Stockholm, Sweden",
+    businessModel: "Merchant Payment Processing & Shopping Referral",
+    primaryTech: "AWS, TypeScript & AI Customer Service Agents",
+    marketIntelligence: "High checkout referral traffic from partner fashion and electronics retailers."
+  },
+  kraken: {
+    description: "Kraken is one of the longest-operating and most liquid digital asset exchanges in the world, offering spot, margin, staking, and institutional custody.",
+    funFact: "Founded in 2011, Kraken pioneered cryptographic Proof of Reserves audits to verify 1:1 backing of client crypto balances.",
+    founded: "2011",
+    headquarters: "Cheyenne, WY",
+    businessModel: "Maker/Taker Trading Fees, Staking & Institutional Prime",
+    primaryTech: "Rust Matching Engine, WebSockets & Cloudflare Spectrum",
+    marketIntelligence: "Strong market share across European (EUR) and North American (USD) crypto trading pairs."
+  },
+  brave: {
+    description: "Brave Search is an independent, privacy-preserving search engine built on its own proprietary web index rather than big-tech syndication.",
+    funFact: "Brave Search serves over 10 billion annualized queries from its independent index and powers search grounding for numerous AI apps.",
+    founded: "2021",
+    headquarters: "San Francisco, CA",
+    businessModel: "Privacy-First Search Ads, Brave Search API & Premium",
+    primaryTech: "Independent Web Crawler Index & Answer with AI",
+    marketIntelligence: "Rapidly growing default search engine for privacy-conscious users and AI search API customers."
+  },
+  seznam: {
+    description: "Seznam.cz is the flagship web portal, independent search engine, map platform, and news destination in the Czech Republic.",
+    funFact: "Seznam is one of the very few regional search engines in Europe to build its own search crawler, maps, and browser ecosystem.",
+    founded: "1996",
+    headquarters: "Prague, Czech Republic",
+    businessModel: "Search & Portal Advertising, Seznam Zprávy & Mapy.cz",
+    primaryTech: "Own European Datacenters & Custom Czech NLP Index",
+    marketIntelligence: "Visited daily by the vast majority of the Czech internet population."
+  },
+  ecosia: {
+    description: "Ecosia is a Certified B-Corp social business search engine that dedicates 100% of its profits to global reforestation and climate action.",
+    funFact: "Ecosia users have funded the planting of more than 200 million native trees across 35+ countries worldwide.",
+    founded: "2009",
+    headquarters: "Berlin, Germany",
+    businessModel: "Eco-Conscious Search Advertising (Steward-Owned)",
+    primaryTech: "Solar-Powered Cloud & European Search Index",
+    marketIntelligence: "Especially popular across Germany, France, the UK, and European university networks."
+  },
+  kagi: {
+    description: "Kagi is a paid, zero-ad, zero-telemetry search engine designed for power users who want customizable domain rankings and high-signal web results.",
+    funFact: "Kagi lets users manually boost, lower, or block specific domains from their personal search results and filter out SEO content farms.",
+    founded: "2018",
+    headquarters: "Palo Alto, CA",
+    businessModel: "100% User-Paid Search Subscriptions (Zero Ads)",
+    primaryTech: "Teclis & TinyGem Specialized Indexes, Orion Browser",
+    marketIntelligence: "High retention and daily query volume among software engineers and researchers."
+  },
+  archive: {
+    description: "The Internet Archive is a non-profit digital library preserving humanity’s cultural artifacts and over 860 billion historical web pages via the Wayback Machine.",
+    funFact: "The Internet Archive stores over 100 petabytes of unique historical websites, books, audio recordings, software, and public domain films.",
+    founded: "1996",
+    headquarters: "San Francisco, CA",
+    businessModel: "Non-Profit Philanthropy, Grants & Library Digitization",
+    primaryTech: "Petabox Custom Storage Clusters & Wayback Machine",
+    marketIntelligence: "Serves as the memory of the internet for journalists, legal researchers, historians, and archivists."
+  },
+  goodreads: {
+    description: "Goodreads is the world’s largest social cataloging and book review community, helping over 150 million members discover and track books.",
+    funFact: "Goodreads members have added more than 4 billion books to their digital shelves and submitted hundreds of millions of reviews.",
+    founded: "2006",
+    headquarters: "San Francisco, CA",
+    businessModel: "Book Publisher Advertising & Kindle Ecosystem",
+    primaryTech: "AWS, Ruby & Kindle Graph Integration",
+    marketIntelligence: "Dominates organic search results for book titles, author bibliographies, and annual reading challenges."
+  },
+  arxiv: {
+    description: "arXiv is the open-access scientific preprint repository maintained by Cornell University, hosting over 2.4 million papers in AI, physics, and mathematics.",
+    funFact: "Virtually every foundational breakthrough in modern machine learning—from the Transformer paper to DeepSeek—was published first on arXiv.",
+    founded: "1991",
+    headquarters: "Ithaca, NY",
+    businessModel: "Cornell University, Simons Foundation & Member Institutions",
+    primaryTech: "Python, LaTeX Compilation Pipeline & Fastly/GCP",
+    marketIntelligence: "Spikes every weekday evening UTC when the daily batch of new computer science and AI preprints is released."
+  },
+  wolframalpha: {
+    description: "WolframAlpha is a computational knowledge engine that answers factual and mathematical queries directly by computing symbolic answers from curated data.",
+    funFact: "WolframAlpha’s symbolic Wolfram Language engine computes step-by-step calculus, chemistry, physics, and astronomical calculations in real time.",
+    founded: "2009",
+    headquarters: "Champaign, IL",
+    businessModel: "WolframAlpha Pro Subscriptions & Enterprise APIs",
+    primaryTech: "Wolfram Language, Mathematica Kernel & HPC Clusters",
+    marketIntelligence: "Strong seasonal academic traffic during fall and spring university semesters."
+  },
 };
 
 function getCategoryArchetype(category: string, siteName: string): SiteDossier {

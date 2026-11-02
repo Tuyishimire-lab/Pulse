@@ -617,6 +617,19 @@ export function canonicalPairSlug(idA: string, idB: string): string {
   return idA <= idB ? `${idA}-vs-${idB}` : `${idB}-vs-${idA}`;
 }
 
+/**
+ * Resolves the canonical comparison slug between two site IDs.
+ * Checks COMPARE_PAIRS for matching editorial pairs in both directions,
+ * returning the authored slug if found, and otherwise returning canonicalPairSlug(idA, idB).
+ */
+export function getCompareSlug(idA: string, idB: string): string {
+  const editorial = COMPARE_PAIRS.find(
+    (p) => (p.siteAId === idA && p.siteBId === idB) || (p.siteAId === idB && p.siteBId === idA)
+  );
+  if (editorial) return editorial.slug;
+  return canonicalPairSlug(idA, idB);
+}
+
 export function getAllCompareSlugs(): string[] {
   // Seed with hand-crafted slugs exactly as authored (they have editorial content)
   const handCraftedSlugs = new Set(PAIR_SLUGS);

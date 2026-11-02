@@ -4,6 +4,7 @@ import { parseDomain } from '../../../../utils/domain';
 import { generateAIStories, SiteSnapshot, CategoryTotal } from '../../../../utils/groqAnalysis';
 import { ALL_COUNTRIES, CountryData } from '../../../top-sites/data/countries';
 import { getRegionalProfile } from '../../../top-sites/data/regionalProfiles';
+import { matchRadarDomainToSiteId } from '../../../../lib/getCountrySites';
 import { submitToIndexNow } from '../../../../lib/indexnow';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -235,25 +236,29 @@ export async function GET(request: Request) {
                 if (cfData.success && cfData.result?.top_0) {
                   for (const item of cfData.result.top_0 as { domain: string }[]) {
                     const domain = item.domain.toLowerCase().replace(/^www\./, '');
-                    const id = domainToSiteId.get(domain);
+                    const id = domainToSiteId.get(domain) ?? matchRadarDomainToSiteId(domain, sites as never);
                     if (id && !siteIds.includes(id)) siteIds.push(id);
                     if (siteIds.length >= 20) break;
                   }
                 }
               }
 
-              // Fall back to regional profile if Radar returned < 10 matches
-              if (siteIds.length < 10) {
+              // Ensure a full 20-site list by filling any remaining slots from the regional profile
+              if (siteIds.length < 20) {
+                const wasBelowTen = siteIds.length < 10;
                 const regionalIds = getRegionalProfile(country.cfCode);
-                // Merge: keep radar results first, fill with regional
                 const combined = [...siteIds];
                 for (const id of regionalIds) {
                   if (!combined.includes(id)) combined.push(id);
                   if (combined.length >= 20) break;
                 }
                 siteIds = combined;
-                source = siteIds.length >= 10 && countriesWithRadarData > 0 ? 'regional-profile' : 'regional-profile';
-                countriesWithFallback++;
+                if (wasBelowTen) {
+                  source = 'regional-profile';
+                  countriesWithFallback++;
+                } else {
+                  countriesWithRadarData++;
+                }
               } else {
                 countriesWithRadarData++;
               }

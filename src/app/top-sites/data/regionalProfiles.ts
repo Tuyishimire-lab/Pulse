@@ -5,11 +5,12 @@
 // Globally irrelevant sites excluded from the generic fallback (Tier 3)
 export const GLOBALLY_IRRELEVANT = new Set([
   'baidu', 'yandex', 'taobao', 'qq', 'weibo', 'vk', 'rakuten', 'naver',
-  'bilibili', 'jd', 'tieba', '360', 'sohu', 'sina', 'youku',
+  'bilibili', 'jd', 'tieba', '360', 'sohu', 'sina', 'youku', 'coupang',
+  'seznam', 'line', 'flipkart', 'mercadolibre',
 ]);
 
 // -------------------------------------------------------------------
-// 6 Regional Profiles - curated for each region's actual internet mix
+// 8 Regional Profiles - curated for each region's actual internet mix
 // -------------------------------------------------------------------
 export const REGIONAL_PROFILES: Record<string, string[]> = {
   // Sub-Saharan Africa: Facebook/WhatsApp dominant, TikTok rising, Temu/Shein expanding
@@ -26,19 +27,19 @@ export const REGIONAL_PROFILES: Record<string, string[]> = {
     'netflix', 'amazon', 'shein', 'temu', 'linkedin',
     'spotify', 'discord', 'microsoft', 'deepseek', 'bing',
   ],
-  // South & Southeast Asia: mobile-first, WhatsApp/TikTok/Facebook dominant, DeepSeek breakout
+  // South & Southeast Asia: mobile-first, WhatsApp/TikTok/Facebook dominant, Flipkart & Canva strong
   'south-southeast-asia': [
     'google', 'youtube', 'facebook', 'instagram', 'tiktok',
     'chatgpt', 'deepseek', 'x', 'whatsapp', 'reddit',
-    'netflix', 'amazon', 'temu', 'shein', 'spotify',
-    'linkedin', 'microsoft', 'notion', 'twitch', 'bing',
+    'netflix', 'amazon', 'flipkart', 'canva', 'temu',
+    'spotify', 'linkedin', 'microsoft', 'twitch', 'bing',
   ],
-  // Eastern Europe: close to global mix with DeepSeek & Temu growth
+  // Eastern Europe: close to global mix with Seznam, DeepSeek & Temu growth
   'eastern-europe': [
     'google', 'youtube', 'facebook', 'instagram', 'chatgpt',
     'wikipedia', 'amazon', 'temu', 'netflix', 'microsoft',
-    'linkedin', 'discord', 'spotify', 'deepseek', 'twitch',
-    'github', 'shein', 'bing', 'tiktok', 'notion',
+    'linkedin', 'discord', 'spotify', 'deepseek', 'seznam',
+    'twitch', 'github', 'shein', 'bing', 'tiktok',
   ],
   // Russia & CIS: Yandex and VK ARE relevant here
   'russia-cis': [
@@ -47,19 +48,19 @@ export const REGIONAL_PROFILES: Record<string, string[]> = {
     'netflix', 'microsoft', 'discord', 'reddit', 'spotify',
     'deepseek', 'twitch', 'github', 'bing', 'telegram',
   ],
-  // East Asia (non-China): YouTube, LINE, KakaoTalk, Naver, DeepSeek & Notion
+  // East Asia (non-China): YouTube, LINE, Rakuten, Naver, Coupang, DeepSeek & Bilibili
   'east-asia': [
     'google', 'youtube', 'instagram', 'facebook', 'tiktok',
-    'x', 'chatgpt', 'deepseek', 'netflix', 'naver',
-    'microsoft', 'discord', 'notion', 'spotify', 'linkedin',
-    'twitch', 'github', 'amazon', 'temu', 'bilibili',
+    'x', 'chatgpt', 'line', 'naver', 'rakuten',
+    'coupang', 'netflix', 'deepseek', 'microsoft', 'discord',
+    'spotify', 'linkedin', 'twitch', 'github', 'bilibili',
   ],
-  // Latin America: WhatsApp primary, TikTok/Instagram high, Temu/Shein surge
+  // Latin America: WhatsApp primary, Mercado Libre dominant ecommerce, TikTok/Instagram high
   'latin-america': [
     'google', 'youtube', 'facebook', 'instagram', 'tiktok',
-    'chatgpt', 'x', 'wikipedia', 'whatsapp', 'reddit',
-    'amazon', 'netflix', 'temu', 'shein', 'discord',
-    'spotify', 'microsoft', 'twitch', 'deepseek', 'bing',
+    'chatgpt', 'x', 'wikipedia', 'mercadolibre', 'whatsapp',
+    'reddit', 'amazon', 'netflix', 'temu', 'shein',
+    'discord', 'spotify', 'microsoft', 'twitch', 'bing',
   ],
   // Western Europe / Oceania / North America: global mix with Temu, Notion, Cloudflare, DeepSeek
   'western-world': [

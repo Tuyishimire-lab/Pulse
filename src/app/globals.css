@@ -907,7 +907,7 @@ body {
 @media (min-width: 768px) {
   .list-header {
     display: grid;
-    grid-template-columns: 80px 1.5fr 1fr 1.2fr 1.8fr 100px;
+    grid-template-columns: 105px 1.5fr 1fr 1.2fr 1.8fr 100px;
     align-items: center;
     gap: 1.5rem;
   }
@@ -930,7 +930,7 @@ body {
 
 @media (min-width: 768px) {
   .list-row {
-    grid-template-columns: 80px 1.5fr 1fr 1.2fr 1.8fr 100px;
+    grid-template-columns: 105px 1.5fr 1fr 1.2fr 1.8fr 100px;
     gap: 1.5rem;
     padding: 0.8rem 1.5rem;
     border-radius: 12px;

@@ -250,28 +250,25 @@ export default function SiteGrid({
                 >
                   ★
                 </button>
-                <div className="list-rank text-left flex items-center gap-1.5">
+                <div className="list-rank text-left flex items-center gap-1.5 min-w-0">
                   <span>#{getDisplayRank(site)}</span>
                   {(() => {
                     const change = getRankChange(site);
                     if (change === null || change === 0) return null;
                     if (change > 0) {
                       return (
-                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                           ▲+{change}
                         </span>
                       );
                     } else {
                       return (
-                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
                           ▼{change}
                         </span>
                       );
                     }
                   })()}
-                  {site.rank_history && site.rank_history.length >= 2 && (
-                    <RankSparkline history={site.rank_history} />
-                  )}
                 </div>
               </div>
 

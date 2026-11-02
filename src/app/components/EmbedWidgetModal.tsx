@@ -12,9 +12,10 @@ interface EmbedWidgetModalProps {
 
 export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose }: EmbedWidgetModalProps) {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+  const [embedMode, setEmbedMode] = useState<'widget' | 'shield'>('shield');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [format, setFormat] = useState<'card' | 'badge'>('card');
-  const [copied, setCopied] = useState(false);
+  const [copiedSnippet, setCopiedSnippet] = useState<'iframe' | 'markdown' | 'html' | null>(null);
 
   // Close on Escape key
   useEffect(() => {
@@ -32,14 +33,23 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.pulstraffic.com';
   const iframeSrc = `${baseUrl}/embed/${activeSite.id}?theme=${theme}&compact=${format === 'badge'}`;
 
+  // Interactive iframe snippet
   const iframeSnippet = format === 'card'
     ? `<iframe src="${iframeSrc}" width="360" height="200" frameborder="0" scrolling="no" style="border-radius: 12px; overflow: hidden; border: none; display: block;" title="${activeSite.name} Live Traffic by Pulse"></iframe>`
     : `<iframe src="${iframeSrc}" width="300" height="52" frameborder="0" scrolling="no" style="border-radius: 8px; overflow: hidden; border: none; display: block;" title="${activeSite.name} Traffic Badge"></iframe>`;
 
-  const handleCopy = (text: string) => {
+  // Static SVG Shield Snippets (Direct Dofollow backlink to Pulse)
+  const canonicalSiteUrl = `https://www.pulstraffic.com/sites/${activeSite.id}`;
+  const badgeImageUrl = `https://www.pulstraffic.com/api/badge/${activeSite.id}${theme === 'light' ? '?theme=light' : ''}`;
+  const previewBadgeSrc = `/api/badge/${activeSite.id}${theme === 'light' ? '?theme=light' : ''}`;
+
+  const markdownSnippet = `[![Pulse Rank](${badgeImageUrl})](${canonicalSiteUrl})`;
+  const htmlSnippet = `<a href="${canonicalSiteUrl}" target="_blank" rel="noopener"><img src="${badgeImageUrl}" alt="Pulse Rank" /></a>`;
+
+  const handleCopy = (text: string, type: 'iframe' | 'markdown' | 'html') => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedSnippet(type);
+    setTimeout(() => setCopiedSnippet(null), 2000);
   };
 
   return (
@@ -64,7 +74,7 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
                 Embed Live Traffic Widget
               </h2>
               <p className="text-xs text-slate-400 truncate leading-tight">
-                Real-time interactive benchmarks for your site or blog.
+                Real-time interactive benchmarks & SVG badges for your site or blog.
               </p>
             </div>
           </div>
@@ -79,11 +89,45 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
           </button>
         </div>
 
-        {/* 2-Column Content Area (Side-by-Side on desktop to avoid vertical scrolling) */}
-        <div className="flex-1 overflow-y-auto py-3.5 modal-custom-scroll">
+        {/* Mode Selector Tabs: Static SVG Shield vs Interactive Widget */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800/80 my-3">
+          <button
+            type="button"
+            onClick={() => setEmbedMode('shield')}
+            className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+              embedMode === 'shield'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span>Static SVG Shield</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">SEO</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEmbedMode('widget')}
+            className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+              embedMode === 'widget'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+            <span>Interactive Widget (iFrame)</span>
+          </button>
+        </div>
+
+        {/* 2-Column Content Area */}
+        <div className="flex-1 overflow-y-auto pb-2 modal-custom-scroll">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
             
-            {/* Left Column: Configuration & Embed Code (5 cols) */}
+            {/* Left Column: Configuration & Embed Code (6 cols) */}
             <div className="md:col-span-6 space-y-3">
               {/* Site Switcher (when comparing two sites) */}
               {alternateSite && (
@@ -123,42 +167,74 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
               )}
 
               {/* Options: Style & Theme */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
-                    Style
-                  </label>
-                  <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-900/80 rounded-lg border border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => setFormat('card')}
-                      className={`py-1 text-xs font-semibold rounded transition-all ${
-                        format === 'card'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      Card
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormat('badge')}
-                      className={`py-1 text-xs font-semibold rounded transition-all ${
-                        format === 'badge'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      Badge
-                    </button>
+              {embedMode === 'widget' ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
+                      Style
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-900/80 rounded-lg border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setFormat('card')}
+                        className={`py-1 text-xs font-semibold rounded transition-all ${
+                          format === 'card'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormat('badge')}
+                        className={`py-1 text-xs font-semibold rounded transition-all ${
+                          format === 'badge'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Badge
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
+                      Theme
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-900/80 rounded-lg border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setTheme('dark')}
+                        className={`py-1 text-xs font-semibold rounded transition-all ${
+                          theme === 'dark'
+                            ? 'bg-slate-700 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Dark
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheme('light')}
+                        className={`py-1 text-xs font-semibold rounded transition-all ${
+                          theme === 'light'
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Light
+                      </button>
+                    </div>
                   </div>
                 </div>
-
+              ) : (
                 <div>
                   <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
-                    Theme
+                    Shield Theme
                   </label>
-                  <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-900/80 rounded-lg border border-slate-800">
+                  <div className="grid grid-cols-2 gap-1 p-0.5 bg-slate-900/80 rounded-lg border border-slate-800 max-w-[200px]">
                     <button
                       type="button"
                       onClick={() => setTheme('dark')}
@@ -183,39 +259,109 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
                     </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Embed Snippet Box */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    HTML Embed Code
-                  </span>
-                  <button
-                    onClick={() => handleCopy(iframeSnippet)}
-                    className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                  >
-                    {copied ? (
-                      <>
-                        <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-emerald-400 font-bold">Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        <span>Copy Code</span>
-                      </>
-                    )}
-                  </button>
+              {/* Embed Code Snippet Boxes */}
+              {embedMode === 'widget' ? (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      HTML Embed Code
+                    </span>
+                    <button
+                      onClick={() => handleCopy(iframeSnippet, 'iframe')}
+                      className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                    >
+                      {copiedSnippet === 'iframe' ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-emerald-400 font-bold">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <span>Copy Code</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <pre className="p-2.5 bg-black/60 rounded-lg text-[10px] font-mono text-slate-300 border border-slate-800 whitespace-pre-wrap break-all select-all leading-relaxed scrollbar-hide">
+                    {iframeSnippet}
+                  </pre>
                 </div>
-                <pre className="p-2.5 bg-black/60 rounded-lg text-[10px] font-mono text-slate-300 border border-slate-800 whitespace-pre-wrap break-all select-all leading-relaxed scrollbar-hide">
-                  {iframeSnippet}
-                </pre>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Markdown Snippet Box */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span>Markdown</span>
+                        <span className="text-[9px] font-normal text-slate-500 lowercase">(README / docs)</span>
+                      </span>
+                      <button
+                        onClick={() => handleCopy(markdownSnippet, 'markdown')}
+                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                      >
+                        {copiedSnippet === 'markdown' ? (
+                          <>
+                            <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-emerald-400 font-bold">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span>Copy Markdown</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="p-2.5 bg-black/60 rounded-lg text-[10px] font-mono text-slate-300 border border-slate-800 whitespace-pre-wrap break-all select-all leading-relaxed scrollbar-hide">
+                      {markdownSnippet}
+                    </pre>
+                  </div>
+
+                  {/* HTML Dofollow Snippet Box */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span>HTML</span>
+                        <span className="text-[9px] font-normal text-emerald-400 lowercase font-medium">(direct dofollow link)</span>
+                      </span>
+                      <button
+                        onClick={() => handleCopy(htmlSnippet, 'html')}
+                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                      >
+                        {copiedSnippet === 'html' ? (
+                          <>
+                            <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-emerald-400 font-bold">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span>Copy HTML</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="p-2.5 bg-black/60 rounded-lg text-[10px] font-mono text-slate-300 border border-slate-800 whitespace-pre-wrap break-all select-all leading-relaxed scrollbar-hide">
+                      {htmlSnippet}
+                    </pre>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Live Preview (6 cols) */}
@@ -223,16 +369,43 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
               <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">
                 Live Preview
               </label>
-              <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-center min-h-[215px] overflow-hidden">
-                <iframe
-                  src={iframeSrc}
-                  width={format === 'card' ? '360' : '300'}
-                  height={format === 'card' ? '200' : '52'}
-                  scrolling="no"
-                  style={{ border: 'none', borderRadius: '12px', overflow: 'hidden', display: 'block', maxWidth: '100%' }}
-                  title="Widget Preview"
-                />
-              </div>
+              {embedMode === 'widget' ? (
+                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-center min-h-[215px] overflow-hidden">
+                  <iframe
+                    src={iframeSrc}
+                    width={format === 'card' ? '360' : '300'}
+                    height={format === 'card' ? '200' : '52'}
+                    scrolling="no"
+                    style={{ border: 'none', borderRadius: '12px', overflow: 'hidden', display: 'block', maxWidth: '100%' }}
+                    title="Widget Preview"
+                  />
+                </div>
+              ) : (
+                <div className="p-6 rounded-xl bg-slate-950/70 border border-slate-800/80 flex flex-col items-center justify-center min-h-[215px] overflow-hidden text-center gap-3">
+                  <a
+                    href={canonicalSiteUrl}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-block transition-transform hover:scale-105 active:scale-95"
+                    title={`View ${activeSite.name} on Pulse Traffic`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={previewBadgeSrc}
+                      alt={`${activeSite.name} Pulse Rank`}
+                      className="max-w-full h-auto drop-shadow-md"
+                    />
+                  </a>
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-slate-400">
+                      Click preview to test direct backlink
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono truncate max-w-[280px]">
+                      {canonicalSiteUrl}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
@@ -242,7 +415,11 @@ export default function EmbedWidgetModal({ site, alternateSite, isOpen, onClose 
         <div className="flex-shrink-0 flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-800/80">
           <span className="flex items-center gap-1.5 text-[11px] text-slate-400 truncate mr-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
-            <span className="truncate">Real-time telemetry synced • Zero API keys</span>
+            <span className="truncate">
+              {embedMode === 'shield'
+                ? 'Direct dofollow link equity • Lightweight SVG • Zero API keys'
+                : 'Real-time telemetry synced • Zero API keys'}
+            </span>
           </span>
           <button
             onClick={onClose}

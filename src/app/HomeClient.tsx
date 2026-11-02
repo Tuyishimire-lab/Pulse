@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
-import { SITE_META, SiteConfig } from './data/sites';
+import { SITE_META, SiteConfig, CATEGORIES } from './data/sites';
 
 import { getSiteDetails, SiteDetails } from './data/details';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -142,31 +142,56 @@ export default function HomeClient({
     return new Set(incidentSeverityMap.keys());
   }, [incidentSeverityMap]);
 
-  // ── Load persisted state on mount ─────────────────────────────────────────
+  // ── Load persisted state and URL filters on mount ─────────────────────────
   useEffect(() => {
+    // ── Parse URL filters on mount (?search=, ?category=, ?view=) ───────────
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+
+      const searchParam = params.get('search');
+      if (searchParam !== null && searchParam.trim() !== '') {
+        setSearchQuery(searchParam.trim());
+        setCurrentPage(1);
+      }
+
+      const categoryParam = params.get('category')?.trim().toLowerCase();
+      if (categoryParam && CATEGORIES.some((c) => c.id === categoryParam)) {
+        setActiveCategory(categoryParam);
+        setCurrentPage(1);
+      }
+
+      const viewParam = params.get('view')?.trim().toLowerCase();
+      if (viewParam === 'grid' || viewParam === 'list' || viewParam === 'treemap') {
+        setViewLayout(viewParam as 'grid' | 'list' | 'treemap');
+      }
+    }
+
     const timer = setTimeout(() => {
       setPageLoadTime(Date.now());
       
       // Check for shareable ?watchlist=id1,id2 in URL query first
+      let hasUrlWatchlist = false;
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const urlWatchlist = params.get('watchlist');
         if (urlWatchlist) {
           const ids = urlWatchlist.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
           if (ids.length > 0) {
+            hasUrlWatchlist = true;
             setWatchlistIds(ids);
             setChannelFilter('watchlist');
             localStorage.setItem('pulse_watchlist', JSON.stringify(ids));
             setToastMessage(`Loaded ${ids.length} sites from shared watchlist!`);
             setTimeout(() => setToastMessage(null), 4000);
-            return;
           }
         }
       }
 
-      const storedStars = localStorage.getItem('pulse_watchlist');
-      if (storedStars) {
-        try { setWatchlistIds(JSON.parse(storedStars)); } catch {}
+      if (!hasUrlWatchlist) {
+        const storedStars = localStorage.getItem('pulse_watchlist');
+        if (storedStars) {
+          try { setWatchlistIds(JSON.parse(storedStars)); } catch {}
+        }
       }
       const storedCustom = localStorage.getItem('pulse_custom_sites');
       if (storedCustom) {

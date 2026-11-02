@@ -14,14 +14,110 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 const STALE_THRESHOLD_MS = 25 * 60 * 60 * 1000; // 25 hours
 
+export const RADAR_DOMAIN_ALIASES: Record<string, string> = {
+  'twitter.com': 'x',
+  't.co': 'x',
+  'openai.com': 'chatgpt',
+  'fb.com': 'facebook',
+  'm.facebook.com': 'facebook',
+  'youtu.be': 'youtube',
+  'en.wikipedia.org': 'wikipedia',
+  'characterai.com': 'characterai',
+  'notion.site': 'notion',
+  'us.temu.com': 'temu',
+  'yahoo.co.jp': 'yahoo',
+  'rakuten.co.jp': 'rakuten',
+  'mercadolivre.com.br': 'mercadolibre',
+  'mercadolibre.com.ar': 'mercadolibre',
+  'mercadolibre.com.mx': 'mercadolibre',
+  'mercadolibre.com.co': 'mercadolibre',
+  'mercadolibre.cl': 'mercadolibre',
+  'vkontakte.ru': 'vk',
+  'line.me': 'line',
+  'seznam.cz': 'seznam',
+  'coupang.com': 'coupang',
+  'flipkart.com': 'flipkart',
+  'bbc.co.uk': 'bbc',
+};
+
+const MULTI_TLD_BRANDS: Record<string, string> = {
+  google: 'google',
+  amazon: 'amazon',
+  ebay: 'ebay',
+  yahoo: 'yahoo',
+  mercadolibre: 'mercadolibre',
+  mercadolivre: 'mercadolibre',
+  rakuten: 'rakuten',
+  pinterest: 'pinterest',
+  shopify: 'shopify',
+  indeed: 'indeed',
+};
+
 // ---------- Domain → Site matching ------------------------------------------
-function domainMatchesSite(domain: string, site: SiteConfig): boolean {
-  const siteHost = site.url
-    .replace(/https?:\/\/(www\.)?/, '')
-    .split('/')[0]
-    .toLowerCase();
+export function matchRadarDomainToSiteId(domain: string, allSites: SiteConfig[]): string | undefined {
   const d = domain.toLowerCase().replace(/^www\./, '');
-  return siteHost === d || siteHost.endsWith('.' + d) || d.endsWith('.' + siteHost);
+
+  // 1. Direct alias lookup
+  if (RADAR_DOMAIN_ALIASES[d]) {
+    return RADAR_DOMAIN_ALIASES[d];
+  }
+
+  // 2. Exact host or subdomain match against catalog sites
+  for (const site of allSites) {
+    const siteHost = site.url
+      .replace(/https?:\/\/(www\.)?/, '')
+      .split('/')[0]
+      .toLowerCase();
+    if (siteHost === d || siteHost.endsWith('.' + d) || d.endsWith('.' + siteHost)) {
+      return site.id;
+    }
+  }
+
+  // 3. Multi-country ccTLD match for global brands (e.g. amazon.co.jp, google.co.in, ebay.de)
+  const firstLabel = d.split('.')[0];
+  if (firstLabel && MULTI_TLD_BRANDS[firstLabel]) {
+    return MULTI_TLD_BRANDS[firstLabel];
+  }
+
+  return undefined;
+}
+
+/** Backfills a list of siteIds up to 20 using the country's regional profile and global fallback. */
+export function ensureTwentyCountrySites(
+  siteIds: string[],
+  cfCode: string,
+  allSites: SiteConfig[]
+): string[] {
+  const validCatalogIds = new Set(allSites.map((s) => s.id));
+  const result: string[] = [];
+
+  for (const id of siteIds) {
+    if (validCatalogIds.has(id) && !result.includes(id)) {
+      result.push(id);
+    }
+    if (result.length >= 20) return result;
+  }
+
+  const regionalIds = getRegionalProfile(cfCode);
+  for (const id of regionalIds) {
+    if (validCatalogIds.has(id) && !result.includes(id)) {
+      result.push(id);
+    }
+    if (result.length >= 20) return result;
+  }
+
+  const globalFallback = allSites
+    .filter((s) => !GLOBALLY_IRRELEVANT.has(s.id))
+    .sort((a, b) => a.rank - b.rank);
+
+  for (const site of globalFallback) {
+    if (!result.includes(site.id)) {
+      result.push(site.id);
+    }
+    if (result.length >= 20) break;
+  }
+
+  return result;
 }
 
 // ---------- Tier 3: Live Cloudflare Radar lookup ----------------------------
@@ -43,8 +139,8 @@ async function fetchRadarForCountry(cfCode: string, allSites: SiteConfig[]): Pro
 
     const siteIds: string[] = [];
     for (const item of json.result.top_0 as { domain: string; rank: number }[]) {
-      const matched = allSites.find((s) => domainMatchesSite(item.domain, s));
-      if (matched && !siteIds.includes(matched.id)) siteIds.push(matched.id);
+      const matchedId = matchRadarDomainToSiteId(item.domain, allSites);
+      if (matchedId && !siteIds.includes(matchedId)) siteIds.push(matchedId);
       if (siteIds.length >= 20) break;
     }
     return siteIds;
@@ -91,7 +187,11 @@ export async function resolveCountrySites(
         cronLastRan = data.updated_at;
         const age = Date.now() - new Date(data.updated_at).getTime();
         if (age < STALE_THRESHOLD_MS && Array.isArray(data.site_ids) && data.site_ids.length >= 10) {
-          return { siteIds: data.site_ids, source: 'supabase-cache', cronLastRan };
+          return {
+            siteIds: ensureTwentyCountrySites(data.site_ids, cfCode, allSites),
+            source: 'supabase-cache',
+            cronLastRan,
+          };
         }
         // Data is stale - record the timestamp but continue to Tier 3
       }
@@ -103,34 +203,36 @@ export async function resolveCountrySites(
   // ── Tier 3: Live Cloudflare Radar lookup (cron missed or data stale) ─────
   const radarIds = await withTimeout(fetchRadarForCountry(cfCode, allSites), 3000, []);
   if (radarIds.length >= 10) {
+    const fullIds = ensureTwentyCountrySites(radarIds, cfCode, allSites);
     // Write result back to Supabase cache asynchronously so future renders use it
     if (supabaseUrl && supabaseKey) {
       try {
         const supabase = createClient(supabaseUrl, supabaseKey);
         supabase.from('country_rankings').upsert({
           cf_code: cfCode.toUpperCase(),
-          site_ids: radarIds,
+          site_ids: fullIds,
           source: 'radar',
           updated_at: new Date().toISOString(),
         }, { onConflict: 'cf_code' }).then(() => {}, () => {});
       } catch { /* non-critical */ }
     }
-    return { siteIds: radarIds, source: 'live-radar', cronLastRan };
+    return { siteIds: fullIds, source: 'live-radar', cronLastRan };
   }
 
   // ── Tier 4: PTI Regional Profile ─────────────────────────────────────────
   const regionalIds = getRegionalProfile(cfCode);
   if (regionalIds.length >= 10) {
-    return { siteIds: regionalIds, source: 'regional-profile', cronLastRan };
+    return {
+      siteIds: ensureTwentyCountrySites(regionalIds, cfCode, allSites),
+      source: 'regional-profile',
+      cronLastRan,
+    };
   }
 
   // ── Tier 5: Smart-filtered global fallback ────────────────────────────────
-  const filtered = allSites
-    .filter((s) => !GLOBALLY_IRRELEVANT.has(s.id))
-    .sort((a, b) => a.rank - b.rank)
-    .slice(0, 20)
-    .map((s) => s.id);
-
-  return { siteIds: filtered, source: 'smart-filter', cronLastRan };
+  return {
+    siteIds: ensureTwentyCountrySites([], cfCode, allSites),
+    source: 'smart-filter',
+    cronLastRan,
+  };
 }
-

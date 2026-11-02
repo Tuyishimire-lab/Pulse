@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { SITES } from '../../data/sites';
-import { getSiteById } from '../../../lib/getSites';
+import { SITES, CATEGORIES } from '../../data/sites';
+import { getSiteById, getSites } from '../../../lib/getSites';
+import { getSiteEnrichment } from '../../../lib/getSiteEnrichment';
 import SitePageClient from './SitePageClient';
 
 interface PageProps {
@@ -56,8 +57,13 @@ export const revalidate = 3600; // ISR: re-render at most once per hour
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  // Fetch live data so JSON-LD schema reflects engine-authoritative rank/baseline
-  const site = await getSiteById(id);
+
+  // Fetch live site, full catalog (for category rank & peers), and enrichment in parallel
+  const [site, allSites, enrichment] = await Promise.all([
+    getSiteById(id),
+    getSites(),
+    getSiteEnrichment(id),
+  ]);
 
   // Unknown slug → hard 404 (not a soft-200 "Domain Not Found" shell)
   if (!site) notFound();
@@ -66,6 +72,24 @@ export default async function Page({ params }: PageProps) {
   const siteUrl = site.url;
   const baseline = site.baseline;
   const rank = site.rank;
+
+  // Compute Category Rank & Closest Category Competitors
+  const categoryObj = CATEGORIES.find((c) => c.id === site.category);
+  const categoryLabel = categoryObj ? categoryObj.label : site.category;
+  const categorySites = allSites
+    .filter((s) => s.category === site.category)
+    .sort((a, b) => a.rank - b.rank);
+
+  const catIndex = categorySites.findIndex((s) => s.id === site.id);
+  const categoryRank = catIndex >= 0 ? catIndex + 1 : 1;
+  const categoryTotal = categorySites.length || 1;
+
+  // Pick up to 4 closest competitors by rank distance within the same category
+  const categoryCompetitors = categorySites
+    .filter((s) => s.id !== site.id)
+    .sort((a, b) => Math.abs(a.rank - site.rank) - Math.abs(b.rank - site.rank))
+    .slice(0, 4)
+    .sort((a, b) => a.rank - b.rank);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -97,6 +121,11 @@ export default async function Page({ params }: PageProps) {
               '@type': 'PropertyValue',
               'name': 'Global Rank',
               'value': rank,
+            },
+            {
+              '@type': 'PropertyValue',
+              'name': `${categoryLabel} Category Rank`,
+              'value': categoryRank,
             }
           ]
         }
@@ -113,8 +142,8 @@ export default async function Page({ params }: PageProps) {
           {
             '@type': 'ListItem',
             position: 2,
-            name: 'Sites',
-            item: 'https://www.pulstraffic.com',
+            name: categoryLabel,
+            item: `https://www.pulstraffic.com/category/${site.category}`,
           },
           {
             '@type': 'ListItem',
@@ -133,7 +162,15 @@ export default async function Page({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <SitePageClient id={id} />
+      <SitePageClient
+        id={id}
+        initialSite={site}
+        initialEnrichment={enrichment}
+        categoryRank={categoryRank}
+        categoryTotal={categoryTotal}
+        categoryLabel={categoryLabel}
+        categoryCompetitors={categoryCompetitors}
+      />
     </>
   );
 }

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { SITES } from '../../data/sites';
+import { SITES, CATEGORIES, type SiteConfig } from '../../data/sites';
+import type { SiteEnrichmentData } from '../../../lib/getSiteEnrichment';
 import { getSiteDetails } from '../../data/details';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
-import { COMPARE_PAIRS } from '../../compare/data/pairs';
+import { COMPARE_PAIRS, canonicalPairSlug, getCompareSlug } from '../../compare/data/pairs';
 import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
@@ -42,8 +43,26 @@ export function getMostSearchedTopics(site: { name: string; category: string }) 
   }
 }
 
-export default function SitePageClient({ id }: { id: string }) {
-  const site = useMemo(() => SITES.find((s) => s.id === id), [id]);
+export interface SitePageClientProps {
+  id: string;
+  initialSite?: SiteConfig | null;
+  initialEnrichment?: SiteEnrichmentData | null;
+  categoryRank?: number;
+  categoryTotal?: number;
+  categoryLabel?: string;
+  categoryCompetitors?: SiteConfig[];
+}
+
+export default function SitePageClient({
+  id,
+  initialSite,
+  initialEnrichment,
+  categoryRank,
+  categoryTotal,
+  categoryLabel,
+  categoryCompetitors,
+}: SitePageClientProps) {
+  const [site, setSite] = useState<SiteConfig | null | undefined>(() => initialSite ?? SITES.find((s) => s.id === id));
   const details = useMemo(() => (site ? getSiteDetails(site) : null), [site]);
 
   const timerRef = useRef<HTMLDivElement>(null);
@@ -57,20 +76,43 @@ export default function SitePageClient({ id }: { id: string }) {
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
   const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
 
-  // Enrichment data (CrUX, Wikipedia, Security) - fetched from cached Supabase tables
-  const [enrichment, setEnrichment] = useState<{
-    webVitals: Record<string, unknown> | null;
-    wikiViews: Record<string, unknown> | null;
-    security: Record<string, unknown> | null;
-  } | null>(null);
+  // Enrichment data (CrUX, Wikipedia, Security) - initialized from server SSR props
+  const [enrichment, setEnrichment] = useState<SiteEnrichmentData | null>(initialEnrichment ?? null);
+  const [catRank, setCatRank] = useState<number | undefined>(categoryRank);
+  const [catTotal, setCatTotal] = useState<number | undefined>(categoryTotal);
+  const [competitors, setCompetitors] = useState<SiteConfig[]>(categoryCompetitors ?? []);
 
   useEffect(() => {
+    if (initialSite) {
+      setSite(initialSite);
+    } else {
+      setSite(SITES.find((s) => s.id === id) ?? null);
+    }
+  }, [initialSite, id]);
+
+  useEffect(() => {
+    if (initialEnrichment !== undefined) {
+      setEnrichment(initialEnrichment);
+      return;
+    }
     if (!site) return;
     fetch(`/api/site-enrichment?id=${site.id}`)
-      .then((r) => r.ok ? r.json() : Promise.reject(new Error("API Error")))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("API Error"))))
       .then(setEnrichment)
-      .catch(() => {}); // graceful - panels simply don't render
-  }, [site]);
+      .catch(() => {});
+  }, [site, initialEnrichment]);
+
+  useEffect(() => {
+    if (categoryRank !== undefined) setCatRank(categoryRank);
+  }, [categoryRank]);
+
+  useEffect(() => {
+    if (categoryTotal !== undefined) setCatTotal(categoryTotal);
+  }, [categoryTotal]);
+
+  useEffect(() => {
+    if (categoryCompetitors !== undefined) setCompetitors(categoryCompetitors);
+  }, [categoryCompetitors]);
 
 
   useEffect(() => {
@@ -300,6 +342,141 @@ export default function SitePageClient({ id }: { id: string }) {
     return `${start} ${points} ${end}`;
   }, [chartPoints]);
 
+  // Memoized fallbacks for Category Benchmark & Alternatives
+  const resolvedCatRank = useMemo(() => {
+    if (catRank !== undefined) return catRank;
+    if (!site) return 1;
+    const catSites = SITES.filter((s) => s.category === site.category).sort((a, b) => a.rank - b.rank);
+    const idx = catSites.findIndex((s) => s.id === site.id);
+    return idx >= 0 ? idx + 1 : 1;
+  }, [catRank, site]);
+
+  const resolvedCatTotal = useMemo(() => {
+    if (catTotal !== undefined) return catTotal;
+    if (!site) return 1;
+    return SITES.filter((s) => s.category === site.category).length || 1;
+  }, [catTotal, site]);
+
+  const resolvedCatLabel = useMemo(() => {
+    if (categoryLabel) return categoryLabel;
+    if (!site) return '';
+    const catObj = CATEGORIES.find((c) => c.id === site.category);
+    return catObj ? catObj.label : site.category;
+  }, [categoryLabel, site]);
+
+  const displayCompetitors = useMemo(() => {
+    if (competitors && competitors.length > 0) return competitors;
+    if (!site) return [];
+    return SITES
+      .filter((s) => s.category === site.category && s.id !== site.id)
+      .sort((a, b) => Math.abs(a.rank - site.rank) - Math.abs(b.rank - site.rank))
+      .slice(0, 4)
+      .sort((a, b) => a.rank - b.rank);
+  }, [competitors, site]);
+
+  // Memoized comparison pills: Up to 4 links, prioritizing hand-crafted COMPARE_PAIRS,
+  // then backfilling remaining slots with intra-category competitors using canonical slugs.
+  const comparePills = useMemo(() => {
+    if (!site) return [];
+    const pills: { slug: string; other: SiteConfig }[] = [];
+    const pairedSiteIds = new Set<string>();
+    pairedSiteIds.add(site.id);
+
+    // 1. Hand-crafted pairs from COMPARE_PAIRS
+    const handCrafted = COMPARE_PAIRS.filter(
+      (p) => p.siteAId === site.id || p.siteBId === site.id
+    );
+
+    for (const pair of handCrafted) {
+      if (pills.length >= 4) break;
+      const otherId = pair.siteAId === site.id ? pair.siteBId : pair.siteAId;
+      if (pairedSiteIds.has(otherId)) continue;
+      const other = SITES.find((s) => s.id === otherId);
+      if (!other) continue;
+      pairedSiteIds.add(otherId);
+      pills.push({ slug: pair.slug, other });
+    }
+
+    // 2. If fewer than 4, fill remaining slots with intra-category peers
+    if (pills.length < 4) {
+      const candidates: SiteConfig[] = [];
+
+      // First try closest competitors from state/SSR props
+      for (const c of competitors) {
+        if (!pairedSiteIds.has(c.id)) {
+          candidates.push(c);
+          pairedSiteIds.add(c.id);
+        }
+      }
+
+      // If still under 4, pull remaining peers from same category in SITES sorted by rank proximity
+      if (pills.length + candidates.length < 4) {
+        const sameCategory = SITES
+          .filter((s) => s.category === site.category && !pairedSiteIds.has(s.id))
+          .sort((a, b) => Math.abs(a.rank - site.rank) - Math.abs(b.rank - site.rank));
+        for (const s of sameCategory) {
+          candidates.push(s);
+          pairedSiteIds.add(s.id);
+          if (pills.length + candidates.length >= 4) break;
+        }
+      }
+
+      for (const peer of candidates) {
+        if (pills.length >= 4) break;
+        const slug = getCompareSlug(site.id, peer.id);
+        pills.push({ slug, other: peer });
+      }
+    }
+
+    return pills;
+  }, [site, competitors]);
+
+  // Global Rank Trajectory sparkline data
+  const rankTrajectoryData = useMemo(() => {
+    if (!site?.rank_history || site.rank_history.length < 2) return null;
+    const sorted = [...site.rank_history]
+      .filter((h) => typeof h.rank === 'number' && !isNaN(h.rank) && h.date)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (sorted.length < 2) return null;
+
+    const width = 580;
+    const height = 110;
+    const topPad = 20;
+    const botPad = 20;
+    const effectiveHeight = height - topPad - botPad; // 70
+
+    const ranks = sorted.map((p) => p.rank);
+    const minRank = Math.min(...ranks);
+    const maxRank = Math.max(...ranks);
+    const range = maxRank - minRank;
+
+    const pts = sorted.map((p, idx) => {
+      const x = (idx / (sorted.length - 1)) * width;
+      // Invert Y: lower rank number (better) = higher on chart (topPad)
+      const y = range === 0 ? height / 2 : topPad + ((p.rank - minRank) / range) * effectiveHeight;
+      return { x, y, rank: p.rank, date: p.date };
+    });
+
+    const linePath = pts.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ');
+    const fillPath = `M 0 ${height} ${pts.map((pt) => `L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ')} L ${width} ${height} Z`;
+
+    const startSnapshot = sorted[0];
+    const latestSnapshot = sorted[sorted.length - 1];
+    const delta = startSnapshot.rank - latestSnapshot.rank; // Positive delta = improved rank
+
+    return {
+      pts,
+      linePath,
+      fillPath,
+      minRank,
+      maxRank,
+      startSnapshot,
+      latestSnapshot,
+      delta,
+      sorted,
+    };
+  }, [site?.rank_history]);
+
   if (!site || !details) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-[#08080f] text-white flex flex-col items-center justify-center p-6 text-center">
@@ -356,7 +533,9 @@ export default function SitePageClient({ id }: { id: string }) {
                 <div className="modal-headline">
                   <div className="modal-name-row">
                     <h1 className="text-3xl font-extrabold tracking-tight m-0">{site.name}</h1>
-                    <span className="list-category-badge">{site.category}</span>
+                    <span className="list-category-badge">
+                      {resolvedCatLabel || site.category}{resolvedCatRank ? ' · #' + resolvedCatRank : ''}
+                    </span>
                   </div>
                   <a 
                     href={site.url} 
@@ -706,6 +885,245 @@ export default function SitePageClient({ id }: { id: string }) {
                 </span>
               </div>
             </div>
+
+            {/* Category Benchmark & Alternatives Card */}
+            <div 
+              className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/10 mt-6 text-left"
+              style={{
+                boxShadow: '0 4px 20px -8px rgba(0,0,0,0.5)'
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4 flex-wrap gap-2">
+                <span className="text-[11px] font-bold tracking-widest text-[#82c8e5] uppercase">
+                  Category Benchmark &amp; Alternatives
+                </span>
+                <span className="text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#82c8e5]/10 text-[#82c8e5] border border-[#82c8e5]/20">
+                  Rank #{resolvedCatRank} of {resolvedCatTotal} in {resolvedCatLabel}
+                </span>
+              </div>
+
+              {displayCompetitors.length > 0 ? (
+                <>
+                  <p className="text-xs text-white/60 mb-4 leading-relaxed">
+                    {site.name} is ranked #{resolvedCatRank} among {resolvedCatTotal} monitored {resolvedCatLabel} destinations. Compare key traffic baselines against its closest category alternatives:
+                  </p>
+
+                  {/* Peer List */}
+                  <div className="flex flex-col gap-2.5">
+                    {displayCompetitors.map((peer) => {
+                      const compareSlug = getCompareSlug(site.id, peer.id);
+                      return (
+                        <div
+                          key={peer.id}
+                          className="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-white/[0.015] border border-white/5 hover:border-white/15 hover:bg-white/[0.03] transition-all flex-wrap sm:flex-nowrap gap-3"
+                        >
+                          {/* Peer Info */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ backgroundColor: peer.color === '#ffffff' ? '#18181b' : peer.color + '22', border: `1px solid ${peer.color}44` }}
+                            >
+                              <FaviconImage
+                                url={peer.url}
+                                logo={peer.logo}
+                                color={peer.color}
+                                size={20}
+                                className="w-5 h-5 rounded-full object-contain"
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Link
+                                  href={`/sites/${peer.id}`}
+                                  className="font-bold text-sm text-white hover:text-[#82c8e5] transition-colors truncate"
+                                >
+                                  {peer.name}
+                                </Link>
+                                <span className="text-[9px] font-mono font-semibold text-white/50 bg-white/5 px-1.5 py-0.5 rounded">
+                                  #{peer.rank} Global
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-[#6d8196] mt-0.5 flex items-center gap-1.5">
+                                <span className="text-white/80 font-medium">{peer.baseline}</span>
+                                <span>·</span>
+                                <span className="truncate">{peer.url.replace(/^https?:\/\//, '')}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
+                            <Link
+                              href={`/sites/${peer.id}`}
+                              className="text-[11px] font-medium text-white/60 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition"
+                            >
+                              Profile
+                            </Link>
+                            <Link
+                              href={`/compare/${compareSlug}`}
+                              className="text-[11px] font-semibold text-[#82c8e5] bg-[#82c8e5]/10 border border-[#82c8e5]/20 hover:bg-[#82c8e5]/20 hover:border-[#82c8e5]/40 px-3 py-1.5 rounded-lg transition-all flex items-center gap-1"
+                            >
+                              <span>Compare</span>
+                              <span>vs {site.name} →</span>
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-white/50 italic mb-0">
+                  No category competitors currently tracked in this category.
+                </p>
+              )}
+            </div>
+
+            {/* Global Rank Trajectory Card */}
+            {rankTrajectoryData && (
+              <div 
+                className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/10 mt-6 text-left"
+                style={{
+                  boxShadow: '0 4px 20px -8px rgba(0,0,0,0.5)'
+                }}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4 flex-wrap gap-2">
+                  <span className="text-[11px] font-bold tracking-widest text-[#82c8e5] uppercase">
+                    Global Rank Trajectory
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#82c8e5]/10 text-[#82c8e5] border border-[#82c8e5]/20">
+                      {rankTrajectoryData.sorted.length} Snapshots
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4-Stat Metric Summary Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+                  <div className="p-3 rounded-xl bg-white/[0.015] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">
+                      Starting Rank
+                    </span>
+                    <div className="text-base font-extrabold text-white mt-1">
+                      #{rankTrajectoryData.startSnapshot.rank}
+                    </div>
+                    <span className="text-[10px] text-white/40 block mt-0.5">
+                      {rankTrajectoryData.startSnapshot.date}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/[0.015] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">
+                      Latest Rank
+                    </span>
+                    <div className="text-base font-extrabold text-white mt-1">
+                      #{rankTrajectoryData.latestSnapshot.rank}
+                    </div>
+                    <span className="text-[10px] text-white/40 block mt-0.5">
+                      {rankTrajectoryData.latestSnapshot.date}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/[0.015] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">
+                      Net Change
+                    </span>
+                    <div className="text-base font-extrabold mt-1 flex items-center gap-1">
+                      {rankTrajectoryData.delta > 0 && (
+                        <span className="text-emerald-400 flex items-center gap-1">
+                          <span>▲</span>
+                          <span>+{rankTrajectoryData.delta}</span>
+                        </span>
+                      )}
+                      {rankTrajectoryData.delta < 0 && (
+                        <span className="text-red-400 flex items-center gap-1">
+                          <span>▼</span>
+                          <span>{rankTrajectoryData.delta}</span>
+                        </span>
+                      )}
+                      {rankTrajectoryData.delta === 0 && (
+                        <span className="text-white/60">
+                          Unchanged
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-white/40 block mt-0.5">
+                      {rankTrajectoryData.delta > 0 ? 'Improved' : rankTrajectoryData.delta < 0 ? 'Declined' : 'Stable'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/[0.015] border border-white/5">
+                    <span className="text-[10px] font-bold text-[#6d8196] uppercase tracking-wider block">
+                      Range (Best / Worst)
+                    </span>
+                    <div className="text-base font-extrabold text-white mt-1 flex items-center gap-1.5">
+                      <span className="text-emerald-400">#{rankTrajectoryData.minRank}</span>
+                      <span className="text-white/30 text-xs">/</span>
+                      <span className="text-white/60">#{rankTrajectoryData.maxRank}</span>
+                    </div>
+                    <span className="text-[10px] text-white/40 block mt-0.5">
+                      Window Extremes
+                    </span>
+                  </div>
+                </div>
+
+                {/* SVG Sparkline / Step-Chart */}
+                <div className="chart-wrapper-svg">
+                  <svg viewBox="0 0 580 110" className="chart-svg">
+                    <defs>
+                      <linearGradient id={`rank-trajectory-grad-${site.id}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={site.color} stopOpacity="0.35" />
+                        <stop offset="100%" stopColor={site.color} stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    {/* Grid lines */}
+                    <line x1="0" y1="20" x2="580" y2="20" className="chart-grid-line" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                    <line x1="0" y1="55" x2="580" y2="55" className="chart-grid-line" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                    <line x1="0" y1="90" x2="580" y2="90" className="chart-grid-line" stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                    {/* Fill area */}
+                    <path d={rankTrajectoryData.fillPath} fill={`url(#rank-trajectory-grad-${site.id})`} opacity="0.5" />
+                    {/* Line */}
+                    <path
+                      d={rankTrajectoryData.linePath}
+                      fill="none"
+                      stroke={site.color}
+                      strokeWidth="2.5"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      style={{ filter: `drop-shadow(0 0 6px ${site.glow})` }}
+                    />
+                    {/* Interactive dots with <title> tooltips */}
+                    {rankTrajectoryData.pts.map((pt, i) => (
+                      <circle
+                        key={i}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r="4"
+                        fill={site.color}
+                        stroke="#0a0a14"
+                        strokeWidth="1.5"
+                        className="cursor-pointer hover:scale-125 transition-transform"
+                      >
+                        <title>{`${pt.date}: Rank #${pt.rank}`}</title>
+                      </circle>
+                    ))}
+                  </svg>
+                </div>
+
+                <div className="chart-axis-labels flex justify-between text-[11px] text-[#6d8196] mt-2">
+                  <span>{rankTrajectoryData.startSnapshot.date}</span>
+                  {rankTrajectoryData.sorted.length >= 3 && (
+                    <span>{rankTrajectoryData.sorted[Math.floor(rankTrajectoryData.sorted.length / 2)].date}</span>
+                  )}
+                  <span>{rankTrajectoryData.latestSnapshot.date}</span>
+                </div>
+                <p className="text-[10px] text-[#6d8196] mt-2 mb-0">
+                  Lower rank number = higher position. Y-axis inverted: top of chart = better rank.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -734,33 +1152,22 @@ export default function SitePageClient({ id }: { id: string }) {
       )}
 
       {/* ── Compare With links ─────────────────────────────────────────── */}
-      {site && (() => {
-        const compareLinks = COMPARE_PAIRS.filter(
-          (p) => p.siteAId === site.id || p.siteBId === site.id
-        ).slice(0, 4);
-        if (compareLinks.length === 0) return null;
-        return (
-          <section className="w-full max-w-[800px] px-6 mt-6 mb-2">
-            <h2 className="text-xs font-bold text-[#6d8196] uppercase tracking-wider mb-3">Compare {site.name} with</h2>
-            <div className="flex flex-wrap gap-2">
-              {compareLinks.map((pair) => {
-                const otherId = pair.siteAId === site.id ? pair.siteBId : pair.siteAId;
-                const other = SITES.find((s) => s.id === otherId);
-                if (!other) return null;
-                return (
-                  <Link
-                    key={pair.slug}
-                    href={`/compare/${pair.slug}`}
-                    className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] text-[#94a3b8] hover:text-white hover:border-[#82c8e5]/40 transition-all"
-                  >
-                    {site.name} vs {other.name} →
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })()}
+      {site && comparePills.length > 0 && (
+        <section className="w-full max-w-[800px] px-6 mt-6 mb-2">
+          <h2 className="text-xs font-bold text-[#6d8196] uppercase tracking-wider mb-3">Compare {site.name} with</h2>
+          <div className="flex flex-wrap gap-2">
+            {comparePills.map(({ slug, other }) => (
+              <Link
+                key={slug}
+                href={`/compare/${slug}`}
+                className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] text-[#94a3b8] hover:text-white hover:border-[#82c8e5]/40 transition-all"
+              >
+                {site.name} vs {other.name} →
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {site && (
         <EmbedWidgetModal

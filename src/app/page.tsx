@@ -22,7 +22,7 @@ export default async function Home() {
   let initialMarquee: MarqueeItem[] = [];
 
   const [initialSites, radarData, marqueeData] = await Promise.all([
-    getSites(60),
+    getSites(),
     getRadarStats('global').catch(() => null),
     getMarqueeItems().catch(() => []),
   ]);

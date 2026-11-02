@@ -7,6 +7,7 @@ import { CountryData } from '../data/countries';
 import NavHeader from '../../components/NavHeader';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
 import { exportCountryRankingReport } from '../../../utils/exportCsv';
+import FaviconImage from '../../components/ui/FaviconImage';
 
 interface Props {
   countryData: CountryData;
@@ -14,8 +15,6 @@ interface Props {
   allCountries: CountryData[];
   dataSource?: string;
 }
-
-import FaviconImage from '../../components/ui/FaviconImage';
 
 function LiveCounter({ rate }: { rate: number }) {
   const [count, setCount] = useState(0);
@@ -232,6 +231,16 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
   };
   const badge = dataSource && dataSource !== 'pinned' ? sourceLabel[dataSource] : null;
 
+  // Compute regional standouts: sites that rank at least 5 positions higher locally than globally
+  const regionalStandouts = sites
+    .map((site, idx) => ({
+      site,
+      localRank: idx + 1,
+      delta: site.rank - (idx + 1),
+    }))
+    .filter((item) => item.delta >= 5)
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#02020a] text-white font-sans">
@@ -252,7 +261,7 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
         <nav className="flex items-center gap-2 text-xs text-[#6d8196] mb-4" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-white transition-colors">Pulse</Link>
           <span>/</span>
-          <span className="text-[#82c8e5]">Top Sites</span>
+          <Link href="/top-sites" className="text-[#82c8e5] hover:underline transition-colors">Top Sites</Link>
           <span>/</span>
           <span className="text-white">{countryData.name}</span>
         </nav>
@@ -284,7 +293,7 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
         </div>
 
         {/* Hero */}
-        <header className="mb-10">
+        <header className="mb-8">
           {/* Top meta row */}
           <div className="flex flex-wrap items-center gap-2 mb-5">
             {/* Country code badge - reliable across all OS/browsers */}
@@ -324,6 +333,48 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
           </div>
         </header>
 
+        {/* Regional Standouts Strip */}
+        {regionalStandouts.length > 0 && (
+          <section className="mb-8" aria-label={`Regional standouts in ${countryData.name}`}>
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <span>⚡ Regional Standouts in {countryData.name}</span>
+              </span>
+              <span className="text-[11px] text-[#6d8196]">Over-indexing vs. Global Rank</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {regionalStandouts.map(({ site, localRank, delta }) => (
+                <Link
+                  key={site.id}
+                  href={`/sites/${site.id}`}
+                  className="flex items-center justify-between gap-2.5 p-3 rounded-xl border border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-400/30 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <FaviconImage
+                      url={site.url}
+                      logo={site.logo}
+                      color={site.color}
+                      size={28}
+                      className="w-7 h-7 rounded-full object-contain p-0.5 bg-white/10 flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-white group-hover:text-[#82c8e5] transition-colors truncate">
+                        {site.name}
+                      </div>
+                      <div className="text-[11px] text-[#6d8196]">
+                        #{localRank} Local · #{site.rank} Global
+                      </div>
+                    </div>
+                  </div>
+                  <span className="flex-shrink-0 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 px-2 py-0.5 rounded-full">
+                    ▲ +{delta}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Rankings Table */}
         <section aria-label={`Top 20 websites in ${countryData.name}`} className="mb-12">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
@@ -356,60 +407,90 @@ export default function CountryPageClient({ countryData, sites, allCountries, da
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider w-10">Local</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Website</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden sm:table-cell">Category</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden lg:table-cell">Global Rank</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden lg:table-cell">Global vs Local</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider">Monthly Visits</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-[#6d8196] uppercase tracking-wider hidden md:table-cell">Visits since you landed</th>
                 </tr>
               </thead>
               <tbody>
-                {sites.map((site, index) => (
-                  <tr
-                    key={site.id}
-                    className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
-                  >
-                    <td className="px-4 py-3.5">
-                      <span className="text-xs font-bold text-[#6d8196] tabular-nums">{index + 1}</span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <Link href={`/sites/${site.id}`} className="flex items-center gap-3 group">
-                        <FaviconImage
-                          url={site.url}
-                          logo={site.logo}
-                          color={site.color}
-                          size={32}
-                          className="w-8 h-8 rounded-full object-contain p-0.5 bg-white/10"
-                        />
-                        <div>
-                          <div className="font-semibold text-white group-hover:text-[#82c8e5] transition-colors text-sm">
-                            {site.name}
+                {sites.map((site, index) => {
+                  const localRank = index + 1;
+                  const delta = site.rank - localRank;
+                  return (
+                    <tr
+                      key={site.id}
+                      className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
+                    >
+                      <td className="px-4 py-3.5">
+                        <span className="text-xs font-bold text-[#6d8196] tabular-nums">{localRank}</span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <Link href={`/sites/${site.id}`} className="flex items-center gap-3 group">
+                          <FaviconImage
+                            url={site.url}
+                            logo={site.logo}
+                            color={site.color}
+                            size={32}
+                            className="w-8 h-8 rounded-full object-contain p-0.5 bg-white/10"
+                          />
+                          <div>
+                            <div className="font-semibold text-white group-hover:text-[#82c8e5] transition-colors text-sm flex items-center gap-2">
+                              <span>{site.name}</span>
+                              {delta >= 5 && (
+                                <span className="lg:hidden text-[10px] font-mono font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
+                                  ▲ +{delta}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-[#6d8196]">
+                              {site.url.replace('https://', '')}
+                            </div>
                           </div>
-                          <div className="text-xs text-[#6d8196]">
-                            {site.url.replace('https://', '')}
-                          </div>
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3.5 hidden sm:table-cell">
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full capitalize"
+                          style={{ backgroundColor: site.color + '22', color: site.color }}
+                        >
+                          {site.category}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-right hidden lg:table-cell">
+                        <div className="inline-flex items-center justify-end gap-2">
+                          <span className="text-xs font-mono text-[#a78bfa] tabular-nums">#{site.rank}</span>
+                          {delta > 0 ? (
+                            <span
+                              className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 px-1.5 py-0.5 rounded-md tabular-nums"
+                              title={`Ranks ${delta} spots higher in ${countryData.name} than globally (#${site.rank})`}
+                            >
+                              ▲ +{delta}
+                            </span>
+                          ) : delta === 0 ? (
+                            <span className="text-[10px] font-mono text-[#6d8196] bg-white/[0.03] border border-white/[0.06] px-1.5 py-0.5 rounded-md">
+                              = Global
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[10px] font-mono text-[#6d8196] bg-white/[0.02] border border-white/[0.05] px-1.5 py-0.5 rounded-md tabular-nums"
+                              title={`Ranks ${Math.abs(delta)} spots lower in ${countryData.name} than globally (#${site.rank})`}
+                            >
+                              ▼ {Math.abs(delta)}
+                            </span>
+                          )}
                         </div>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3.5 hidden sm:table-cell">
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full capitalize"
-                        style={{ backgroundColor: site.color + '22', color: site.color }}
-                      >
-                        {site.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right hidden lg:table-cell">
-                      <span className="text-xs font-mono text-[#a78bfa] tabular-nums">#{site.rank}</span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <span className="text-sm font-semibold text-white tabular-nums">
-                        {site.baseline}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-right hidden md:table-cell">
-                      <LiveCounter rate={site.rate} />
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="text-sm font-semibold text-white tabular-nums">
+                          {site.baseline}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-right hidden md:table-cell">
+                        <LiveCounter rate={site.rate} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

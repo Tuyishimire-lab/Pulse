@@ -27,37 +27,44 @@ export default function RankSparkline({ history, color }: RankSparklineProps) {
     if (delta > 0) sc = '#10b981'; // improved - green
     else if (delta < 0) sc = '#ef4444'; // declined - red
 
-    const W = 60;
-    const H = 20;
+    const W = 44;
+    const H = 18;
     const maxRank = Math.max(...ranks);
     const minRank = Math.min(...ranks);
-    const range = maxRank - minRank || 1;
+
+    // If rank never changed across the entire history window, do not render a flat line
+    // (which looks like a stray underline/artifact next to the rank number).
+    if (maxRank === minRank) {
+      return { path: '', strokeColor: '#6d8196', tooltip: '' };
+    }
+
+    const range = maxRank - minRank;
 
     const points = ranks.map((rank, i) => {
       const x = (i / (ranks.length - 1)) * W;
       // Invert: lower rank = higher on chart
-      const y = H - 2 - ((maxRank - rank) / range) * (H - 4);
+      const y = H - 3 - ((maxRank - rank) / range) * (H - 6);
       return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
     });
 
     const tooltipStr =
       delta > 0
-        ? `Rank improved: #${first} ? #${last} (+${delta})`
+        ? `Rank improved: #${first} → #${last} (+${delta})`
         : delta < 0
-          ? `Rank declined: #${first} ? #${last} (${delta})`
-          : `Rank stable: #${last}`;
+          ? `Rank declined: #${first} → #${last} (${delta})`
+          : `Rank varied between #${minRank} and #${maxRank} (currently #${last})`;
 
     return { path: points.join(' '), strokeColor: color || sc, tooltip: tooltipStr };
   }, [history, color]);
 
-  if (!history || history.length < 2) return null;
+  if (!history || history.length < 2 || !path) return null;
 
   return (
     <svg
-      width="60"
-      height="20"
-      viewBox="0 0 60 20"
-      className="inline-block opacity-70 hover:opacity-100 transition-opacity cursor-help"
+      width="44"
+      height="18"
+      viewBox="0 0 44 18"
+      className="inline-block shrink-0 opacity-75 hover:opacity-100 transition-opacity cursor-help"
       aria-label={tooltip}
     >
       <title>{tooltip}</title>

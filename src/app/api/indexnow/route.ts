@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import { cronAuthError } from '@/lib/auth';
 import { submitToIndexNow } from '@/lib/indexnow';
 import { SITES, CATEGORIES } from '@/app/data/sites';
 import { COUNTRY_SLUGS } from '@/app/top-sites/data/countries';
 import { getAllCompareSlugs } from '@/app/compare/data/pairs';
+import { getReportSlugs } from '@/app/report/data/reportGenerator';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const BASE_URL = 'https://www.pulstraffic.com';
@@ -15,12 +17,13 @@ async function getAllSiteUrls(): Promise<string[]> {
     `${BASE_URL}/compare`,
     `${BASE_URL}/top-sites`,
     `${BASE_URL}/category`,
+    `${BASE_URL}/report`,
     `${BASE_URL}/methodology`,
     `${BASE_URL}/about`,
   ];
 
-  // Categories
-  CATEGORIES.forEach((cat) => {
+  // Categories (exclude 'all' since it's an aggregate filter, not a valid slug route)
+  CATEGORIES.filter((cat) => cat.id !== 'all').forEach((cat) => {
     urls.push(`${BASE_URL}/category/${cat.id}`);
   });
 
@@ -34,6 +37,16 @@ async function getAllSiteUrls(): Promise<string[]> {
   compareSlugs.forEach((slug) => {
     urls.push(`${BASE_URL}/compare/${slug}`);
   });
+
+  // Weekly reports
+  try {
+    const reportSlugs = await getReportSlugs();
+    reportSlugs.forEach((slug) => {
+      urls.push(`${BASE_URL}/report/${slug}`);
+    });
+  } catch (e) {
+    console.warn('IndexNow API: Using static reports fallback:', e);
+  }
 
   // Sites from database or static
   let activeSites: { id: string }[] = SITES;
@@ -56,10 +69,13 @@ async function getAllSiteUrls(): Promise<string[]> {
     urls.push(`${BASE_URL}/sites/${site.id}`);
   });
 
-  return urls;
+  return Array.from(new Set(urls));
 }
 
 export async function POST(request: Request) {
+  const authError = cronAuthError(request);
+  if (authError) return authError;
+
   try {
     const body = await request.json().catch(() => ({}));
     const urls: string[] = Array.isArray(body?.urls) && body.urls.length > 0
@@ -84,7 +100,10 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = cronAuthError(request);
+  if (authError) return authError;
+
   try {
     // Quick submission of core hub and trending URLs on GET
     const coreUrls = [
@@ -94,6 +113,7 @@ export async function GET() {
       `${BASE_URL}/map`,
       `${BASE_URL}/compare`,
       `${BASE_URL}/category`,
+      `${BASE_URL}/report`,
     ];
 
     const result = await submitToIndexNow(coreUrls);

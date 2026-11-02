@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import Footer from "./components/Footer";
 import { CURRENT_YEAR } from "../lib/currentYear";
+import { SITE_COUNT } from "./data/sites";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -26,7 +27,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.pulstraffic.com"),
   title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
-  description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates, monthly visits, and rankings for 137+ top websites worldwide, powered by the Pulse Traffic Index (PTI).",
+  description: `The transparent, model-driven index of global web traffic. Track estimated visitor rates, monthly visits, and rankings for ${SITE_COUNT}+ top websites worldwide, powered by the Pulse Traffic Index (PTI).`,
   applicationName: "Pulse",
   authors: [{ name: "Pulse", url: "https://www.pulstraffic.com" }],
   creator: "Pulse",
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: `Pulse - Global Web Traffic Rankings & Index (${CURRENT_YEAR})`,
-    description: "The transparent, model-driven index of global web traffic. Track estimated visitor rates and monthly visits for 137+ top websites worldwide.",
+    description: `The transparent, model-driven index of global web traffic. Track estimated visitor rates and monthly visits for ${SITE_COUNT}+ top websites worldwide.`,
     url: "https://www.pulstraffic.com",
     siteName: "Pulse",
     images: [

@@ -64,6 +64,11 @@ const EDITORIAL_SLUGS = new Set([
   'linkedin-vs-glassdoor',
   'npm-vs-github',
   'whatsapp-vs-telegram',
+  'perplexity-vs-chatgpt',
+  'deepseek-vs-chatgpt',
+  'temu-vs-amazon',
+  'linear-vs-jira',
+  'notion-vs-linear',
 ]);
 
 export function proxy(request: NextRequest, event: NextFetchEvent) {

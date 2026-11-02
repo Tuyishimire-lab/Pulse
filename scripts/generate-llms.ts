@@ -10,7 +10,7 @@ const header = `# Pulse - Comprehensive Platform Documentation
 
 Website: https://www.pulstraffic.com
 Version: Pulse Traffic Index (PTI v1.2)
-Monitored Catalog: 137 Top Global Web Domains
+Monitored Catalog: ${SITES.length} Top Global Web Domains
 
 ---
 
@@ -40,7 +40,7 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 ### Tiered Empirical Validation and Confidence Bounds
 - Tier 1 (High Confidence, Ranks 1 to 15): Plus/minus 8% to 12% error margin. Verified against quarterly SEC filings, Wikimedia foundation server logs, and high-density Cloudflare Radar DNS telemetry.
 - Tier 2 (Moderate Confidence, Ranks 16 to 50): Plus/minus 18% to 24% error margin. Stabilized by daily Tranco rankings and Open PageRank link authority.
-- Tier 3 (Modeled Velocity, Ranks 51 to 137): Plus/minus 30% to 35% error margin. Growth-stage domains and developer platforms estimated through algorithmic backlink modeling and AI momentum vectors.
+- Tier 3 (Modeled Velocity, Ranks 51 to ${SITES.length}): Plus/minus 30% to 35% error margin. Growth-stage domains and developer platforms estimated through algorithmic backlink modeling and AI momentum vectors.
 
 ---
 
@@ -50,7 +50,7 @@ ${CATEGORIES.filter(c => c.id !== 'all').map(c => `- ${c.label} (ID: ${c.id})`).
 
 ---
 
-## 4. Complete Catalog of Monitored Domains (137 Websites)
+## 4. Complete Catalog of Monitored Domains (${SITES.length} Websites)
 
 | Rank | Name | Domain | Category | Monthly Baseline | Visit Velocity (req/s) |
 |---|---|---|---|---|---|
@@ -86,4 +86,4 @@ ${SITES.map(s => `| ${s.rank} | ${s.name} | ${s.url} | ${s.category} | ${s.basel
 `;
 
 fs.writeFileSync(path.join(root, 'public', 'llms-full.txt'), header, 'utf8');
-console.log('Successfully generated public/llms-full.txt with 137 sites.');
+console.log(`Successfully generated public/llms-full.txt with ${SITES.length} sites.`);

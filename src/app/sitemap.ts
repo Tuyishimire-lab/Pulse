@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { SITES, CATEGORIES } from './data/sites';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getSites } from '../lib/getSites';
 import { COUNTRY_SLUGS } from './top-sites/data/countries';
 import { getAllCompareSlugs } from './compare/data/pairs';
 import { getReportSlugs, parseReportSlug } from './report/data/reportGenerator';
@@ -13,18 +13,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let activeSites: { id: string }[] = SITES;
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data } = await supabase
-        .from('sites')
-        .select('id')
-        .order('rank', { ascending: true });
-      if (data && data.length > 0) {
-        activeSites = data as { id: string }[];
-      }
-    } catch (e) {
-      console.error('Sitemap: Failed to load sites from database, falling back to static schema:', e);
+  try {
+    const liveSites = await getSites();
+    if (liveSites && liveSites.length > 0) {
+      activeSites = liveSites;
     }
+  } catch (e) {
+    console.error('Sitemap: Failed to load sites, falling back to static schema:', e);
   }
 
   const siteUrls = activeSites.map((site) => ({

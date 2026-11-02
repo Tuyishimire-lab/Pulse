@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { getSites } from '../../../lib/getSites';
 import { ALL_COUNTRIES, getCountryBySlug, COUNTRY_SLUGS } from '../data/countries';
-import { resolveCountrySites } from '../../../lib/getCountrySites';
+import { resolveCountrySites, ensureTwentyCountrySites } from '../../../lib/getCountrySites';
 import CountryPageClient from './CountryPageClient';
 import { notFound } from 'next/navigation';
 import { CURRENT_YEAR } from '../../../lib/currentYear';
@@ -45,23 +45,37 @@ export default async function CountryPage({ params }: PageProps) {
   let orderedSites: typeof liveSites;
   let dataSource = 'pinned';
 
-  if (pinnedIds.length >= 20) {
-    orderedSites = pinnedIds
+  if (pinnedIds.length > 0) {
+    const fullPinnedIds = ensureTwentyCountrySites(pinnedIds, countryData.cfCode, liveSites);
+    orderedSites = fullPinnedIds
       .map((id) => liveSites.find((s) => s.id === id))
       .filter(Boolean) as typeof liveSites;
-    orderedSites = orderedSites.slice(0, 20);
   } else {
     const resolved = await resolveCountrySites(countryData.cfCode, liveSites);
     dataSource = resolved.source;
-    if (resolved.siteIds.length > 0) {
-      orderedSites = resolved.siteIds
-        .map((id) => liveSites.find((s) => s.id === id))
-        .filter(Boolean) as typeof liveSites;
-    } else {
-      orderedSites = liveSites.slice(0, 20);
-      dataSource = 'global-fallback';
-    }
+    const fullIds = ensureTwentyCountrySites(resolved.siteIds, countryData.cfCode, liveSites);
+    orderedSites = fullIds
+      .map((id) => liveSites.find((s) => s.id === id))
+      .filter(Boolean) as typeof liveSites;
   }
+
+  orderedSites = orderedSites.slice(0, 20);
+
+  const topSocialSite = orderedSites.find((s) => s.category === 'social')?.name ?? 'Facebook';
+  const faqEntries = [
+    {
+      q: `What is the most visited website in ${countryData.name}?`,
+      a: `${orderedSites[0]?.name ?? 'Google'} is the most visited website in ${countryData.name}, receiving approximately ${orderedSites[0]?.baseline ?? 'billions of'} visits per month. ${countryData.localNote}`,
+    },
+    {
+      q: `How many people use the internet in ${countryData.name}?`,
+      a: `${countryData.name} has approximately ${countryData.internetUsers} internet users, representing a ${countryData.internetPenetration} internet penetration rate. ${countryData.insight.split('.')[1]?.trim() ?? ''}`,
+    },
+    {
+      q: `Which social media platform is most popular in ${countryData.name}?`,
+      a: `Based on traffic data, ${topSocialSite} is the leading social media platform in ${countryData.name}. ${countryData.localNote}`,
+    },
+  ];
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -81,9 +95,20 @@ export default async function CountryPage({ params }: PageProps) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
-          { '@type': 'ListItem', position: 2, name: 'Top Sites', item: `${BASE_URL}/top-sites/united-states` },
+          { '@type': 'ListItem', position: 2, name: 'Top Sites', item: `${BASE_URL}/top-sites` },
           { '@type': 'ListItem', position: 3, name: countryData.name, item: `${BASE_URL}/top-sites/${slug}` },
         ],
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqEntries.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: f.a,
+          },
+        })),
       },
     ],
   };

@@ -91,8 +91,8 @@ export async function getRadarStats(locationParam = 'global'): Promise<RadarStat
 
     const locationQuery = hasLocation ? `&location=${location}` : '';
     const endpoints = {
-      deviceType: `https://api.cloudflare.com/client/v4/radar/http/top/device_types?dateRange=7d&format=json${locationQuery}`,
-      httpVersion: `https://api.cloudflare.com/client/v4/radar/http/top/http_protocols?dateRange=7d&format=json${locationQuery}`,
+      deviceType: `https://api.cloudflare.com/client/v4/radar/http/summary/device_type?dateRange=7d&format=json${locationQuery}`,
+      httpVersion: `https://api.cloudflare.com/client/v4/radar/http/summary/http_version?dateRange=7d&format=json${locationQuery}`,
       topLocations: `https://api.cloudflare.com/client/v4/radar/http/top/locations?dateRange=7d&format=json&limit=5`,
     };
 
@@ -108,17 +108,11 @@ export async function getRadarStats(locationParam = 'global'): Promise<RadarStat
 
     if (deviceRes.status === 'fulfilled' && deviceRes.value?.ok) {
       const data = await deviceRes.value.json();
-      if (data?.result?.top_0) {
-        let mobile = 0;
-        let desktop = 0;
-        let other = 0;
-        for (const item of data.result.top_0) {
-          const client = (item.clientDeviceType || '').toLowerCase();
-          const pct = parseFloat(item.value) || 0;
-          if (client === 'mobile') mobile = pct;
-          else if (client === 'desktop') desktop = pct;
-          else other += pct;
-        }
+      const summary = data?.result?.summary_0 ?? data?.result?.summary;
+      if (summary) {
+        const desktop = parseFloat(summary.desktop) || 0;
+        const mobile = parseFloat(summary.mobile) || 0;
+        const other = parseFloat(summary.other) || 0;
         if (mobile > 0 || desktop > 0) {
           result.deviceType = {
             desktop: Math.round(desktop * 10) / 10,
@@ -131,17 +125,11 @@ export async function getRadarStats(locationParam = 'global'): Promise<RadarStat
 
     if (httpRes.status === 'fulfilled' && httpRes.value?.ok) {
       const data = await httpRes.value.json();
-      if (data?.result?.top_0) {
-        let h1 = 0;
-        let h2 = 0;
-        let h3 = 0;
-        for (const item of data.result.top_0) {
-          const proto = (item.protocol || '').toLowerCase();
-          const pct = parseFloat(item.value) || 0;
-          if (proto.includes('http/3') || proto.includes('quic')) h3 = pct;
-          else if (proto.includes('http/2')) h2 = pct;
-          else if (proto.includes('http/1')) h1 = pct;
-        }
+      const summary = data?.result?.summary_0 ?? data?.result?.summary;
+      if (summary) {
+        const h3 = parseFloat(summary['HTTP/3'] ?? summary.http3 ?? '0') || 0;
+        const h2 = parseFloat(summary['HTTP/2'] ?? summary.http2 ?? '0') || 0;
+        const h1 = parseFloat(summary['HTTP/1.x'] ?? summary.http1 ?? '0') || 0;
         if (h2 > 0 || h3 > 0) {
           result.httpVersion = {
             http3: Math.round(h3 * 10) / 10,
