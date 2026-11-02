@@ -69,7 +69,7 @@ export default async function CountryPage({ params }: PageProps) {
     },
     {
       q: `How many people use the internet in ${countryData.name}?`,
-      a: `${countryData.name} has approximately ${countryData.internetUsers} internet users, representing a ${countryData.internetPenetration} internet penetration rate. ${countryData.insight.split('.')[1]?.trim() ?? ''}`,
+      a: `${countryData.name} has approximately ${countryData.internetUsers} internet users, representing a ${countryData.internetPenetration} internet penetration rate. ${countryData.insight.split(/(?<=[.!?])\s+/)[1]?.trim() ?? ''}`,
     },
     {
       q: `Which social media platform is most popular in ${countryData.name}?`,

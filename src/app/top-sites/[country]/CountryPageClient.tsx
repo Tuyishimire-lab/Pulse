@@ -45,7 +45,7 @@ const FAQ_ITEMS = (country: CountryData, sites: SiteConfig[]) => [
   },
   {
     q: `How many people use the internet in ${country.name}?`,
-    a: `${country.name} has approximately ${country.internetUsers} internet users, representing a ${country.internetPenetration} internet penetration rate. ${country.insight.split('.')[1]?.trim() ?? ''}`,
+    a: `${country.name} has approximately ${country.internetUsers} internet users, representing a ${country.internetPenetration} internet penetration rate. ${country.insight.split(/(?<=[.!?])\s+/)[1]?.trim() ?? ''}`,
   },
   {
     q: `Which social media platform is most popular in ${country.name}?`,

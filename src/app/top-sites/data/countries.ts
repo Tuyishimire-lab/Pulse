@@ -313,13 +313,40 @@ export const COUNTRIES: CountryData[] = [
 // Hand-crafted entries above always take priority - generated ones fill the gaps.
 // If the generated file doesn't exist yet (before running the script), this is a no-op.
 import { GENERATED_COUNTRIES } from './countries.generated';
+import { CURATED_COUNTRY_TEXT } from './countries.curated';
 
 const handcraftedSlugs = new Set(COUNTRIES.map((c) => c.slug));
 
-/** Full merged list: hand-crafted first, then auto-generated for the rest of the world */
+/**
+ * Pinned lists for generated countries where the regional fallback would be wrong.
+ * China: Google, YouTube, Facebook, Instagram, X and Wikipedia are blocked, so only
+ * catalog sites that are reachable and used there are listed.
+ */
+const GENERATED_PINNED: Record<string, string[]> = {
+  china: ['baidu', 'weibo', 'bilibili', 'deepseek', 'bing', 'microsoft', 'apple', 'office', 'github', 'amazon', 'steam', 'aliexpress', 'stackoverflow', 'adobe', 'booking', 'arxiv', 'npm', 'wolframalpha', 'speedtest', 'tradingview'],
+};
+
+/** Replaces AI-generated prose with the curated, fact-checked copy (stats come from the data fields). */
+function applyCuratedText(c: CountryData): CountryData {
+  const curated = CURATED_COUNTRY_TEXT[c.slug];
+  const pinned = GENERATED_PINNED[c.slug];
+  if (!curated && !pinned) return c;
+  return {
+    ...c,
+    ...(curated && {
+      insight: `${c.name} has about ${c.internetUsers} internet users, roughly ${c.internetPenetration} of the population. ${curated.insight}`,
+      localNote: curated.localNote,
+    }),
+    ...(pinned && { pinnedSiteIds: pinned }),
+  };
+}
+
+/** Full merged list: hand-crafted first, then auto-generated (with curated copy) for the rest of the world */
 export const ALL_COUNTRIES: CountryData[] = [
   ...COUNTRIES,
-  ...(GENERATED_COUNTRIES ?? []).filter((c) => !handcraftedSlugs.has(c.slug)),
+  ...(GENERATED_COUNTRIES ?? [])
+    .filter((c) => !handcraftedSlugs.has(c.slug))
+    .map(applyCuratedText),
 ];
 
 export function getCountryBySlug(slug: string): CountryData | undefined {
