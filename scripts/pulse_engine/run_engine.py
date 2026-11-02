@@ -1,18 +1,25 @@
 """
-run_engine.py - Pulse Traffic Index Engine v2.1 (Radar-Modulated)
+run_engine.py - Pulse Traffic Index Engine v3 (Live Rank)
 
 Architecture:
-  - rank, baseline       → derived from STATIC_BASELINES (immutable anchor)
-  - rate                 → static baseline × CF Radar volatility modulator (±15%)
-  - volatility, trend    → computed from CF Radar + Google Trends signals
+  - baseline anchor      -> STATIC_BASELINES (curated, calibrated on BASELINE_ANCHOR_DATE)
+  - live estimate        -> anchor x Tranco rank movement since the anchor date (max ±15%)
+  - rank                 -> sites re-ranked daily by the live estimate
+  - rate / baseline      -> derived from the live estimate (so rank and displayed numbers agree)
 
-v2.1 change: rate is now modulated by the live CF Radar DNS rank signal
-instead of random ±4% cosmetic noise. The volatility field that was already
-being computed and stored now directly drives the displayed rate.
+See live_rank.py for the formula and safeguards. If Tranco is unreachable, every factor is
+1.0 and ranks fall back to the curated order - values are never simulated.
+
+v3 changes vs v2.1:
+  - rank is no longer frozen to the static file order
+  - removed the CF-Radar rate modulator (it compared catalog rank with global rank, which are
+    different scales, and biased most sites downward)
+  - removed the Google Trends step (its output was computed but never stored)
+  - site_history rows now include rank and share one recorded_at per run
 """
 
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 root_dir = Path(__file__).resolve().parent.parent.parent
@@ -21,13 +28,10 @@ sys.path.insert(0, str(root_dir))
 from supabase import Client, create_client
 
 from scripts.pulse_engine.config import SUPABASE_KEY, SUPABASE_URL
-from scripts.pulse_engine.signals import (
-    fetch_cloudflare_outage_count,
-    fetch_cloudflare_radar_ranks,
-    fetch_google_trends_momentum,
-    parse_domain,
-)
+from scripts.pulse_engine.live_rank import compute_live, rank_by_value, resolve_tranco_domains
+from scripts.pulse_engine.signals import fetch_cloudflare_outage_count, fetch_tranco_list
 from scripts.pulse_engine.static_baselines import (
+    BASELINE_ANCHOR_DATE,
     SITE_META,
     STATIC_BASELINES,
     get_baseline_str,
@@ -36,75 +40,14 @@ from scripts.pulse_engine.static_baselines import (
 )
 from scripts.pulse_engine.validation import print_validation_report, run_validation
 
-# ─────────────────────────────────────────────────────────────────────────────
-# RADAR-DRIVEN RATE MODULATION
-# Uses the CF Radar volatility signal to modulate the static base rate.
-# Replaces the old ±4% random noise band with real DNS-derived signals.
-# Clamped to ±15% to prevent wild swings when CF rank diverges heavily.
-# ─────────────────────────────────────────────────────────────────────────────
-RADAR_DAMPEN = 0.75   # scale factor: prevents raw volatility from overdriving
-RADAR_CLAMP  = 0.15   # max ±15% deviation from static baseline
+TRANCO_TOP_N = 100_000
 
 
-def apply_radar_modulation(base_rate: int, volatility: float) -> int:
-    """Modulate static rate using live CF Radar volatility signal.
-
-    Args:
-        base_rate:   visits/sec derived from static monthly baseline.
-        volatility:  CF Radar rank deviation (%), positive = CF sees MORE
-                     traffic than static estimate, negative = LESS.
-
-    Returns:
-        Modulated rate, clamped to [base * 0.85, base * 1.15].
-    """
-    modulator = 1.0 + (volatility / 100.0) * RADAR_DAMPEN
-    modulator = max(1.0 - RADAR_CLAMP, min(1.0 + RADAR_CLAMP, modulator))
-    return max(1, int(round(base_rate * modulator)))
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# TREND CLASSIFIER
-# Based only on Cloudflare Radar DNS rank delta - not Groq AI or OPR.
-# ─────────────────────────────────────────────────────────────────────────────
-def classify_trend_from_rank_delta(old_rank: int, new_rank: int) -> str:
-    """Classify trend from CF Radar rank movement."""
-    if old_rank <= 0 or new_rank <= 0:
-        return "stable"
-    delta_pct = (old_rank - new_rank) / float(old_rank)  # positive = improving rank
-    if delta_pct > 0.10:
-        return "surging"
-    elif delta_pct > 0.02:
-        return "growing"
-    elif delta_pct < -0.10:
-        return "cooling"
-    return "stable"
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# VOLATILITY
-# Measures how much the CF Radar rank moved relative to static rank.
-# Positive = improving (rank number dropped), negative = falling.
-# ─────────────────────────────────────────────────────────────────────────────
-def compute_volatility(static_rank: int, cf_rank: int | None) -> float:
-    """
-    Returns a volatility score (%) based on CF Radar rank vs. static rank.
-    Positive = CF says site is ranked BETTER than our static estimate.
-    Negative = CF says site is ranked WORSE.
-    """
-    if cf_rank is None or cf_rank <= 0:
-        return 0.0
-    # Positive when cf_rank < static_rank (CF says it's more popular)
-    return round(((static_rank - cf_rank) / float(static_rank)) * 100.0, 2)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# MAIN ENGINE
-# ─────────────────────────────────────────────────────────────────────────────
 def run_pulse_engine(run_validation_report: bool = True):
     print("=" * 60)
-    print("Pulse Traffic Engine v2.0 (Static-First)")
-    print("rank/baseline/rate <- STATIC_BASELINES (immutable)")
-    print("volatility/trend   <- CF Radar + Google Trends signals")
+    print("Pulse Traffic Engine v3 (Live Rank)")
+    print(f"anchor baselines <- STATIC_BASELINES (calibrated {BASELINE_ANCHOR_DATE})")
+    print("live rank        <- anchor x Tranco movement since anchor (max ±15%)")
     print("=" * 60)
 
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -113,156 +56,119 @@ def run_pulse_engine(run_validation_report: bool = True):
 
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-    # ── 1. Compute static ranks (derived, not fetched) ─────────────────────
-    print("[1/4] Computing static ranks from STATIC_BASELINES...")
-    rank_map = get_rank_map()
-    print(f"  {len(rank_map)} sites ranked. Top 5: " +
-          ", ".join(f"{sid}=#{r}" for sid, r in list(rank_map.items())[:5]))
-
-    # ── 2. Fetch existing DB rows (for old_rank / old_rate references) ─────
-    print("[2/4] Fetching current DB rows from Supabase...")
+    # ── 1. Current DB rows (urls for domain matching, previous rank for logging) ──
+    print("[1/4] Fetching current DB rows from Supabase...")
     res = supabase.table("sites").select("id, url, rank, rate").execute()
-
     db_sites = res.data or []
     db_lookup: dict[str, dict] = {s["id"]: s for s in db_sites}
     print(f"  Found {len(db_sites)} rows in DB.")
 
-    # ── 3. Fetch CF Radar ranks for volatility/trend only ──────────────────
-    print("[3/4] Fetching Cloudflare Radar ranks (for volatility/trend signals)...")
-    cf_ranks = fetch_cloudflare_radar_ranks()
-    print(f"  CF Radar returned {len(cf_ranks)} domain ranks.")
+    # ── 2. Tranco: latest list + the list at the baseline anchor date ───────────
+    print("[2/4] Fetching Tranco lists (latest + anchor)...")
+    tranco_now, now_date = fetch_tranco_list(date.today().isoformat(), TRANCO_TOP_N, search_days=3, direction=-1)
+    tranco_anchor, anchor_date = fetch_tranco_list(BASELINE_ANCHOR_DATE, TRANCO_TOP_N, search_days=5, direction=+1)
+    if not tranco_now or not tranco_anchor:
+        print("  [Warning] Tranco unavailable - live adjustments disabled for this run (curated order kept).")
+        tranco_now, tranco_anchor = {}, {}
+    else:
+        print(f"  Comparing Tranco {anchor_date} -> {now_date}")
 
-    # ── 4. Fetch Google Trends for trend label enrichment ──────────────────
-    print("[3/4] Fetching Google Trends momentum signals...")
-    all_domains = [
-        parse_domain(db_lookup[sid]["url"])
-        for sid in STATIC_BASELINES
-        if sid in db_lookup and db_lookup[sid].get("url")
-    ]
-    trends_map = fetch_google_trends_momentum(all_domains, batch_size=5)
+    site_urls = {sid: (db_lookup.get(sid) or {}).get("url", "") for sid in STATIC_BASELINES}
+    tranco_domains = resolve_tranco_domains(site_urls)
+    live = compute_live(STATIC_BASELINES, tranco_domains, tranco_now, tranco_anchor)
+    live_values = {sid: v["adjusted"] for sid, v in live.items()}
+    rank_map = rank_by_value(live_values)
+    static_rank_map = get_rank_map()
 
-    # ── 5. Update every site in Supabase ───────────────────────────────────
-    print("[4/4] Syncing all sites to Supabase...")
+    reasons: dict[str, int] = {}
+    for v in live.values():
+        reasons[v["reason"]] = reasons.get(v["reason"], 0) + 1
+    moved = sum(1 for sid in rank_map if rank_map[sid] != static_rank_map[sid])
+    print(f"  Signal coverage: {reasons}")
+    print(f"  {moved} sites ranked differently from the curated order.")
+
+    # ── 3. Write sites + one site_history snapshot ─────────────────────────────
+    print("[3/4] Syncing all sites to Supabase...")
+    now_iso = datetime.now(timezone.utc).isoformat()
+    google_live = live_values.get("google", STATIC_BASELINES.get("google", 85_000_000_000))
     updates_count = 0
     updated_sites = []
-    google_monthly = STATIC_BASELINES.get("google", 85_000_000_000)
+    history_rows = []
 
-    for site_id, monthly_visits in STATIC_BASELINES.items():
+    for site_id in sorted(STATIC_BASELINES, key=lambda s: rank_map[s]):
+        info = live[site_id]
+        monthly = info["adjusted"]
+        rank = rank_map[site_id]
+        rate = get_rate(monthly)
+        baseline_str = get_baseline_str(monthly)
         db_row = db_lookup.get(site_id, {})
-        domain = parse_domain(db_row.get("url", "")) if db_row else ""
-
-        # ── Core values from static (immutable) ────────────────────────────
-        static_rank = rank_map[site_id]
-        baseline_str = get_baseline_str(monthly_visits)
-        base_rate = get_rate(monthly_visits)
-        progress = round((monthly_visits / google_monthly) * 100.0, 2)
-
-        # ── Volatility: CF Radar rank vs. static rank ───────────────────────
-        cf_rank = cf_ranks.get(domain) if domain else None
-        volatility = compute_volatility(static_rank, cf_rank)
-
-        # ── Dynamic rate: static × radar modulator ─────────────────────────
-        display_rate = apply_radar_modulation(base_rate, volatility)
-
-        # ── Trend: combine CF rank delta + Google Trends ────────────────────
-        old_cf_rank = db_row.get("rank", static_rank)  # previous DB rank as proxy
-        cf_trend = classify_trend_from_rank_delta(old_cf_rank, cf_rank or static_rank)
-        trends_score = trends_map.get(domain, 0.0)
-        if trends_score >= 0.5 and cf_trend in ("stable", "growing"):
-            trend = "surging"
-        elif trends_score >= 0.2:
-            trend = "growing"
-        elif trends_score <= -0.4:
-            trend = "cooling"
-        else:
-            trend = cf_trend
 
         update_payload = {
-            "rank": static_rank,
+            "rank": rank,
             "baseline": baseline_str,
-            "baseline_raw": monthly_visits,
-            "rate": display_rate,
-            "progress": progress,
-            "volatility": volatility,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "baseline_raw": monthly,
+            "rate": rate,
+            "progress": round((monthly / google_live) * 100.0, 2),
+            # % deviation of the live estimate from the curated anchor
+            "volatility": round((info["factor"] - 1.0) * 100.0, 2),
+            "updated_at": now_iso,
         }
 
         try:
             if not db_row:
                 meta = SITE_META.get(site_id, {})
-                domain_url = f"https://{site_id}.com"
-                if site_id == "threads": domain_url = "https://threads.net"
-                elif site_id == "kick": domain_url = "https://kick.com"
-                elif site_id == "perplexity": domain_url = "https://perplexity.ai"
-                elif site_id == "substack": domain_url = "https://substack.com"
-                elif site_id == "bsky": domain_url = "https://bsky.app"
-                elif site_id == "suno": domain_url = "https://suno.com"
-                elif site_id == "cursor": domain_url = "https://cursor.com"
-                elif site_id == "supabase": domain_url = "https://supabase.com"
-
-                insert_payload = {
+                supabase.table("sites").upsert({
                     "id": site_id,
                     "name": meta.get("name", site_id.capitalize()),
-                    "url": domain_url,
+                    "url": f"https://{site_id}.com",
                     "category": meta.get("category", "dev"),
                     "color": meta.get("color", "#82c8e5"),
                     "glow": "rgba(130,200,229,0.15)",
-                    "baseline_raw": monthly_visits,
                     **update_payload,
-                }
-                supabase.table("sites").upsert(insert_payload).execute()
+                }).execute()
+                print(f"  [Warning] {site_id} was missing from DB; inserted with placeholder url - fix it in Supabase.")
             else:
                 supabase.table("sites").update(update_payload).eq("id", site_id).execute()
 
             updates_count += 1
-            cf_note = f"CF=#{cf_rank}" if cf_rank else "CF=n/a"
-            print(f"  {site_id:20s} | #{static_rank:3d} | {baseline_str:12s} | {display_rate:5d}/s | Vol:{volatility:+6.1f}% | {trend} | {cf_note}")
-            updated_sites.append({
-                "id": site_id,
-                "rank": static_rank,
-                "rate": display_rate,
-                "baseline": baseline_str,
-            })
+            prev = db_row.get("rank")
+            move = f"{prev:>3}->{rank:<3}" if isinstance(prev, int) else f"new->{rank:<3}"
+            tr = f"T {info['tranco_anchor']}->{info['tranco_now']}" if info["reason"] == "tranco" else info["reason"]
+            print(f"  {site_id:18s} | {move} | {baseline_str:11s} | x{info['factor']:.3f} | {tr}")
+            updated_sites.append({"id": site_id, "rank": rank, "rate": rate, "baseline": baseline_str})
+            history_rows.append({"site_id": site_id, "rank": rank, "rate": rate,
+                                 "volatility": update_payload["volatility"], "recorded_at": now_iso})
         except Exception as e:
             print(f"  X Failed to update {site_id}: {e}")
 
-        # Log to site_history (schema: site_id, rate, volatility, pti_score)
-        try:
-            supabase.table("site_history").insert({
-                "site_id": site_id,
-                "rate": display_rate,
-                "volatility": volatility,
-                "pti_score": 0.0,
-            }).execute()
-        except Exception:
-            pass  # site_history is optional telemetry - don't block on schema mismatches
-
+    try:
+        for i in range(0, len(history_rows), 200):
+            supabase.table("site_history").insert(history_rows[i:i + 200]).execute()
+        print(f"  site_history: wrote {len(history_rows)} rows at {now_iso}")
+    except Exception as e:
+        print(f"  [Warning] site_history insert failed: {e}")
 
     print()
-    print(f"SUCCESS: Engine v2.0 updated {updates_count}/{len(STATIC_BASELINES)} sites.")
+    print(f"SUCCESS: Engine v3 updated {updates_count}/{len(STATIC_BASELINES)} sites.")
 
-    # ── 6. Write weekly snapshot ────────────────────────────────────────────
-    print("[Weekly] Writing weekly snapshot to Supabase...")
+    # ── 4. Weekly snapshot ─────────────────────────────────────────────────────
+    print("[4/4] Writing weekly snapshot to Supabase...")
     try:
         now_utc = datetime.now(timezone.utc)
         iso_week = now_utc.isocalendar()
         week_slug = f"{iso_week.year}-w{str(iso_week.week).zfill(2)}"
 
-        db_lookup_full = {s["id"]: s for s in db_sites}
         sites_data = []
         category_totals: dict[str, dict] = {}
         total_rate = 0
-
         for upd in updated_sites:
             sid = upd["id"]
-            orig = db_lookup_full.get(sid, {})
             meta = SITE_META.get(sid, {})
-            # Category, color, logo, name come from SITE_META (not DB columns)
             cat = meta.get("category", "general")
-            entry = {
+            sites_data.append({
                 "id": sid,
                 "name": meta.get("name", sid),
-                "url": orig.get("url", ""),
+                "url": (db_lookup.get(sid) or {}).get("url", ""),
                 "rank": upd["rank"],
                 "rate": upd["rate"],
                 "baseline": upd["baseline"],
@@ -270,39 +176,33 @@ def run_pulse_engine(run_validation_report: bool = True):
                 "color": meta.get("color", "#888"),
                 "logo": meta.get("logo", sid[:2].upper()),
                 "keywords": None,
-            }
-
-            sites_data.append(entry)
+            })
             total_rate += upd["rate"]
             category_totals.setdefault(cat, {"count": 0, "totalRate": 0})
             category_totals[cat]["count"] += 1
             category_totals[cat]["totalRate"] += upd["rate"]
 
         sites_data.sort(key=lambda s: s["rank"])
-        outage_count = fetch_cloudflare_outage_count()
-
         supabase.table("weekly_snapshots").upsert({
             "week_slug": week_slug,
             "snapshot_date": now_utc.isoformat(),
             "sites_data": sites_data,
             "category_totals": category_totals,
             "total_rate": total_rate,
-            "outage_count": outage_count,
+            "outage_count": fetch_cloudflare_outage_count(),
         }, on_conflict="week_slug").execute()
         print(f"  Snapshot written: {week_slug} ({len(sites_data)} sites, total_rate={total_rate}/s)")
     except Exception as e:
         print(f"  [Warning] Could not write weekly snapshot: {e}")
 
-    # ── 7. Run Ground-Truth Benchmark Validation ─────────────────────────────
-    if updated_sites:
+    if run_validation_report and updated_sites:
         try:
-            val_report = run_validation(updated_sites)
-            print_validation_report(val_report)
+            print_validation_report(run_validation(updated_sites))
         except Exception as e:
             print(f"  [Warning] Ground-truth validation error: {e}")
 
     print("=" * 60)
-    print("Pulse Engine v2.0 completed.")
+    print("Pulse Engine v3 completed.")
     print("=" * 60)
 
 

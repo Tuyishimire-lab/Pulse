@@ -19,8 +19,10 @@ name: Pulse Engine — Automated Data Updates
 
 on:
   schedule:
-    # JOB 1: Run engine every day at 06:00 UTC (pushes signals + weekly snapshot)
+    # JOB 1: Run engine every day at 06:00 UTC (live ranks + weekly snapshot)
     - cron: '0 6 * * *'
+    # JOB 2: Recalibrate baselines on the 1st of each month at 05:00 UTC
+    - cron: '0 5 1 * *'
   workflow_dispatch:
     inputs:
       job:
@@ -39,7 +41,7 @@ jobs:
     name: Run Pulse Engine (signals + snapshot)
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'schedule' ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 6 * * *') ||
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'engine' || inputs.job == 'both'))
 
     steps:
@@ -56,7 +58,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install supabase httpx python-dotenv pytrends
 
-      - name: Run Pulse Engine v2.1
+      - name: Run Pulse Engine v3 (live rank)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -78,7 +80,8 @@ jobs:
     name: Update Monthly Baselines
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'baselines' || inputs.job == 'both')
+      (github.event_name == 'schedule' && github.event.schedule == '0 5 1 * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'baselines' || inputs.job == 'both'))
 
     steps:
       - name: Checkout repository
@@ -102,7 +105,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          SIMILARWEB_API_KEY: ${{ secrets.SIMILARWEB_API_KEY }}
         run: |
           python scripts/pulse_engine/update_baselines.py
 

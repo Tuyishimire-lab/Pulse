@@ -86,7 +86,7 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 28 | Gemini | https://gemini.com | ai | 860.0M / mo | 327 |
 | 29 | DuckDuckGo | https://duckduckgo.com | search | 850.0M / mo | 323 |
 | 30 | Quora | https://quora.com | reference | 750.0M / mo | 285 |
-| 31 | Telegram | https://telegram.com | social | 750.0M / mo | 285 |
+| 31 | Telegram | https://telegram.org | social | 750.0M / mo | 285 |
 | 32 | AliExpress | https://aliexpress.com | ecommerce | 680.0M / mo | 258 |
 | 33 | Canva | https://canva.com | dev | 650.0M / mo | 247 |
 | 34 | NY Times | https://nytimes.com | news | 650.0M / mo | 247 |
@@ -122,14 +122,14 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 64 | Target | https://target.com | ecommerce | 340.0M / mo | 129 |
 | 65 | The Guardian | https://theguardian.com | news | 340.0M / mo | 129 |
 | 66 | Coupang | https://coupang.com | ecommerce | 335.0M / mo | 127 |
-| 67 | Mail.ru | https://mailru.com | news | 330.0M / mo | 125 |
+| 67 | Mail.ru | https://mail.ru | news | 330.0M / mo | 125 |
 | 68 | Dailymotion | https://dailymotion.com | entertainment | 325.0M / mo | 123 |
 | 69 | Home Depot | https://homedepot.com | ecommerce | 320.0M / mo | 121 |
 | 70 | Chase | https://chase.com | finance | 315.0M / mo | 119 |
 | 71 | Adobe | https://adobe.com | dev | 310.0M / mo | 117 |
 | 72 | Brave Search | https://search.brave.com | search | 310.0M / mo | 117 |
 | 73 | Grok | https://grok.com | ai | 310.0M / mo | 117 |
-| 74 | Steam | https://steam.com | entertainment | 305.0M / mo | 116 |
+| 74 | Steam | https://store.steampowered.com | entertainment | 305.0M / mo | 116 |
 | 75 | Globo | https://globo.com | news | 295.0M / mo | 112 |
 | 76 | Shein | https://shein.com | ecommerce | 290.0M / mo | 110 |
 | 77 | Seznam | https://seznam.cz | search | 285.0M / mo | 108 |
@@ -146,7 +146,7 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 88 | TradingView | https://tradingview.com | finance | 220.0M / mo | 83 |
 | 89 | DoorDash | https://doordash.com | ecommerce | 215.0M / mo | 81 |
 | 90 | ESPN | https://espn.com | entertainment | 210.0M / mo | 79 |
-| 91 | Hugging Face | https://huggingface.com | ai | 210.0M / mo | 79 |
+| 91 | Hugging Face | https://huggingface.co | ai | 210.0M / mo | 79 |
 | 92 | Salesforce | https://salesforce.com | dev | 198.0M / mo | 75 |
 | 93 | Daily Mail | https://dailymail.com | news | 195.0M / mo | 74 |
 | 94 | Fidelity | https://fidelity.com | finance | 190.0M / mo | 72 |
@@ -183,11 +183,11 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 125 | CoinMarketCap | https://coinmarketcap.com | finance | 120.0M / mo | 45 |
 | 126 | Shopify | https://shopify.com | ecommerce | 120.0M / mo | 45 |
 | 127 | Indeed | https://indeed.com | ecommerce | 118.0M / mo | 44 |
-| 128 | Merriam-Webster | https://merriamwebster.com | reference | 118.0M / mo | 44 |
+| 128 | Merriam-Webster | https://www.merriam-webster.com | reference | 118.0M / mo | 44 |
 | 129 | AccuWeather | https://accuweather.com | reference | 115.0M / mo | 43 |
 | 130 | Ecosia | https://ecosia.org | search | 115.0M / mo | 43 |
 | 131 | IKEA | https://ikea.com | ecommerce | 112.0M / mo | 42 |
-| 132 | Speedtest | https://speedtest.com | dev | 112.0M / mo | 42 |
+| 132 | Speedtest | https://www.speedtest.net | dev | 112.0M / mo | 42 |
 | 133 | Epic Games | https://epicgames.com | entertainment | 110.0M / mo | 41 |
 | 134 | Substack | https://substack.com | reference | 110.0M / mo | 41 |
 | 135 | Best Buy | https://bestbuy.com | ecommerce | 108.0M / mo | 41 |
@@ -207,7 +207,7 @@ Base traffic estimation follows a Zipf power law anchored to verified macro traf
 | 149 | Bluesky | https://bsky.app | social | 85.0M / mo | 32 |
 | 150 | Reuters | https://reuters.com | news | 84.0M / mo | 31 |
 | 151 | Forbes | https://forbes.com | news | 82.0M / mo | 31 |
-| 152 | NPM | https://npm.com | dev | 80.0M / mo | 30 |
+| 152 | NPM | https://www.npmjs.com | dev | 80.0M / mo | 30 |
 | 153 | Vercel | https://vercel.com | dev | 80.0M / mo | 30 |
 | 154 | Wired | https://wired.com | news | 78.0M / mo | 29 |
 | 155 | itch.io | https://itch.io | entertainment | 76.0M / mo | 28 |

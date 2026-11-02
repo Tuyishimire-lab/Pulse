@@ -10,7 +10,15 @@ Last updated: 2026-11-02
 Format: { site_id: monthly_visits (integer) }
 Rank is derived by sorting on monthly_visits descending - no separate rank field needed.
 Rate (visits/sec) = monthly_visits // 2_628_000  (pure math, no model)
+
+Engine v3: these curated values are the ANCHOR. The daily engine adjusts them (max ±15%)
+by each site's Tranco rank movement since BASELINE_ANCHOR_DATE - see live_rank.py.
+update_baselines.py bakes those adjustments in monthly and moves the anchor date forward.
 """
+
+# Date (YYYY-MM-DD) the curated baselines below were last calibrated.
+# The daily engine measures Tranco rank movement relative to this date.
+BASELINE_ANCHOR_DATE: str = "2026-10-01"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ANCHOR: Google is rank 1 by definition

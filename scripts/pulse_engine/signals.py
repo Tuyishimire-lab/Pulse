@@ -62,71 +62,92 @@ def fetch_cloudflare_radar_ranks() -> dict[str, int]:
 # SIGNAL 1b: Tranco List (aggregated from CF Radar + Cisco Umbrella + Majestic)
 # Fills the gap where CF Radar free tier only covers top 100
 # ─────────────────────────────────────────────────────────────────────────────
-def fetch_tranco_ranks(top_n: int = 5000) -> dict[str, int]:
+def _tranco_get(client: httpx.Client, url: str, timeout: float) -> httpx.Response | None:
+    """GET with backoff on HTTP 429 (Tranco rate-limits rapid calls). Never steps to other dates."""
+    for wait in (0, 5, 15, 30):
+        if wait:
+            print(f"[Signals] Tranco rate-limited; retrying in {wait}s...")
+            time.sleep(wait)
+        try:
+            res = client.get(url, timeout=timeout)
+        except Exception as e:
+            print(f"[Signals] Tranco request error: {type(e).__name__}: {e}")
+            continue
+        if res.status_code != 429:
+            return res
+    return None
+
+
+def _tranco_list_id(client: httpx.Client, target_date: str) -> tuple[str | None, bool]:
     """
-    Fetch Tranco rank list - an aggregated ranking combining Cloudflare Radar,
-    Cisco Umbrella, Majestic, Farsight, and Google CrUX. Updated daily.
-    No API key required.
-    top_n: How many top domains to download.
+    Resolve the Tranco list ID for a YYYY-MM-DD date.
+    Returns (list_id, definitive): definitive=False means a transient failure (don't step dates).
+    """
+    res = _tranco_get(client, f"https://tranco-list.eu/api/lists/date/{target_date}", 15.0)
+    if res is None:
+        return None, False
+    if res.status_code == 404:
+        print(f"[Signals] Tranco list {target_date} not published.")
+        return None, True
+    if res.status_code != 200:
+        print(f"[Signals] Tranco list lookup {target_date}: HTTP {res.status_code}")
+        return None, False
+    try:
+        meta = res.json()
+    except Exception:
+        return None, False
+    if not isinstance(meta, dict) or meta.get("available") is False:
+        print(f"[Signals] Tranco list {target_date} not available.")
+        return None, True
+    return (meta.get("list_id") or meta.get("listId")), True
+
+
+def fetch_tranco_list(start_date: str, top_n: int = 100_000, search_days: int = 3,
+                      direction: int = -1) -> tuple[dict[str, int], str | None]:
+    """
+    Download the Tranco list for `start_date` (YYYY-MM-DD). If that day's list isn't
+    available, step `direction` days (-1 = earlier, +1 = later) up to `search_days` times.
+    Returns ({domain: rank}, list_date) or ({}, None). Tranco is a 30-day-averaged
+    ranking aggregated from Cloudflare Radar, Cisco Umbrella, Majestic, Farsight and CrUX.
     """
     from datetime import date, timedelta
 
     try:
-        with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-            # Try today, then yesterday (list may not be ready until after midnight UTC)
-            list_id = None
-            for days_back in range(0, 3):
-                target_date = (date.today() - timedelta(days=days_back)).strftime("%Y-%m-%d")
-                meta_res = client.get(
-                    f"https://tranco-list.eu/api/lists/date/{target_date}",
-                    timeout=10.0
-                )
-                if meta_res.status_code == 200:
-                    meta = meta_res.json()
-                    if isinstance(meta, dict) and meta.get("available"):
-                        list_id = meta.get("list_id")
-                        if not list_id:
-                            # API returns "list_id" key
-                            list_id = meta.get("listId")
-                        if list_id:
-                            print(f"[Signals] Tranco List: using list {list_id} ({target_date})")
-                            break
-                    elif isinstance(meta, dict):
-                        list_id = meta.get("list_id") or meta.get("listId")
-                        if list_id:
-                            print(f"[Signals] Tranco List: using list {list_id} ({target_date})")
-                            break
-
-            if not list_id:
-                print("[Signals] Tranco: could not find a valid list ID.")
-                return {}
-
-            # Download top N domains (CSV: rank,domain)
-            csv_res = client.get(
-                f"https://tranco-list.eu/download/{list_id}/{top_n}",
-                timeout=30.0
-            )
-            if csv_res.status_code != 200:
-                print(f"[Signals] Tranco download HTTP {csv_res.status_code}")
-                return {}
-
-            rank_map = {}
-            reader = csv.reader(StringIO(csv_res.text))
-            for row in reader:
-                if len(row) >= 2:
-                    try:
-                        rank = int(row[0])
-                        domain = row[1].strip().lower()
-                        rank_map[domain] = rank
-                    except ValueError:
-                        continue
-
-            print(f"[Signals] Tranco List: fetched {len(rank_map)} rankings.")
-            return rank_map
-
+        base = date.fromisoformat(start_date)
+        with httpx.Client(timeout=60.0, follow_redirects=True) as client:
+            for step in range(search_days + 1):
+                target = (base + timedelta(days=direction * step)).isoformat()
+                list_id, definitive = _tranco_list_id(client, target)
+                if not list_id:
+                    if not definitive:
+                        print(f"[Signals] Tranco lookup for {target} failed transiently; not falling back to other dates.")
+                        return {}, None
+                    continue
+                csv_res = _tranco_get(client, f"https://tranco-list.eu/download/{list_id}/{top_n}", 90.0)
+                if csv_res is None or csv_res.status_code != 200:
+                    print(f"[Signals] Tranco download failed for {target} "
+                          f"({'rate-limited' if csv_res is None else csv_res.status_code}).")
+                    return {}, None
+                rank_map: dict[str, int] = {}
+                for row in csv.reader(StringIO(csv_res.text)):
+                    if len(row) >= 2 and row[0].strip().isdigit():
+                        rank_map[row[1].strip().lower()] = int(row[0])
+                print(f"[Signals] Tranco list {list_id} ({target}): {len(rank_map)} domains.")
+                return rank_map, target
     except Exception as e:
         print(f"[Signals] Tranco fetch error: {type(e).__name__}: {e}")
-    return {}
+    return {}, None
+
+
+def fetch_tranco_ranks(top_n: int = 5000) -> dict[str, int]:
+    """
+    Fetch the latest Tranco rank list (today, falling back up to 2 days earlier).
+    No API key required.
+    """
+    from datetime import date
+
+    ranks, _ = fetch_tranco_list(date.today().isoformat(), top_n=top_n, search_days=2, direction=-1)
+    return ranks
 
 DOMAIN_ALIASES = {
     "x.com": ["x.com", "twitter.com", "t.co"],

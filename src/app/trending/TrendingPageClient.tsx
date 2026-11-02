@@ -217,6 +217,29 @@ export default function TrendingPageClient({ datasets }: Props) {
               </Link>
             </div>
           </div>
+        ) : ds.risers.length === 0 && ds.fallers.length === 0 ? (
+          /* Real data, but nobody moved — say so plainly instead of showing all-zero grids */
+          <div className="p-10 rounded-2xl border border-white/[0.08] bg-white/[0.015] text-center">
+            <div className="text-base font-bold text-white mb-2">No rank changes in this window</div>
+            <p className="text-sm text-[#8899aa] max-w-xl mx-auto">
+              All {ds.totalSites} tracked sites held the same position in the Pulse Traffic Index between{' '}
+              {formatUtc(ds.comparedAt)} and {formatUtc(ds.snapshotAt)}.
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
+              {TIMEFRAMES.filter((t) => t.id !== timeframe && datasets[t.id]?.available).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTimeframe(t.id)}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#82c8e5]/30 text-[#82c8e5] hover:bg-[#82c8e5]/10"
+                >
+                  View {t.label}
+                </button>
+              ))}
+              <Link href="/" className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/10 text-[#8899aa] hover:text-white">
+                Live dashboard
+              </Link>
+            </div>
+          </div>
         ) : (
           <>
             {/* Spotlights */}
