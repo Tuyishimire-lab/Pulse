@@ -25,6 +25,7 @@ export function getPlatformLinks(): NavLink[] {
     { href: '/compare',                        label: 'Compare' },
     { href: '/category/ai',                    label: 'Categories' },
     { href: '/map',                            label: 'Traffic Map' },
+    { href: '/status',                         label: 'Live Status' },
     { href: '/report/' + getCurrentWeekSlug(), label: 'Weekly Report' },
   ];
 }

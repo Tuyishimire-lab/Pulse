@@ -1,8 +1,12 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { SITES, CATEGORIES } from '../../data/sites';
+import { getSiteDetails } from '../../data/details';
 import { getSiteById, getSites } from '../../../lib/getSites';
 import { getSiteEnrichment } from '../../../lib/getSiteEnrichment';
+import { getSiteCountryRankings } from '../../../lib/getCountrySites';
+import { generateSiteFaq } from '../../../lib/siteFaq';
+import { resolveSiteHealth } from '../../../lib/statusResolver';
 import SitePageClient from './SitePageClient';
 
 interface PageProps {
@@ -58,15 +62,18 @@ export const revalidate = 3600; // ISR: re-render at most once per hour
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
 
-  // Fetch live site, full catalog (for category rank & peers), and enrichment in parallel
-  const [site, allSites, enrichment] = await Promise.all([
+  // Fetch live site, full catalog (for category rank & peers), enrichment, and country rankings in parallel
+  const [site, allSites, enrichment, countryRankings] = await Promise.all([
     getSiteById(id),
     getSites(),
     getSiteEnrichment(id),
+    getSiteCountryRankings(id),
   ]);
 
   // Unknown slug → hard 404 (not a soft-200 "Domain Not Found" shell)
   if (!site) notFound();
+
+  const siteHealth = await resolveSiteHealth(site.id, enrichment);
 
   const siteName = site.name;
   const siteUrl = site.url;
@@ -90,6 +97,17 @@ export default async function Page({ params }: PageProps) {
     .sort((a, b) => Math.abs(a.rank - site.rank) - Math.abs(b.rank - site.rank))
     .slice(0, 4)
     .sort((a, b) => a.rank - b.rank);
+
+  const details = getSiteDetails(site);
+  const faqItems = generateSiteFaq(
+    site,
+    details,
+    categoryLabel,
+    categoryRank,
+    categoryTotal,
+    categoryCompetitors,
+    countryRankings
+  );
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -153,6 +171,17 @@ export default async function Page({ params }: PageProps) {
           },
         ],
       },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answerText,
+          },
+        })),
+      },
     ],
   };
 
@@ -170,6 +199,9 @@ export default async function Page({ params }: PageProps) {
         categoryTotal={categoryTotal}
         categoryLabel={categoryLabel}
         categoryCompetitors={categoryCompetitors}
+        countryRankings={countryRankings}
+        faqItems={faqItems}
+        siteHealth={siteHealth}
       />
     </>
   );

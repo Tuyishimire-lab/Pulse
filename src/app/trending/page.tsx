@@ -19,13 +19,13 @@ export const metadata: Metadata = {
     siteName: 'Pulse',
     type: 'website',
     locale: 'en_US',
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/trending/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Trending Websites - Biggest Rank Movers | Pulse',
     description: DESCRIPTION,
-    images: [`${BASE_URL}/opengraph-image`],
+    images: [`${BASE_URL}/trending/opengraph-image`],
   },
 };
 
@@ -58,22 +58,23 @@ export default async function TrendingPage() {
   if (primary) {
     graph.push({
       '@type': 'ItemList',
-      name: `Biggest website rank climbers (${primary.timeframe})`,
+      name: `Biggest Rank Climbers (${primary.timeframe})`,
       numberOfItems: Math.min(10, primary.risers.length),
-      itemListElement: primary.risers.slice(0, 10).map((s, i) => ({
+      itemListElement: primary.risers.slice(0, 10).map((s, idx) => ({
         '@type': 'ListItem',
-        position: i + 1,
-        name: `${s.name}: #${s.previousRank} → #${s.currentRank}`,
+        position: idx + 1,
+        name: s.name,
         url: `${BASE_URL}/sites/${s.id}`,
       })),
     });
   }
 
-  const jsonLd = { '@context': 'https://schema.org', '@graph': graph };
-
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }) }}
+      />
       <TrendingPageClient datasets={datasets} />
     </>
   );

@@ -66,6 +66,7 @@ function StatRow({ label, a, b, colorA, colorB, winner }: {
 export default function ComparePageClient({ siteA, siteB, pairData, related, allSites }: Props) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [embedSite, setEmbedSite] = useState<SiteConfig | null>(null);
+  const [heroLinkCopied, setHeroLinkCopied] = useState(false);
 
   // Canonical evaluation: derive directly from rendered baseline strings (with baselineRaw fallback).
   // This guarantees UI displayed numbers NEVER contradict the winner badge.
@@ -260,6 +261,43 @@ export default function ComparePageClient({ siteA, siteB, pairData, related, all
           {pairData?.context && (
             <p className="text-center text-[#94a3b8] text-sm mt-2">{pairData.context}</p>
           )}
+
+          {/* 1-Click Hero Share & Copy Matchup Actions */}
+          <div className="flex items-center justify-center gap-2.5 mt-4 flex-wrap">
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                `${siteA.name} (#${siteA.rank}, ${siteA.baseline}/mo) vs ${siteB.name} (#${siteB.rank}, ${siteB.baseline}/mo) — ${leaderSite.name} leads by ${disparityRatio}x in live web traffic on @PulseTraffic`
+              )}&url=${encodeURIComponent(
+                `https://www.pulstraffic.com/compare/${pairData?.slug || `${siteA.id}-vs-${siteB.id}`}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/[0.04] border border-white/10 text-white/90 hover:text-white hover:bg-white/[0.09] hover:border-white/25 transition-all"
+            >
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              <span>Share Battle on X</span>
+            </a>
+            <button
+              type="button"
+              onClick={async () => {
+                const url = `https://www.pulstraffic.com/compare/${pairData?.slug || `${siteA.id}-vs-${siteB.id}`}`;
+                try {
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                  }
+                  setHeroLinkCopied(true);
+                  setTimeout(() => setHeroLinkCopied(false), 2000);
+                } catch {
+                  // Ignore clipboard failure
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#82c8e5]/10 border border-[#82c8e5]/25 text-[#82c8e5] hover:bg-[#82c8e5]/20 transition-all"
+            >
+              <span>{heroLinkCopied ? 'Copied Matchup Link!' : 'Copy Matchup Link'}</span>
+            </button>
+          </div>
         </header>
 
         {/* Stats Comparison */}

@@ -20,14 +20,14 @@ export const metadata: Metadata = {
     siteName: 'Pulse',
     type: 'website',
     locale: 'en_US',
-    images: [{ url: `${BASE_URL}/opengraph-image`, width: 1200, height: 630 }],
+    images: [{ url: `${BASE_URL}/map/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: `Global Web Traffic Map ${CURRENT_YEAR} | Pulse`,
     description:
       'Interactive world globe showing internet penetration, the distinctive local platform in each country (from Cloudflare Radar), and connected online population across 115+ countries.',
-    images: [`${BASE_URL}/opengraph-image`],
+    images: [`${BASE_URL}/map/opengraph-image`],
   },
 };
 

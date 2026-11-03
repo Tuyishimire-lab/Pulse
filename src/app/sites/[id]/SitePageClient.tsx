@@ -4,12 +4,18 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { SITES, CATEGORIES, type SiteConfig } from '../../data/sites';
 import type { SiteEnrichmentData } from '../../../lib/getSiteEnrichment';
+import type { SiteCountryRank } from '../../../lib/getCountrySites';
+import { generateSiteFaq, type SiteFaqItem } from '../../../lib/siteFaq';
+import type { StatusIndicatorData } from '../../../lib/statusResolver';
 import { getSiteDetails } from '../../data/details';
 import { supabase, isSupabaseConfigured } from '../../../lib/supabase';
-import { COMPARE_PAIRS, canonicalPairSlug, getCompareSlug } from '../../compare/data/pairs';
+import { COMPARE_PAIRS, getCompareSlug } from '../../compare/data/pairs';
 import NavHeader from '../../components/NavHeader';
 import SocialShareBar from '../../components/SocialShareBar';
 import EmbedWidgetModal from '../../components/EmbedWidgetModal';
+import EmbedBadgeCard from '../../components/EmbedBadgeCard';
+import SiteFaqSection from '../../components/SiteFaqSection';
+import StatusIndicatorBadge from '../../components/StatusIndicatorBadge';
 import FaviconImage from '../../components/ui/FaviconImage';
 import WebVitalsPanel, { WebVitalsData } from '../../components/ui/WebVitalsPanel';
 import WikiInterestPanel, { WikiViewsData } from '../../components/ui/WikiInterestPanel';
@@ -51,6 +57,9 @@ export interface SitePageClientProps {
   categoryTotal?: number;
   categoryLabel?: string;
   categoryCompetitors?: SiteConfig[];
+  countryRankings?: SiteCountryRank[];
+  faqItems?: SiteFaqItem[];
+  siteHealth?: StatusIndicatorData | null;
 }
 
 export default function SitePageClient({
@@ -61,6 +70,9 @@ export default function SitePageClient({
   categoryTotal,
   categoryLabel,
   categoryCompetitors,
+  countryRankings = [],
+  faqItems,
+  siteHealth,
 }: SitePageClientProps) {
   const [site, setSite] = useState<SiteConfig | null | undefined>(() => initialSite ?? SITES.find((s) => s.id === id));
   const details = useMemo(() => (site ? getSiteDetails(site) : null), [site]);
@@ -75,6 +87,8 @@ export default function SitePageClient({
   const liveBaseline = site?.baseline ?? null;
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
   const [isEmbedOpen, setIsEmbedOpen] = useState<boolean>(false);
+  const [showAllCountries, setShowAllCountries] = useState<boolean>(false);
+  const [heroLinkCopied, setHeroLinkCopied] = useState<boolean>(false);
 
   // Enrichment data (CrUX, Wikipedia, Security) - initialized from server SSR props
   const [enrichment, setEnrichment] = useState<SiteEnrichmentData | null>(initialEnrichment ?? null);
@@ -477,6 +491,39 @@ export default function SitePageClient({
     };
   }, [site?.rank_history]);
 
+  const resolvedFaqItems = useMemo(() => {
+    if (faqItems && faqItems.length > 0) return faqItems;
+    if (!site || !details) return [];
+    return generateSiteFaq(
+      site,
+      details,
+      resolvedCatLabel || site.category,
+      resolvedCatRank,
+      resolvedCatTotal,
+      displayCompetitors,
+      countryRankings
+    );
+  }, [faqItems, site, details, resolvedCatLabel, resolvedCatRank, resolvedCatTotal, displayCompetitors, countryRankings]);
+
+  const visibleCountries = useMemo(() => {
+    if (showAllCountries) return countryRankings;
+    return countryRankings.slice(0, 12);
+  }, [countryRankings, showAllCountries]);
+
+  const handleCopyHeroLink = async () => {
+    if (!site) return;
+    const shareUrl = `https://www.pulstraffic.com/sites/${site.id}`;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+      setHeroLinkCopied(true);
+      setTimeout(() => setHeroLinkCopied(false), 2000);
+    } catch {
+      // Ignore clipboard failures
+    }
+  };
+
   if (!site || !details) {
     return (
       <div className="min-h-screen relative overflow-hidden bg-[#08080f] text-white flex flex-col items-center justify-center p-6 text-center">
@@ -531,11 +578,12 @@ export default function SitePageClient({
                   <FaviconImage url={site.url} logo={site.logo} color={site.color} />
                 </div>
                 <div className="modal-headline">
-                  <div className="modal-name-row">
+                  <div className="modal-name-row flex-wrap gap-2">
                     <h1 className="text-3xl font-extrabold tracking-tight m-0">{site.name}</h1>
                     <span className="list-category-badge">
                       {resolvedCatLabel || site.category}{resolvedCatRank ? ' · #' + resolvedCatRank : ''}
                     </span>
+                    <StatusIndicatorBadge status={siteHealth} siteName={site.name} />
                   </div>
                   <a 
                     href={site.url} 
@@ -547,9 +595,35 @@ export default function SitePageClient({
                   </a>
                 </div>
               </div>
-              <div className="timer-card scale-90">
-                <span className="timer-label">ELAPSED TIME</span>
-                <div ref={timerRef} className="timer-value text-xl">00:00:00</div>
+
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* 1-Click Hero Social Share & Copy Actions */}
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                    `${site.name} is ranked #${liveRank ?? site.rank} globally with ${liveBaseline ?? site.baseline} monthly visits (~${site.rate.toLocaleString()} req/s) on @PulseTraffic`
+                  )}&url=${encodeURIComponent(`https://www.pulstraffic.com/sites/${site.id}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white/[0.04] border border-white/10 text-white/85 hover:text-white hover:bg-white/[0.09] hover:border-white/25 transition-all"
+                  title={`Share ${site.name} stats on X`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  <span>Post</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyHeroLink}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-white/[0.04] border border-white/10 text-[#82c8e5] hover:bg-white/[0.09] hover:border-[#82c8e5]/40 transition-all"
+                  title="Copy direct link to this dossier"
+                >
+                  <span>{heroLinkCopied ? 'Copied!' : 'Copy Link'}</span>
+                </button>
+                <div className="timer-card scale-90">
+                  <span className="timer-label">ELAPSED TIME</span>
+                  <div ref={timerRef} className="timer-value text-xl">00:00:00</div>
+                </div>
               </div>
             </div>
 
@@ -798,6 +872,52 @@ export default function SitePageClient({
                   </div>
                 ))}
               </div>
+
+              {/* Reverse Country Cross-Links: Where [Site] Ranks in the Top 20 */}
+              {countryRankings.length > 0 && (
+                <div className="mt-5 pt-4 border-t border-white/5 text-left">
+                  <div className="flex items-center justify-between gap-2 flex-wrap mb-2.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#82c8e5]">
+                      Where {site.name} Ranks in the National Top 20 ({countryRankings.length} Countries)
+                    </span>
+                    <Link
+                      href="/top-sites"
+                      className="text-[11px] font-semibold text-[#6d8196] hover:text-white transition-colors"
+                    >
+                      All 50 Country Rankings →
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {visibleCountries.map((c) => (
+                      <Link
+                        key={c.slug}
+                        href={`/top-sites/${c.slug}`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.025] border border-white/[0.08] text-white/90 hover:text-white hover:border-[#82c8e5]/40 hover:bg-[#82c8e5]/10 transition-all"
+                      >
+                        <span>{c.flag}</span>
+                        <span>{c.name}</span>
+                        <span
+                          className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.06]"
+                          style={{ color: site.color === '#ffffff' ? '#82c8e5' : site.color }}
+                        >
+                          #{c.rank}
+                        </span>
+                      </Link>
+                    ))}
+                    {countryRankings.length > 12 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllCountries((prev) => !prev)}
+                        className="inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-[#82c8e5]/10 border border-[#82c8e5]/25 text-[#82c8e5] hover:bg-[#82c8e5]/20 transition-all"
+                      >
+                        {showAllCountries
+                          ? 'Show fewer'
+                          : `+${countryRankings.length - 12} more countries`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Related Topics Badges Card */}
@@ -1124,6 +1244,20 @@ export default function SitePageClient({
                 </p>
               </div>
             )}
+
+            {/* Inline Auto-Updating SVG Badge Generator (Backlink Flywheel) */}
+            <EmbedBadgeCard
+              site={site}
+              liveRank={liveRank}
+              liveBaseline={liveBaseline}
+            />
+
+            {/* Data-Driven FAQ Accordion (Matches JSON-LD FAQPage Schema) */}
+            <SiteFaqSection
+              siteName={site.name}
+              items={resolvedFaqItems}
+              brandColor={site.color}
+            />
           </div>
         </div>
       </main>
@@ -1151,18 +1285,57 @@ export default function SitePageClient({
         </section>
       )}
 
-      {/* ── Compare With links ─────────────────────────────────────────── */}
+      {/* ── Head-to-Head Traffic Battles ────────────────────────────────── */}
       {site && comparePills.length > 0 && (
         <section className="w-full max-w-[800px] px-6 mt-6 mb-2">
-          <h2 className="text-xs font-bold text-[#6d8196] uppercase tracking-wider mb-3">Compare {site.name} with</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-bold text-[#82c8e5] uppercase tracking-wider m-0">
+              Head-to-Head Traffic Battles — {site.name} vs Rivals
+            </h2>
+            <Link
+              href="/compare"
+              className="text-[11px] font-semibold text-[#6d8196] hover:text-white transition-colors"
+            >
+              All Matchups →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {comparePills.map(({ slug, other }) => (
               <Link
                 key={slug}
                 href={`/compare/${slug}`}
-                className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] text-[#94a3b8] hover:text-white hover:border-[#82c8e5]/40 transition-all"
+                className="p-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#82c8e5]/40 transition-all flex items-center justify-between gap-3 group"
               >
-                {site.name} vs {other.name} →
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FaviconImage
+                    url={site.url}
+                    logo={site.logo}
+                    color={site.color}
+                    size={24}
+                    className="w-6 h-6 rounded-full object-contain flex-shrink-0"
+                  />
+                  <span className="text-[10px] font-extrabold text-[#6d8196] px-1.5 py-0.5 rounded bg-white/[0.05]">
+                    VS
+                  </span>
+                  <FaviconImage
+                    url={other.url}
+                    logo={other.logo}
+                    color={other.color}
+                    size={24}
+                    className="w-6 h-6 rounded-full object-contain flex-shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-white group-hover:text-[#82c8e5] transition-colors truncate">
+                      {site.name} vs {other.name}
+                    </div>
+                    <div className="text-[10px] text-[#6d8196] truncate">
+                      #{site.rank} ({site.baseline}) vs #{other.rank} ({other.baseline})
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-[#82c8e5] group-hover:translate-x-0.5 transition-transform flex-shrink-0">
+                  Battle →
+                </span>
               </Link>
             ))}
           </div>

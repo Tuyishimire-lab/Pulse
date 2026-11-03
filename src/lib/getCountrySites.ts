@@ -8,6 +8,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { SiteConfig } from '../app/data/sites';
+import { COUNTRIES } from '../app/top-sites/data/countries';
 import { getRegionalProfile, GLOBALLY_IRRELEVANT } from '../app/top-sites/data/regionalProfiles';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -240,4 +241,95 @@ export async function resolveCountrySites(
     source: 'smart-filter',
     cronLastRan,
   };
+}
+
+// ---------- Reverse Country Ranking Lookup (Site → Countries) ----------------
+export interface SiteCountryRank {
+  slug: string;
+  name: string;
+  cfCode: string;
+  flag: string;
+  rank: number;
+}
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: '🇺🇸', IN: '🇮🇳', BR: '🇧🇷', GB: '🇬🇧', DE: '🇩🇪', JP: '🇯🇵', FR: '🇫🇷',
+  CA: '🇨🇦', AU: '🇦🇺', MX: '🇲🇽', KR: '🇰🇷', ID: '🇮🇩', IT: '🇮🇹', ES: '🇪🇸',
+  NL: '🇳🇱', TR: '🇹🇷', PL: '🇵🇱', AR: '🇦🇷', ZA: '🇿🇦', NG: '🇳🇬', PH: '🇵🇭',
+  VN: '🇻🇳', SG: '🇸🇬', SE: '🇸🇪', CH: '🇨🇭', AE: '🇦🇪', SA: '🇸🇦', EG: '🇪🇬',
+  CO: '🇨🇴', CL: '🇨🇱', PE: '🇵🇪', TH: '🇹🇭', MY: '🇲🇾', PK: '🇵🇰', BD: '🇧🇩',
+  UA: '🇺🇦', RO: '🇷🇴', CZ: '🇨🇿', PT: '🇵🇹', BE: '🇧🇪', AT: '🇦🇹', IL: '🇮🇱',
+  IE: '🇮🇪', NO: '🇳🇴', DK: '🇩🇰', FI: '🇫🇮', NZ: '🇳🇿', GR: '🇬🇷', HU: '🇭🇺',
+  KE: '🇰🇪',
+};
+
+/**
+ * Resolves all countries where `siteId` ranks in the Top 20.
+ * Queries Supabase `country_rankings` first (with 3000ms timeout) and falls back
+ * to `pinnedSiteIds` and `getRegionalProfile` in `COUNTRIES` if Supabase is unreachable.
+ */
+export async function getSiteCountryRankings(siteId: string): Promise<SiteCountryRank[]> {
+  const results = new Map<string, SiteCountryRank>();
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data } = await withTimeout(
+        supabase
+          .from('country_rankings')
+          .select('cf_code, site_ids')
+          .contains('site_ids', [siteId]),
+        3000,
+        { data: null, error: null } as { data: { cf_code: string; site_ids: string[] }[] | null; error: null }
+      );
+
+      if (data && Array.isArray(data)) {
+        for (const row of data) {
+          if (!Array.isArray(row.site_ids)) continue;
+          const idx = row.site_ids.indexOf(siteId);
+          if (idx >= 0 && idx < 20) {
+            const countryMeta = COUNTRIES.find(
+              (c) => c.cfCode.toUpperCase() === row.cf_code.toUpperCase()
+            );
+            if (countryMeta) {
+              const code = countryMeta.cfCode.toUpperCase();
+              results.set(code, {
+                slug: countryMeta.slug,
+                name: countryMeta.name,
+                cfCode: code,
+                flag: countryMeta.flag || COUNTRY_FLAGS[code] || '🌐',
+                rank: idx + 1,
+              });
+            }
+          }
+        }
+      }
+    } catch {
+      // Fallback to static evaluation below
+    }
+  }
+
+  // Static fallback / backfill for countries not yet in results
+  for (const country of COUNTRIES) {
+    const code = country.cfCode.toUpperCase();
+    if (results.has(code)) continue;
+
+    const list =
+      country.pinnedSiteIds && country.pinnedSiteIds.length > 0
+        ? country.pinnedSiteIds
+        : getRegionalProfile(code);
+
+    const idx = list.indexOf(siteId);
+    if (idx >= 0 && idx < 20) {
+      results.set(code, {
+        slug: country.slug,
+        name: country.name,
+        cfCode: code,
+        flag: country.flag || COUNTRY_FLAGS[code] || '🌐',
+        rank: idx + 1,
+      });
+    }
+  }
+
+  return Array.from(results.values()).sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
 }

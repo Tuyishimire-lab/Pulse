@@ -37,20 +37,32 @@ const limiter = rateLimit({
   uniqueTokenPerInterval: 500, // Max 500 users per minute
 });
 
-export function checkRateLimit(request: Request, limit: number = 20) {
-  // Try to get IP from headers
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'anonymous';
-             
-  const { isRateLimited } = limiter.check(limit, ip);
-  
+export function checkRateLimit(request: Request, limit: number = 20, routeKey?: string) {
+  // Extract first IP from x-forwarded-for or fallback
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip =
+    (forwarded ? forwarded.split(',')[0].trim() : null) ||
+    request.headers.get('x-real-ip') ||
+    'anonymous';
+
+  let namespace = routeKey;
+  if (!namespace) {
+    try {
+      namespace = new URL(request.url).pathname;
+    } catch {
+      namespace = 'global';
+    }
+  }
+
+  const compositeKey = `${namespace}:${ip}`;
+  const { isRateLimited } = limiter.check(limit, compositeKey);
+
   if (isRateLimited) {
     return NextResponse.json(
       { error: 'Too Many Requests' },
       { status: 429, headers: { 'Retry-After': '60' } }
     );
   }
-  
+
   return null;
 }
