@@ -623,6 +623,11 @@ export default function HomeClient({
     return Object.fromEntries(filteredSites.map((site, idx) => [site.id, idx + 1]));
   }, [isFiltered, filteredSites]);
 
+  const maxRateInView = useMemo(() => {
+    if (filteredSites.length === 0) return 32343;
+    return Math.max(...filteredSites.map((s) => s.rate), 1);
+  }, [filteredSites]);
+
   const compareSiteA = useMemo(() => allSites.find((s) => s.id === selectedCompareIds[0]) || null, [selectedCompareIds, allSites]);
   const compareSiteB = useMemo(() => allSites.find((s) => s.id === selectedCompareIds[1]) || null, [selectedCompareIds, allSites]);
 
@@ -781,6 +786,7 @@ export default function HomeClient({
               setCurrentPage(1);
             }}
             displayRankMap={displayRankMap}
+            maxRate={maxRateInView}
           />
         )}
 

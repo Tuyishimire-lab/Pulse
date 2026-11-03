@@ -18,6 +18,7 @@ v3 changes vs v2.1:
   - site_history rows now include rank and share one recorded_at per run
 """
 
+import math
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -90,6 +91,9 @@ def run_pulse_engine(run_validation_report: bool = True):
     print("[3/4] Syncing all sites to Supabase...")
     now_iso = datetime.now(timezone.utc).isoformat()
     google_live = live_values.get("google", STATIC_BASELINES.get("google", 85_000_000_000))
+    google_rate = max(get_rate(google_live), 10)
+    min_log = math.log10(3)
+    max_log = math.log10(google_rate)
     updates_count = 0
     updated_sites = []
     history_rows = []
@@ -101,13 +105,15 @@ def run_pulse_engine(run_validation_report: bool = True):
         rate = get_rate(monthly)
         baseline_str = get_baseline_str(monthly)
         db_row = db_lookup.get(site_id, {})
+        cur_log = math.log10(max(rate, 3))
+        log_progress = max(8.0, min(100.0, round(((cur_log - min_log) / (max_log - min_log)) * 100.0, 1)))
 
         update_payload = {
             "rank": rank,
             "baseline": baseline_str,
             "baseline_raw": monthly,
             "rate": rate,
-            "progress": round((monthly / google_live) * 100.0, 2),
+            "progress": log_progress,
             # % deviation of the live estimate from the curated anchor
             "volatility": round((info["factor"] - 1.0) * 100.0, 2),
             "updated_at": now_iso,

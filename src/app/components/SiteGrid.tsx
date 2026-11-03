@@ -38,6 +38,27 @@ interface SiteGridProps {
    * Omit (undefined) when the full unfiltered catalog is shown.
    */
   displayRankMap?: Record<string, number>;
+  /**
+   * Highest visitor rate (visits/sec) in the active filtered view.
+   * Used to log-scale the progress bar so power-law web traffic renders
+   * a proportional, readable bar across all 200 ranks and within category filters.
+   */
+  maxRate?: number;
+}
+
+/**
+ * Log10-scaled bar fill (anchored at 3 visits/sec up to the active view's leader)
+ * so power-law traffic distributions display meaningful visual widths from #1 to #200.
+ */
+function getProgressBarWidth(site: SiteConfig, maxRate?: number): number {
+  const leaderRate = maxRate && maxRate > 0 ? maxRate : 32343;
+  if (site.rate <= 0) return 6;
+  if (site.rate >= leaderRate) return 100;
+  const minLog = Math.log10(3);
+  const maxLog = Math.log10(Math.max(leaderRate, 10));
+  const curLog = Math.log10(Math.max(site.rate, 3));
+  const pct = ((curLog - minLog) / (maxLog - minLog)) * 100;
+  return Math.max(8, Math.min(100, Math.round(pct * 10) / 10));
 }
 
 /**
@@ -68,6 +89,7 @@ export default function SiteGrid({
   endIndex,
   onResetFilters,
   displayRankMap,
+  maxRate,
 }: SiteGridProps) {
   // When a filter narrows the list we show position-within-view, not global rank,
   // so there are no confusing gaps (e.g. "RANK #15" jumps to "RANK #18").
@@ -189,7 +211,10 @@ export default function SiteGrid({
                   <span className="stat-val">~{site.rate.toLocaleString('en-US')} / sec</span>
                 </div>
                 <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{ width: `${site.progress}%` }} />
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: `${getProgressBarWidth(site, maxRate)}%` }}
+                  />
                 </div>
                 {compareModeActive && (
                   <label className="compare-checkbox-label" onClick={(e) => e.stopPropagation()}>
@@ -334,7 +359,10 @@ export default function SiteGrid({
 
               <div className="list-progressbar">
                 <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{ width: `${site.progress}%` }} />
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: `${getProgressBarWidth(site, maxRate)}%` }}
+                  />
                 </div>
                 {compareModeActive && (
                   <label className="compare-checkbox-label" onClick={(e) => e.stopPropagation()}>

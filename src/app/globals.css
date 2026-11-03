@@ -356,18 +356,23 @@ body {
 }
 
 .progress-bar-container {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 2px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
   overflow: hidden;
-  margin-top: 0.3rem;
+  margin-top: 0.35rem;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: var(--brand-color);
-  border-radius: 2px;
-  box-shadow: 0 0 8px var(--brand-color);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-color) 65%, transparent) 0%,
+    var(--brand-color) 100%
+  );
+  border-radius: 9999px;
+  box-shadow: 0 0 10px var(--brand-color);
+  transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Visibility animations */
