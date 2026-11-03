@@ -208,7 +208,7 @@ export default function StatusPageClient({
   );
 
   return (
-    <div className="min-h-screen bg-[#02020a] text-white font-sans pb-16">
+    <div className="min-h-screen bg-[#02020a] text-white font-sans pb-16 overflow-x-hidden">
       <div className="mesh-gradient fixed inset-0 pointer-events-none z-0 opacity-60" />
 
       <NavHeader />
@@ -224,7 +224,7 @@ export default function StatusPageClient({
         </nav>
 
         {/* Hero Banner */}
-        <header className="p-6 sm:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] via-[#070b16] to-[#04040c] mb-8 shadow-2xl">
+        <header className="p-6 sm:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.04] via-[#070b16] to-[#04040c] mb-6 shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 mb-3">
@@ -264,9 +264,9 @@ export default function StatusPageClient({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/[0.06]">
             <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d8196] block">
-                Platforms Monitored
+                Platforms Healthy
               </span>
-              <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
+              <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-1 tabular-nums">
                 {operationalCount} / {initialPlatforms.length}
               </div>
               <span className="text-[11px] text-[#94a3b8] mt-0.5 block truncate">
@@ -278,11 +278,11 @@ export default function StatusPageClient({
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d8196] block">
                 Active ASN Alerts (7d)
               </span>
-              <div className="text-xl sm:text-2xl font-black text-amber-400 mt-1">
-                {activeOutageCount} Active · {outages.length} Total
+              <div className="text-xl sm:text-2xl font-black text-amber-400 mt-1 tabular-nums">
+                {activeOutageCount} Active
               </div>
-              <span className="text-[11px] text-[#94a3b8] mt-0.5 block">
-                Cloudflare Radar Outages
+              <span className="text-[11px] text-[#94a3b8] mt-0.5 block truncate">
+                {outages.length} recorded in 7d · Cloudflare Radar
               </span>
             </div>
 
@@ -290,10 +290,10 @@ export default function StatusPageClient({
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d8196] block">
                 Global HTTP/3 Adoption
               </span>
-              <div className="text-xl sm:text-2xl font-black text-[#82c8e5] mt-1">
+              <div className="text-xl sm:text-2xl font-black text-[#82c8e5] mt-1 tabular-nums">
                 {radarStats.httpVersion.http3}%
               </div>
-              <span className="text-[11px] text-[#94a3b8] mt-0.5 block">
+              <span className="text-[11px] text-[#94a3b8] mt-0.5 block truncate">
                 HTTP/2 at {radarStats.httpVersion.http2}%
               </span>
             </div>
@@ -302,10 +302,10 @@ export default function StatusPageClient({
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d8196] block">
                 Global Edge Latency
               </span>
-              <div className="text-xl sm:text-2xl font-black text-white mt-1">
+              <div className="text-xl sm:text-2xl font-black text-white mt-1 tabular-nums">
                 {radarStats.quality.latency} ms
               </div>
-              <span className="text-[11px] text-[#94a3b8] mt-0.5 block">
+              <span className="text-[11px] text-[#94a3b8] mt-0.5 block truncate">
                 DNS {radarStats.quality.dnsResponseTime} ms · {radarStats.deviceType.mobile}% Mobile
               </span>
             </div>
@@ -314,45 +314,27 @@ export default function StatusPageClient({
 
         {/* Section 1: Monitored Catalog Platforms Directory */}
         <section className="mb-10" aria-labelledby="monitored-platforms-heading">
-          {/* Header Row: Title, Search, and Operational Status Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <h2
-                id="monitored-platforms-heading"
-                className="text-base sm:text-lg font-extrabold text-white m-0"
-              >
-                Real-Time Platform Status Directory
-              </h2>
-              <p className="text-xs text-[#6d8196] m-0 mt-0.5">
-                Monitoring all {initialPlatforms.length} catalog platforms across Statuspage feeds, CrUX real-user latency, and edge reachability.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <div className="relative">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Search 200 platforms..."
-                  aria-label="Filter monitored platforms"
-                  className="px-3 py-1.5 pl-8 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-[#6d8196] focus:outline-none focus:border-[#82c8e5]/50 w-44 sm:w-52"
-                />
-                <svg
-                  className="w-3.5 h-3.5 text-[#6d8196] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+          {/* Contained Filter Console Card — aligns 100% with Hero Banner & Grid boundaries */}
+          <div className="p-5 sm:p-6 rounded-3xl border border-white/10 bg-white/[0.02] mb-5 shadow-xl space-y-4">
+            {/* Console Row 1: Title & Operational Status Segmented Filter */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
+              <div className="min-w-0">
+                <h2
+                  id="monitored-platforms-heading"
+                  className="text-base sm:text-lg font-extrabold text-white m-0"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                  Real-Time Platform Status Directory
+                </h2>
+                <p className="text-xs text-[#6d8196] m-0 mt-0.5">
+                  Monitoring all {initialPlatforms.length} catalog platforms across Statuspage v2 feeds, CrUX field telemetry, and edge reachability.
+                </p>
               </div>
 
-              <div className="inline-flex rounded-xl bg-white/[0.03] p-0.5 border border-white/10 flex-shrink-0">
+              <div className="inline-flex rounded-xl bg-white/[0.03] p-1 border border-white/10 self-start md:self-auto flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => handleStatusChange('all')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     filterStatus === 'all'
                       ? 'bg-[#82c8e5]/20 text-[#82c8e5]'
                       : 'text-[#6d8196] hover:text-white'
@@ -363,7 +345,7 @@ export default function StatusPageClient({
                 <button
                   type="button"
                   onClick={() => handleStatusChange('operational')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     filterStatus === 'operational'
                       ? 'bg-emerald-500/20 text-emerald-300'
                       : 'text-[#6d8196] hover:text-white'
@@ -374,7 +356,7 @@ export default function StatusPageClient({
                 <button
                   type="button"
                   onClick={() => handleStatusChange('issues')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     filterStatus === 'issues'
                       ? 'bg-amber-500/20 text-amber-300'
                       : 'text-[#6d8196] hover:text-white'
@@ -384,89 +366,110 @@ export default function StatusPageClient({
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Telemetry Tier Filter Tabs */}
-          <div className="flex items-center gap-1.5 flex-wrap mb-3" role="tablist" aria-label="Telemetry tiers">
-            <button
-              type="button"
-              onClick={() => handleTelemetryTierChange('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTelemetryTier === 'all'
-                  ? 'bg-[#82c8e5]/20 text-[#82c8e5] border border-[#82c8e5]/40 shadow-[0_0_12px_rgba(130,200,229,0.15)]'
-                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
-              }`}
-              role="tab"
-              aria-selected={activeTelemetryTier === 'all'}
-            >
-              All Tiers ({initialPlatforms.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTelemetryTierChange('tier1')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTelemetryTier === 'tier1'
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
-                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
-              }`}
-              role="tab"
-              aria-selected={activeTelemetryTier === 'tier1'}
-            >
-              Tier 1 · Statuspage v2 ({tier1Count})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTelemetryTierChange('tier2')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTelemetryTier === 'tier2'
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
-                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
-              }`}
-              role="tab"
-              aria-selected={activeTelemetryTier === 'tier2'}
-            >
-              Tier 2 · CrUX Latency ({tier2Count})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleTelemetryTierChange('tier3')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTelemetryTier === 'tier3'
-                  ? 'bg-slate-500/20 text-slate-200 border border-slate-400/40 shadow-[0_0_12px_rgba(148,163,184,0.2)]'
-                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
-              }`}
-              role="tab"
-              aria-selected={activeTelemetryTier === 'tier3'}
-            >
-              Tier 3 · Edge Baseline ({tier3Count})
-            </button>
-          </div>
+            {/* Console Row 2: Search Input & Telemetry Tier Filter Pills */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="relative w-full lg:w-64 flex-shrink-0">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder={`Search ${initialPlatforms.length} platforms...`}
+                  aria-label="Filter monitored platforms"
+                  className="w-full px-3.5 py-2 pl-9 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-[#6d8196] focus:outline-none focus:border-[#82c8e5]/50"
+                />
+                <svg
+                  className="w-3.5 h-3.5 text-[#82c8e5] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
 
-          {/* Category Filter Pills (Horizontal Scrollable) */}
-          <div
-            className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none"
-            role="tablist"
-            aria-label="Catalog categories"
-          >
-            {CATEGORIES.map((cat) => {
-              const isActive = activeCategory === cat.id;
-              return (
+              <div className="flex items-center gap-1.5 flex-wrap" role="tablist" aria-label="Telemetry tiers">
                 <button
-                  key={cat.id}
                   type="button"
-                  onClick={() => handleCategoryChange(cat.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex-shrink-0 ${
-                    isActive
-                      ? 'bg-[#0047ab] text-white border border-[#82c8e5]/40 shadow-[0_0_12px_rgba(0,71,171,0.35)]'
+                  onClick={() => handleTelemetryTierChange('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeTelemetryTier === 'all'
+                      ? 'bg-[#82c8e5]/20 text-[#82c8e5] border border-[#82c8e5]/40'
                       : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
                   }`}
                   role="tab"
-                  aria-selected={isActive}
+                  aria-selected={activeTelemetryTier === 'all'}
                 >
-                  {cat.label}
+                  All Tiers ({initialPlatforms.length})
                 </button>
-              );
-            })}
+                <button
+                  type="button"
+                  onClick={() => handleTelemetryTierChange('tier1')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeTelemetryTier === 'tier1'
+                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                      : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                  role="tab"
+                  aria-selected={activeTelemetryTier === 'tier1'}
+                >
+                  Tier 1 · Statuspage ({tier1Count})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTelemetryTierChange('tier2')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeTelemetryTier === 'tier2'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                      : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                  role="tab"
+                  aria-selected={activeTelemetryTier === 'tier2'}
+                >
+                  Tier 2 · CrUX ({tier2Count})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTelemetryTierChange('tier3')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeTelemetryTier === 'tier3'
+                      ? 'bg-slate-500/20 text-slate-200 border border-slate-400/40'
+                      : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                  role="tab"
+                  aria-selected={activeTelemetryTier === 'tier3'}
+                >
+                  Tier 3 · Edge ({tier3Count})
+                </button>
+              </div>
+            </div>
+
+            {/* Console Row 3: Category Filter Pills (Wrapped cleanly inside card — zero right-edge clipping) */}
+            <div
+              className="flex items-center gap-1.5 flex-wrap pt-3 border-t border-white/[0.06]"
+              role="tablist"
+              aria-label="Catalog categories"
+            >
+              {CATEGORIES.map((cat) => {
+                const isActive = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#0047ab] text-white border border-[#82c8e5]/40 shadow-[0_0_12px_rgba(0,71,171,0.35)]'
+                        : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                    role="tab"
+                    aria-selected={isActive}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Active Filter Summary Bar */}
@@ -558,9 +561,9 @@ export default function StatusPageClient({
                 return (
                   <div
                     key={platform.id}
-                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between gap-3 min-h-[140px]"
+                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between gap-3"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-2.5">
                       <Link
                         href={`/sites/${platform.id}`}
                         className="flex items-center gap-3 group min-w-0"
@@ -582,11 +585,16 @@ export default function StatusPageClient({
                           />
                         </div>
                         <div className="min-w-0">
-                          <div className="font-bold text-sm text-white group-hover:text-[#82c8e5] transition-colors truncate">
-                            {platform.name}
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-sm text-white group-hover:text-[#82c8e5] transition-colors truncate">
+                              {platform.name}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-[#82c8e5] bg-[#82c8e5]/10 px-1.5 py-0.5 rounded flex-shrink-0">
+                              #{platform.rank}
+                            </span>
                           </div>
-                          <div className="text-[11px] text-[#6d8196] truncate">
-                            {platform.domain} · #{platform.rank} Global
+                          <div className="text-[11px] text-[#6d8196] truncate mt-0.5">
+                            {platform.domain}
                           </div>
                         </div>
                       </Link>
@@ -612,8 +620,8 @@ export default function StatusPageClient({
                     </div>
 
                     {/* Footer: Detail string & action links */}
-                    <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.05] text-[11px]">
-                      <span className="text-[#94a3b8] truncate pr-2" title={platform.status.detail}>
+                    <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.05] text-[11px] gap-2">
+                      <span className="text-[#94a3b8] truncate" title={platform.status.detail}>
                         {platform.status.detail}
                       </span>
                       <div className="flex items-center gap-2 flex-shrink-0">

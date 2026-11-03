@@ -358,6 +358,7 @@ export async function resolveSiteHealth(
         p75_ttfb?: number;
         lcp_p75?: number;
         p75_lcp?: number;
+        cwv_grade?: string | null;
       } & Record<string, unknown>)
     | undefined;
 
@@ -371,7 +372,7 @@ export async function resolveSiteHealth(
       return {
         tier: 'degraded',
         label: 'Elevated Latency',
-        detail: `Origin p75 TTFB at ${Math.round(ttfbP75)}ms (CrUX field telemetry)`,
+        detail: `Origin p75 TTFB ${Math.round(ttfbP75)}ms (CrUX field data)`,
         source: 'crux-telemetry',
         checkedAt,
         telemetryTier: 2,
@@ -380,34 +381,27 @@ export async function resolveSiteHealth(
     return {
       tier: 'operational',
       label: 'Operational',
-      detail: `Origin p75 TTFB ${Math.round(ttfbP75)}ms · Normal edge response`,
+      detail: `Origin p75 TTFB ${Math.round(ttfbP75)}ms · Edge normal`,
       source: 'crux-telemetry',
       checkedAt,
       telemetryTier: 2,
     };
   }
 
-  // Tier 2 Fallback: Evaluate LCP if TTFB not available in telemetry payload
+  // Tier 2 Fallback: Surface CrUX LCP / CWV grade when TTFB is not in payload.
+  // Note: LCP measures front-end largest paint (e.g. video player poster on YouTube),
+  // not server downtime, so it is reported as operational telemetry rather than an outage.
   const lcpP75 =
     vitals?.metrics?.lcp?.p75 ??
     (typeof vitals?.lcp_p75 === 'number' ? vitals.lcp_p75 : undefined) ??
     (typeof vitals?.p75_lcp === 'number' ? vitals.p75_lcp : undefined);
 
   if (typeof lcpP75 === 'number' && lcpP75 > 0) {
-    if (lcpP75 > 4000) {
-      return {
-        tier: 'degraded',
-        label: 'Elevated Latency',
-        detail: `Origin p75 LCP at ${Math.round(lcpP75)}ms (CrUX field telemetry)`,
-        source: 'crux-telemetry',
-        checkedAt,
-        telemetryTier: 2,
-      };
-    }
+    const gradeSuffix = vitals?.cwv_grade ? `CWV ${vitals.cwv_grade}` : 'Edge normal';
     return {
       tier: 'operational',
       label: 'Operational',
-      detail: `Origin p75 LCP ${Math.round(lcpP75)}ms · Normal edge response`,
+      detail: `CrUX p75 LCP ${Math.round(lcpP75)}ms · ${gradeSuffix}`,
       source: 'crux-telemetry',
       checkedAt,
       telemetryTier: 2,
@@ -418,7 +412,7 @@ export async function resolveSiteHealth(
   return {
     tier: 'operational',
     label: 'Operational',
-    detail: 'No active ASN or origin disruptions detected',
+    detail: 'Edge & ASN routing normal',
     source: 'cloudflare-radar',
     checkedAt,
     telemetryTier: 3,
