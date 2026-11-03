@@ -644,14 +644,14 @@ const TOP_100_DETAILS: Record<string, SiteDossier> = {
     primaryTech: "StackBlitz WebContainers & Frontier Code LLMs",
     marketIntelligence: "Drives strong cross-referral traffic with Netlify, Supabase, and GitHub ecosystems."
   },
-  phind: {
-    description: "Phind is an AI answer engine and pair programmer purpose-built for software developers, combining live documentation search with low-latency code synthesis.",
-    funFact: "Phind fine-tunes custom low-latency code models that rival frontier models on HumanEval software engineering benchmarks.",
-    founded: "2022",
-    headquarters: "San Francisco, CA",
-    businessModel: "Freemium & Phind Pro Subscriptions",
-    primaryTech: "Custom Fine-Tuned Code LLMs & TensorRT-LLM",
-    marketIntelligence: "Concentrated desktop traffic from software engineers debugging stack traces and querying framework documentation."
+  you: {
+    description: "You.com is an AI-powered search and research engine founded by former Salesforce chief scientist Richard Socher, combining real-time web citations with multi-model AI agents.",
+    funFact: "You.com was one of the first search engines to integrate live web citations directly into conversational LLM responses in 2022.",
+    founded: "2020",
+    headquarters: "Palo Alto, CA",
+    businessModel: "Freemium, YouPro Subscriptions & Enterprise API",
+    primaryTech: "Multi-Model AI Routing, React, Python & Cloudflare",
+    marketIntelligence: "Attracts research-heavy desktop traffic comparing frontier LLMs alongside live web search results."
   },
   aws: {
     description: "Amazon Web Services (AWS) is the world’s most comprehensive and broadly adopted cloud infrastructure platform, offering over 200 services from global data centers.",

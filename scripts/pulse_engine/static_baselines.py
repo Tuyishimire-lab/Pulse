@@ -224,7 +224,7 @@ STATIC_BASELINES: dict[str, int] = {
     "railway":              24_000_000,   # #197 Railway
     "luma":                 22_000_000,   # #198 Luma AI
     "kagi":                 19_000_000,   # #199 Kagi Search
-    "phind":                18_000_000,   # #200 Phind
+    "you":                  18_000_000,   # #200 You.com
 }
 
 # Seconds in a calendar month (30.4167 days)
@@ -463,5 +463,5 @@ SITE_META: dict[str, dict] = {
     "railway":       {"name": "Railway", "category": "dev", "color": "#9333ea", "logo": "Rw"},
     "luma":          {"name": "Luma AI", "category": "ai", "color": "#ff3b30", "logo": "Lu"},
     "kagi":          {"name": "Kagi Search", "category": "search", "color": "#ffb319", "logo": "Kg"},
-    "phind":         {"name": "Phind", "category": "ai", "color": "#6366f1", "logo": "Ph"},
+    "you":           {"name": "You.com", "category": "ai", "color": "#6366f1", "logo": "Yo"},
 }

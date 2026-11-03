@@ -24,7 +24,6 @@ const FAVICON_DOMAIN_ALIASES: Record<string, string> = {
 const ICON_HORSE_DOMAINS = new Set([
   'epicgames.com',
   'store.epicgames.com',
-  'phind.com',
 ]);
 
 export function resolveFaviconUrl(url: string, size = 64): { domain: string; primarySrc: string; fallbackSrc: string } {

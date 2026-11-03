@@ -232,7 +232,7 @@ export const SITES: SiteConfig[] = [
   { id: "railway", name: "Railway", url: "https://railway.app", rank: 197, category: "dev", baseline: "24.0M / mo", baselineRaw: 24000000, rate: 9, logo: "Rw", color: "#9333ea", glow: "rgba(147, 51, 234, 0.2)", progress: 0.1, asn: [13335] },
   { id: "luma", name: "Luma AI", url: "https://lumalabs.ai", rank: 198, category: "ai", baseline: "22.0M / mo", baselineRaw: 22000000, rate: 8, logo: "Lu", color: "#ff3b30", glow: "rgba(255, 59, 48, 0.2)", progress: 0.1, asn: [13335] },
   { id: "kagi", name: "Kagi Search", url: "https://kagi.com", rank: 199, category: "search", baseline: "19.0M / mo", baselineRaw: 19000000, rate: 7, logo: "Kg", color: "#ffb319", glow: "rgba(255, 179, 25, 0.2)", progress: 0.1, asn: [13335] },
-  { id: "phind", name: "Phind", url: "https://phind.com", rank: 200, category: "ai", baseline: "18.0M / mo", baselineRaw: 18000000, rate: 6, logo: "Ph", color: "#6366f1", glow: "rgba(99, 102, 241, 0.2)", progress: 0.1, asn: [13335] },
+  { id: "you", name: "You.com", url: "https://you.com", rank: 200, category: "ai", baseline: "18.0M / mo", baselineRaw: 18000000, rate: 6, logo: "Yo", color: "#6366f1", glow: "rgba(99, 102, 241, 0.2)", progress: 18.0, asn: [13335] },
 ];
 
 export const SITE_META: Record<string, SiteMeta> = Object.fromEntries(
