@@ -38,6 +38,9 @@ export const RADAR_DOMAIN_ALIASES: Record<string, string> = {
   'coupang.com': 'coupang',
   'flipkart.com': 'flipkart',
   'bbc.co.uk': 'bbc',
+  'yandex.ru': 'yandex',
+  'yandex.net': 'yandex',
+  'ya.ru': 'yandex',
 };
 
 const MULTI_TLD_BRANDS: Record<string, string> = {
@@ -62,13 +65,15 @@ export function matchRadarDomainToSiteId(domain: string, allSites: SiteConfig[])
     return RADAR_DOMAIN_ALIASES[d];
   }
 
-  // 2. Exact host or subdomain match against catalog sites
+  // 2. Exact host match, or a subdomain of a catalog host (cdn.example.com -> example).
+  //    The reverse (brave.com -> search.brave.com, apple.com -> music.apple.com) is NOT a match:
+  //    a parent domain's DNS volume belongs to the parent brand, not one of its sub-products.
   for (const site of allSites) {
     const siteHost = site.url
       .replace(/https?:\/\/(www\.)?/, '')
       .split('/')[0]
       .toLowerCase();
-    if (siteHost === d || siteHost.endsWith('.' + d) || d.endsWith('.' + siteHost)) {
+    if (siteHost === d || d.endsWith('.' + siteHost)) {
       return site.id;
     }
   }

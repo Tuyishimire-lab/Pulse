@@ -35,7 +35,14 @@ const NUMERIC_TO_ALPHA2: Record<string, string> = {
   '807': 'MK', '818': 'EG', '826': 'GB', '834': 'TZ', '840': 'US', '858': 'UY',
   '860': 'UZ', '862': 'VE', '887': 'YE', '894': 'ZM', '31': 'AZ',  '51': 'AM',
   '70': 'BA',  '72': 'BW',  '158': 'TW',
+  '384': 'CI', '466': 'ML', '512': 'OM', '275': 'PS', '48': 'BH',
 };
+
+/** world-atlas ids are zero-padded strings ("076"); the lookup keys are unpadded ("76"). */
+function geoIdToAlpha2(id: unknown): string | undefined {
+  const n = parseInt(String(id), 10);
+  return Number.isNaN(n) ? undefined : NUMERIC_TO_ALPHA2[String(n)];
+}
 
 // Capital city coordinates [lon, lat]
 const CAPITAL_COORDS: Record<string, [number, number]> = {
@@ -73,6 +80,8 @@ const CAPITAL_COORDS: Record<string, [number, number]> = {
   UG: [32.6, 0.3],     US: [-77.0, 38.9],   UY: [-56.2, -34.9],  UZ: [69.3, 41.3],
   VE: [-66.9, 10.5],   VN: [105.8, 21.0],   YE: [44.2, 15.4],    ZA: [28.2, -25.7],
   ZM: [28.3, -15.4],   ZW: [31.0, -17.8],
+  BH: [50.6, 26.2],    CI: [-5.3, 6.8],     ML: [-8.0, 12.6],    PS: [35.2, 31.9],
+  PR: [-66.1, 18.5],   CH: [7.4, 46.9],
 };
 
 const REGIONS = [
@@ -105,13 +114,68 @@ export interface CountryInfo {
   topSiteName: string;
   topSiteId: string;
   topSiteColor: string;
+  localPlatformId?: string | null;
+  localPlatformName?: string | null;
+  localPlatformSource?: 'radar' | 'curated' | null;
+  radarUpdatedAt?: string | null;
 }
 
 interface Props {
   countryMap: Record<string, CountryInfo>;
 }
 
-function getCountryColor(country: CountryInfo | undefined, layer: MapLayer): { fill: string; hover: string } {
+// Distinct, dark-background-friendly palette for the "Local Platform" layer
+const PLATFORM_PALETTE = [
+  '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#3b82f6', '#ec4899', '#14b8a6', '#f97316',
+  '#a3e635', '#22d3ee', '#e879f9', '#facc15', '#fb7185', '#60a5fa', '#34d399', '#c084fc',
+];
+const OTHER_PLATFORM_COLOR = '#475569';
+const NO_PLATFORM_COLOR = '#1f2937';
+const MAX_LEGEND_PLATFORMS = 12;
+
+function lighten(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c: number) => Math.min(255, Math.round(c + (255 - c) * 0.3));
+  const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+export interface PlatformLegendItem {
+  id: string;
+  name: string;
+  color: string;
+  count: number;
+}
+
+/** Builds the platform legend from the data actually present (most common first). */
+function buildPlatformLegend(countryMap: Record<string, CountryInfo>): {
+  items: PlatformLegendItem[];
+  colorById: Record<string, string>;
+  otherCount: number;
+  noneCount: number;
+} {
+  const counts = new Map<string, { name: string; count: number }>();
+  let noneCount = 0;
+  for (const c of Object.values(countryMap)) {
+    if (!c.localPlatformId) { noneCount++; continue; }
+    const cur = counts.get(c.localPlatformId) ?? { name: c.localPlatformName ?? c.localPlatformId, count: 0 };
+    cur.count++;
+    counts.set(c.localPlatformId, cur);
+  }
+  const sorted = [...counts.entries()].sort((a, b) => b[1].count - a[1].count || a[1].name.localeCompare(b[1].name));
+  const items = sorted.slice(0, MAX_LEGEND_PLATFORMS).map(([id, v], i) => ({
+    id, name: v.name, count: v.count, color: PLATFORM_PALETTE[i % PLATFORM_PALETTE.length],
+  }));
+  const colorById = Object.fromEntries(items.map((it) => [it.id, it.color]));
+  const otherCount = sorted.slice(MAX_LEGEND_PLATFORMS).reduce((n, [, v]) => n + v.count, 0);
+  return { items, colorById, otherCount, noneCount };
+}
+
+function getCountryColor(
+  country: CountryInfo | undefined,
+  layer: MapLayer,
+  platformColors: Record<string, string> = {},
+): { fill: string; hover: string } {
   if (!country) {
     return { fill: '#111827', hover: '#1f2937' };
   }
@@ -128,19 +192,9 @@ function getCountryColor(country: CountryInfo | undefined, layer: MapLayer): { f
   }
 
   if (layer === 'ecosystem') {
-    const siteId = country.topSiteId || 'google';
-    const siteColorMap: Record<string, { fill: string; hover: string }> = {
-      google: { fill: '#3b82f6', hover: '#60a5fa' },
-      youtube: { fill: '#ef4444', hover: '#f87171' },
-      facebook: { fill: '#2563eb', hover: '#3b82f6' },
-      instagram: { fill: '#ec4899', hover: '#f472b6' },
-      chatgpt: { fill: '#10b981', hover: '#34d399' },
-      yandex: { fill: '#dc2626', hover: '#ef4444' },
-      naver: { fill: '#059669', hover: '#10b981' },
-      yahoo: { fill: '#7c3aed', hover: '#8b5cf6' },
-      baidu: { fill: '#1d4ed8', hover: '#2563eb' },
-    };
-    return siteColorMap[siteId] || { fill: country.topSiteColor || '#3b82f6', hover: '#60a5fa' };
+    if (!country.localPlatformId) return { fill: NO_PLATFORM_COLOR, hover: '#374151' };
+    const fill = platformColors[country.localPlatformId] ?? OTHER_PLATFORM_COLOR;
+    return { fill, hover: lighten(fill) };
   }
 
   if (layer === 'population') {
@@ -205,6 +259,9 @@ export default function MapPageClient({ countryMap }: Props) {
   const [searchOpen, setSearchOpen] = useState(false);
 
   const dragRef = useRef<{ x: number; y: number; rot: [number, number, number] } | null>(null);
+  // Set once the pointer moves past a few pixels; a drag that ends over a country must not navigate.
+  const movedRef = useRef(false);
+  const DRAG_THRESHOLD_PX = 5;
   const pinchRef = useRef<number | null>(null);
   const autoRafRef = useRef<number | null>(null);
   const flyRafRef = useRef<number | null>(null);
@@ -314,6 +371,7 @@ export default function MapPageClient({ countryMap }: Props) {
   // Mouse drag handlers
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
+    movedRef.current = false;
     dragRef.current = { x: e.clientX, y: e.clientY, rot: [...rotation] as [number, number, number] };
   }, [rotation]);
 
@@ -325,6 +383,7 @@ export default function MapPageClient({ countryMap }: Props) {
     if (!isDragging || !dragRef.current) return;
     const dx = e.clientX - dragRef.current.x;
     const dy = e.clientY - dragRef.current.y;
+    if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) movedRef.current = true;
     setRotation([
       dragRef.current.rot[0] - dx * 0.35,
       Math.max(-90, Math.min(90, dragRef.current.rot[1] + dy * 0.35)),
@@ -341,6 +400,7 @@ export default function MapPageClient({ countryMap }: Props) {
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       const t = e.touches[0];
+      movedRef.current = false;
       dragRef.current = { x: t.clientX, y: t.clientY, rot: [...rotation] as [number, number, number] };
       setIsDragging(true);
     } else if (e.touches.length === 2) {
@@ -355,6 +415,7 @@ export default function MapPageClient({ countryMap }: Props) {
       const t = e.touches[0];
       const dx = t.clientX - dragRef.current.x;
       const dy = t.clientY - dragRef.current.y;
+      if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) movedRef.current = true;
       setRotation([
         dragRef.current.rot[0] - dx * 0.35,
         Math.max(-90, Math.min(90, dragRef.current.rot[1] + dy * 0.35)),
@@ -388,6 +449,16 @@ export default function MapPageClient({ countryMap }: Props) {
   }, [searchQuery, countryMap]);
 
   const countriesWithData = Object.keys(countryMap).length;
+  const platformLegend = useMemo(() => buildPlatformLegend(countryMap), [countryMap]);
+  const radarCount = useMemo(
+    () => Object.values(countryMap).filter((c) => c.localPlatformSource === 'radar').length,
+    [countryMap],
+  );
+  const radarAsOf = useMemo(() => {
+    const ts = Object.values(countryMap).map((c) => c.radarUpdatedAt).filter(Boolean) as string[];
+    if (!ts.length) return null;
+    return new Date(ts.sort()[ts.length - 1]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }, [countryMap]);
 
   return (
     <div className="min-h-screen bg-[#02020a] text-white font-sans flex flex-col overflow-x-hidden">
@@ -455,7 +526,7 @@ export default function MapPageClient({ countryMap }: Props) {
                   >
                     <span
                       className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: getCountryColor(r, activeLayer).fill }}
+                      style={{ backgroundColor: getCountryColor(r, activeLayer, platformLegend.colorById).fill }}
                     />
                     <span className="text-white font-medium">{r.name}</span>
                     <span className="ml-auto text-[11px] text-[#6d8196]">{r.internetPenetration}</span>
@@ -475,7 +546,7 @@ export default function MapPageClient({ countryMap }: Props) {
             </span>
             {[
               { id: 'penetration', label: 'Penetration %' },
-              { id: 'ecosystem', label: 'Dominant Platform' },
+              { id: 'ecosystem', label: 'Local Platform' },
               { id: 'population', label: 'Connected Population' },
             ].map((layer) => (
               <button
@@ -540,21 +611,33 @@ export default function MapPageClient({ countryMap }: Props) {
 
           {activeLayer === 'ecosystem' && (
             <>
-              {[
-                { label: 'Google', color: '#3b82f6' },
-                { label: 'YouTube', color: '#ef4444' },
-                { label: 'Facebook', color: '#2563eb' },
-                { label: 'Instagram', color: '#ec4899' },
-                { label: 'ChatGPT', color: '#10b981' },
-                { label: 'Yandex', color: '#dc2626' },
-                { label: 'Naver', color: '#059669' },
-                { label: 'Yahoo', color: '#7c3aed' },
-              ].map(({ label, color }) => (
-                <div key={label} className="flex items-center gap-1.5">
+              {platformLegend.items.map(({ id, name, color, count }) => (
+                <div key={id} className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: color }} />
-                  <span className="text-xs text-[#8899aa]">{label}</span>
+                  <span className="text-xs text-[#8899aa]">
+                    {name} <span className="text-[#4d6a84]">({count})</span>
+                  </span>
                 </div>
               ))}
+              {platformLegend.otherCount > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: OTHER_PLATFORM_COLOR }} />
+                  <span className="text-xs text-[#8899aa]">Other <span className="text-[#4d6a84]">({platformLegend.otherCount})</span></span>
+                </div>
+              )}
+              {platformLegend.noneCount > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border border-white/10" style={{ backgroundColor: NO_PLATFORM_COLOR }} />
+                  <span className="text-xs text-[#8899aa]">No data <span className="text-[#4d6a84]">({platformLegend.noneCount})</span></span>
+                </div>
+              )}
+              <p className="basis-full text-[11px] text-[#6d8196] leading-relaxed mt-1">
+                Highest-ranked site in each country after skipping platforms that rank in most countries
+                (Google, YouTube, Meta apps, Apple, Microsoft, Cloudflare, ChatGPT, and any site in over a third of
+                countries&apos; top 15).
+                {' '}Source: Cloudflare Radar top domains for {radarCount} of {countriesWithData} countries
+                {radarAsOf ? ` (as of ${radarAsOf})` : ''}; the rest use Pulse's curated country lists.
+              </p>
             </>
           )}
 
@@ -622,9 +705,9 @@ export default function MapPageClient({ countryMap }: Props) {
                 <Geographies geography={GEO_URL}>
                   {({ geographies }) =>
                     geographies.map((geo) => {
-                      const alpha2 = NUMERIC_TO_ALPHA2[String(geo.id)];
+                      const alpha2 = geoIdToAlpha2(geo.id);
                       const countryData = alpha2 ? countryMap[alpha2] : undefined;
-                      const { fill, hover } = getCountryColor(countryData, activeLayer);
+                      const { fill, hover } = getCountryColor(countryData, activeLayer, platformLegend.colorById);
 
                       return (
                         <Geography
@@ -648,7 +731,10 @@ export default function MapPageClient({ countryMap }: Props) {
                             }
                           }}
                           onMouseLeave={() => setTooltip(null)}
-                          onClick={() => { if (!isDragging && countryData) router.push(`/top-sites/${countryData.slug}`); }}
+                          onClick={() => {
+                            if (movedRef.current || !countryData) return;
+                            router.push(`/top-sites/${countryData.slug}`);
+                          }}
                         />
                       );
                     })
@@ -664,11 +750,7 @@ export default function MapPageClient({ countryMap }: Props) {
 
             {/* Reset button */}
             <button
-              onClick={() => {
-                flyToRegion('all');
-                setTimeout(() => setRotation(DEFAULT_ROTATION), 50);
-                setScale(DEFAULT_SCALE);
-              }}
+              onClick={() => flyToRegion('all')}
               className="absolute top-3 right-3 text-xs text-[#8899aa] hover:text-[#00D4AA] bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 hover:border-[#00D4AA]/40 transition-all"
               title="Reset view"
             >
@@ -692,6 +774,12 @@ export default function MapPageClient({ countryMap }: Props) {
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tooltip.country.topSiteColor }} />
                     <span className="text-[#82c8e5]">#1 {tooltip.country.topSiteName}</span>
                   </div>
+                  {tooltip.country.localPlatformName && (
+                    <div className="text-xs text-[#8899aa]">
+                      Local platform: <span className="text-white font-medium">{tooltip.country.localPlatformName}</span>
+                      <span className="text-[#4d6a84]"> · {tooltip.country.localPlatformSource === 'radar' ? 'Radar' : 'curated'}</span>
+                    </div>
+                  )}
                   <div className="text-[#6d8196] text-xs space-y-0.5">
                     <div>Users: {tooltip.country.internetUsers}</div>
                     <div>Penetration: {tooltip.country.internetPenetration}</div>
@@ -711,7 +799,7 @@ export default function MapPageClient({ countryMap }: Props) {
               {Object.entries(countryMap)
                 .sort(([, a], [, b]) => a.name.localeCompare(b.name))
                 .map(([code, country]) => {
-                  const { fill } = getCountryColor(country, activeLayer);
+                  const { fill } = getCountryColor(country, activeLayer, platformLegend.colorById);
                   return (
                     <button
                       key={code}
@@ -723,7 +811,7 @@ export default function MapPageClient({ countryMap }: Props) {
                         {country.name}
                       </span>
                       <span className="text-[10px] text-[#6d8196] font-mono flex-shrink-0">
-                        {activeLayer === 'penetration' ? country.internetPenetration : (activeLayer === 'ecosystem' ? country.topSiteName : country.internetUsers)}
+                        {activeLayer === 'penetration' ? country.internetPenetration : (activeLayer === 'ecosystem' ? (country.localPlatformName ?? '—') : country.internetUsers)}
                       </span>
                     </button>
                   );

@@ -227,6 +227,10 @@ interface Props {
     topSiteName: string;
     topSiteId: string;
     topSiteColor: string;
+    localPlatformId?: string | null;
+    localPlatformName?: string | null;
+    localPlatformSource?: 'radar' | 'curated' | null;
+    radarUpdatedAt?: string | null;
   }>;
 }
 
