@@ -4,8 +4,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import NavHeader from '../components/NavHeader';
 import FaviconImage from '../components/ui/FaviconImage';
+import Pagination from '../components/ui/Pagination';
+import { CATEGORIES } from '../data/sites';
 import type { MonitoredPlatformStatus } from '../../lib/statusResolver';
-import type { FormattedOutageItem } from '../api/outages/route';
+import type { FormattedOutageItem } from '../../lib/radarOutages';
 import type { RadarStatsData } from '../../types/radar';
 
 interface StatusPageClientProps {
@@ -13,6 +15,27 @@ interface StatusPageClientProps {
   initialOutages: FormattedOutageItem[];
   outageSource: string;
   radarStats: RadarStatsData;
+}
+
+const ITEMS_PER_PAGE = 24;
+
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+  dev: 'Developer Tools',
+  entertainment: 'Entertainment',
+  ecommerce: 'E-Commerce',
+  ai: 'AI Assistants',
+  social: 'Social Media',
+  finance: 'Finance & Crypto',
+  news: 'News & Media',
+  reference: 'Reference',
+  search: 'Search',
+};
+
+function getPlatformTelemetryTier(p: MonitoredPlatformStatus): 1 | 2 | 3 {
+  if (p.status.telemetryTier) return p.status.telemetryTier;
+  if (p.status.source === 'statuspage') return 1;
+  if (p.status.source === 'crux-telemetry') return 2;
+  return 3;
 }
 
 export default function StatusPageClient({
@@ -24,13 +47,18 @@ export default function StatusPageClient({
   const [outages, setOutages] = useState<FormattedOutageItem[]>(initialOutages);
   const [source, setSource] = useState<string>(outageSource);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTier, setFilterTier] = useState<'all' | 'operational' | 'issues'>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeTelemetryTier, setActiveTelemetryTier] = useState<'all' | 'tier1' | 'tier2' | 'tier3'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'operational' | 'issues'>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Hydration-safe timestamp initialization + 60s visibility-aware polling
   useEffect(() => {
-    setLastRefreshed(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    setLastRefreshed(
+      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    );
 
     const pollOutages = async () => {
       if (typeof document !== 'undefined' && document.hidden) return;
@@ -58,27 +86,121 @@ export default function StatusPageClient({
     return () => clearInterval(intervalId);
   }, []);
 
-  const filteredPlatforms = useMemo(() => {
-    return initialPlatforms.filter((p) => {
-      const matchesSearch =
-        !searchQuery.trim() ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter setters that reset currentPage to 1
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
-      if (!matchesSearch) return false;
-      if (filterTier === 'operational') return p.status.tier === 'operational';
-      if (filterTier === 'issues') return p.status.tier !== 'operational';
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleTelemetryTierChange = (tier: 'all' | 'tier1' | 'tier2' | 'tier3') => {
+    setActiveTelemetryTier(tier);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (status: 'all' | 'operational' | 'issues') => {
+    setFilterStatus(status);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setActiveCategory('all');
+    setActiveTelemetryTier('all');
+    setFilterStatus('all');
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    activeCategory !== 'all' ||
+    activeTelemetryTier !== 'all' ||
+    filterStatus !== 'all';
+
+  // 4-Dimension filter evaluation
+  const filteredPlatforms = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return initialPlatforms.filter((p) => {
+      // 1. Search Query filter (matches name, domain, category, detail, or status label)
+      if (query) {
+        const matchesName = p.name.toLowerCase().includes(query);
+        const matchesDomain = p.domain.toLowerCase().includes(query);
+        const matchesCategory = p.category.toLowerCase().includes(query);
+        const matchesDetail = p.status.detail.toLowerCase().includes(query);
+        const matchesLabel = p.status.label.toLowerCase().includes(query);
+        if (!matchesName && !matchesDomain && !matchesCategory && !matchesDetail && !matchesLabel) {
+          return false;
+        }
+      }
+
+      // 2. Category filter
+      if (activeCategory !== 'all' && p.category.toLowerCase() !== activeCategory.toLowerCase()) {
+        return false;
+      }
+
+      // 3. Telemetry Tier filter
+      if (activeTelemetryTier !== 'all') {
+        const tier = getPlatformTelemetryTier(p);
+        if (activeTelemetryTier === 'tier1' && tier !== 1) return false;
+        if (activeTelemetryTier === 'tier2' && tier !== 2) return false;
+        if (activeTelemetryTier === 'tier3' && tier !== 3) return false;
+      }
+
+      // 4. Health Status filter
+      if (filterStatus === 'operational') {
+        if (p.status.tier !== 'operational') return false;
+      } else if (filterStatus === 'issues') {
+        if (p.status.tier === 'operational') return false;
+      }
+
       return true;
     });
-  }, [initialPlatforms, searchQuery, filterTier]);
+  }, [initialPlatforms, searchQuery, activeCategory, activeTelemetryTier, filterStatus]);
 
+  // Pagination calculation
+  const totalItems = filteredPlatforms.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (validPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayedPlatforms = useMemo(() => {
+    return filteredPlatforms.slice(startIndex, endIndex);
+  }, [filteredPlatforms, startIndex, endIndex]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    if (typeof window !== 'undefined') {
+      const el = document.getElementById('monitored-platforms-heading');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  // Metrics and statistics across all initial platforms
   const operationalCount = useMemo(
     () => initialPlatforms.filter((p) => p.status.tier === 'operational').length,
     [initialPlatforms]
   );
-
   const issueCount = initialPlatforms.length - operationalCount;
+
+  const tier1Count = useMemo(
+    () => initialPlatforms.filter((p) => getPlatformTelemetryTier(p) === 1).length,
+    [initialPlatforms]
+  );
+  const tier2Count = useMemo(
+    () => initialPlatforms.filter((p) => getPlatformTelemetryTier(p) === 2).length,
+    [initialPlatforms]
+  );
+  const tier3Count = useMemo(
+    () => initialPlatforms.filter((p) => getPlatformTelemetryTier(p) === 3).length,
+    [initialPlatforms]
+  );
 
   const activeOutageCount = useMemo(
     () => outages.filter((o) => !o.raw?.endDate).length,
@@ -109,7 +231,7 @@ export default function StatusPageClient({
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>
                   {issueCount === 0
-                    ? `All ${operationalCount} Monitored Core Platforms Operational`
+                    ? `All ${operationalCount} Monitored Catalog Platforms Operational`
                     : `${issueCount} Platform Advisory · ${operationalCount} Operational`}
                 </span>
               </div>
@@ -117,7 +239,7 @@ export default function StatusPageClient({
                 Live Internet Outage &amp; Status Tracker
               </h1>
               <p className="text-xs sm:text-sm text-[#94a3b8] mt-2 max-w-2xl leading-relaxed m-0">
-                Real-time operational health checks from official Statuspage v2 endpoints combined with Cloudflare Radar global BGP/ASN network disruption telemetry.
+                Real-time operational health checks across all {initialPlatforms.length} top web platforms powered by Statuspage v2 APIs, CrUX real-user latency telemetry, and Cloudflare Radar global BGP/ASN disruption tracking.
               </p>
             </div>
 
@@ -133,7 +255,7 @@ export default function StatusPageClient({
                 </span>
               </div>
               <span className="text-[11px] text-[#6d8196]">
-                Auto-refreshes every 60s · Source: {source === 'cloudflare' ? 'Cloudflare Radar + Statuspage' : 'Edge Telemetry + Statuspage'}
+                Auto-refreshes every 60s · Source: {source === 'cloudflare' ? 'Cloudflare Radar + Telemetry' : 'Edge Telemetry + Statuspage'}
               </span>
             </div>
           </div>
@@ -142,13 +264,13 @@ export default function StatusPageClient({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/[0.06]">
             <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6d8196] block">
-                Platforms Healthy
+                Platforms Monitored
               </span>
               <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
                 {operationalCount} / {initialPlatforms.length}
               </div>
-              <span className="text-[11px] text-[#94a3b8] mt-0.5 block">
-                Direct Statuspage v2 API
+              <span className="text-[11px] text-[#94a3b8] mt-0.5 block truncate">
+                {tier1Count} Statuspage · {tier2Count} CrUX · {tier3Count} Edge
               </span>
             </div>
 
@@ -190,8 +312,9 @@ export default function StatusPageClient({
           </div>
         </header>
 
-        {/* Section 1: Monitored Major Platforms Grid */}
+        {/* Section 1: Monitored Catalog Platforms Directory */}
         <section className="mb-10" aria-labelledby="monitored-platforms-heading">
+          {/* Header Row: Title, Search, and Operational Status Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <h2
@@ -201,25 +324,36 @@ export default function StatusPageClient({
                 Real-Time Platform Status Directory
               </h2>
               <p className="text-xs text-[#6d8196] m-0 mt-0.5">
-                Click any platform to inspect its full real-time traffic counter, CrUX latency, and historical rank trajectory.
+                Monitoring all {initialPlatforms.length} catalog platforms across Statuspage feeds, CrUX real-user latency, and edge reachability.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter platforms..."
-                aria-label="Filter monitored platforms"
-                className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-[#6d8196] focus:outline-none focus:border-[#82c8e5]/50 w-44"
-              />
-              <div className="inline-flex rounded-xl bg-white/[0.03] p-0.5 border border-white/10">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div className="relative">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Search 200 platforms..."
+                  aria-label="Filter monitored platforms"
+                  className="px-3 py-1.5 pl-8 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder-[#6d8196] focus:outline-none focus:border-[#82c8e5]/50 w-44 sm:w-52"
+                />
+                <svg
+                  className="w-3.5 h-3.5 text-[#6d8196] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              <div className="inline-flex rounded-xl bg-white/[0.03] p-0.5 border border-white/10 flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => setFilterTier('all')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    filterTier === 'all'
+                  onClick={() => handleStatusChange('all')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    filterStatus === 'all'
                       ? 'bg-[#82c8e5]/20 text-[#82c8e5]'
                       : 'text-[#6d8196] hover:text-white'
                   }`}
@@ -228,9 +362,9 @@ export default function StatusPageClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFilterTier('operational')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    filterTier === 'operational'
+                  onClick={() => handleStatusChange('operational')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    filterStatus === 'operational'
                       ? 'bg-emerald-500/20 text-emerald-300'
                       : 'text-[#6d8196] hover:text-white'
                   }`}
@@ -239,9 +373,9 @@ export default function StatusPageClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFilterTier('issues')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    filterTier === 'issues'
+                  onClick={() => handleStatusChange('issues')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    filterStatus === 'issues'
                       ? 'bg-amber-500/20 text-amber-300'
                       : 'text-[#6d8196] hover:text-white'
                   }`}
@@ -252,95 +386,273 @@ export default function StatusPageClient({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {filteredPlatforms.map((platform) => {
-              const tier = platform.status.tier;
-              const badgeStyles = {
-                operational: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300',
-                degraded: 'bg-amber-500/10 border-amber-500/25 text-amber-300',
-                advisory: 'bg-sky-500/10 border-sky-500/25 text-sky-300',
-                outage: 'bg-red-500/15 border-red-500/35 text-red-300',
-              }[tier];
+          {/* Telemetry Tier Filter Tabs */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-3" role="tablist" aria-label="Telemetry tiers">
+            <button
+              type="button"
+              onClick={() => handleTelemetryTierChange('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                activeTelemetryTier === 'all'
+                  ? 'bg-[#82c8e5]/20 text-[#82c8e5] border border-[#82c8e5]/40 shadow-[0_0_12px_rgba(130,200,229,0.15)]'
+                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+              }`}
+              role="tab"
+              aria-selected={activeTelemetryTier === 'all'}
+            >
+              All Tiers ({initialPlatforms.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTelemetryTierChange('tier1')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                activeTelemetryTier === 'tier1'
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.2)]'
+                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+              }`}
+              role="tab"
+              aria-selected={activeTelemetryTier === 'tier1'}
+            >
+              Tier 1 · Statuspage v2 ({tier1Count})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTelemetryTierChange('tier2')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                activeTelemetryTier === 'tier2'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
+                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+              }`}
+              role="tab"
+              aria-selected={activeTelemetryTier === 'tier2'}
+            >
+              Tier 2 · CrUX Latency ({tier2Count})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTelemetryTierChange('tier3')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                activeTelemetryTier === 'tier3'
+                  ? 'bg-slate-500/20 text-slate-200 border border-slate-400/40 shadow-[0_0_12px_rgba(148,163,184,0.2)]'
+                  : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+              }`}
+              role="tab"
+              aria-selected={activeTelemetryTier === 'tier3'}
+            >
+              Tier 3 · Edge Baseline ({tier3Count})
+            </button>
+          </div>
 
-              const dotColor = {
-                operational: 'bg-emerald-400',
-                degraded: 'bg-amber-400',
-                advisory: 'bg-sky-400',
-                outage: 'bg-red-400',
-              }[tier];
-
+          {/* Category Filter Pills (Horizontal Scrollable) */}
+          <div
+            className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none"
+            role="tablist"
+            aria-label="Catalog categories"
+          >
+            {CATEGORIES.map((cat) => {
+              const isActive = activeCategory === cat.id;
               return (
-                <div
-                  key={platform.id}
-                  className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between gap-3"
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleCategoryChange(cat.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex-shrink-0 ${
+                    isActive
+                      ? 'bg-[#0047ab] text-white border border-[#82c8e5]/40 shadow-[0_0_12px_rgba(0,71,171,0.35)]'
+                      : 'bg-white/[0.03] text-[#6d8196] border border-white/10 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                  role="tab"
+                  aria-selected={isActive}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <Link
-                      href={`/sites/${platform.id}`}
-                      className="flex items-center gap-3 group min-w-0"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor:
-                            platform.color === '#ffffff' ? '#18181b' : `${platform.color}22`,
-                          border: `1px solid ${platform.color}44`,
-                        }}
-                      >
-                        <FaviconImage
-                          url={`https://${platform.domain}`}
-                          logo={platform.logo}
-                          color={platform.color}
-                          size={24}
-                          className="w-6 h-6 rounded object-contain"
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-sm text-white group-hover:text-[#82c8e5] transition-colors truncate">
-                          {platform.name}
-                        </div>
-                        <div className="text-[11px] text-[#6d8196] truncate">
-                          {platform.domain} · #{platform.rank} Global
-                        </div>
-                      </div>
-                    </Link>
-
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border flex-shrink-0 ${badgeStyles}`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${dotColor} animate-pulse`} />
-                      <span>{platform.status.label}</span>
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.05] text-[11px]">
-                    <span className="text-[#94a3b8] truncate pr-2" title={platform.status.detail}>
-                      {platform.status.detail}
-                    </span>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {platform.status.statusUrl && (
-                        <a
-                          href={platform.status.statusUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#6d8196] hover:text-white transition-colors"
-                          title={`Official ${platform.name} Status Page`}
-                        >
-                          Status ↗
-                        </a>
-                      )}
-                      <Link
-                        href={`/sites/${platform.id}`}
-                        className="text-[#82c8e5] hover:underline font-semibold"
-                      >
-                        Metrics →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                  {cat.label}
+                </button>
               );
             })}
           </div>
+
+          {/* Active Filter Summary Bar */}
+          {hasActiveFilters && (
+            <div className="flex items-center justify-between text-xs text-[#94a3b8] mb-3 px-1">
+              <span>
+                Found <strong className="text-white">{filteredPlatforms.length}</strong> matching platforms
+                {activeCategory !== 'all' && (
+                  <> in <span className="text-[#82c8e5] font-semibold">{CATEGORY_LABEL_MAP[activeCategory] || activeCategory}</span></>
+                )}
+                {activeTelemetryTier !== 'all' && (
+                  <> under <span className="text-[#82c8e5] font-semibold">Tier {activeTelemetryTier.replace('tier', '')}</span></>
+                )}
+                {filterStatus !== 'all' && (
+                  <> with status <span className="text-[#82c8e5] font-semibold">{filterStatus}</span></>
+                )}
+                {searchQuery.trim() && (
+                  <> matching &ldquo;<span className="text-white">{searchQuery.trim()}</span>&rdquo;</>
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="text-xs text-[#82c8e5] hover:text-white hover:underline cursor-pointer flex-shrink-0 ml-2"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+
+          {/* Empty State when 0 platforms match filters */}
+          {filteredPlatforms.length === 0 ? (
+            <div className="p-12 text-center rounded-2xl bg-white/[0.02] border border-white/[0.08] my-6">
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto mb-4 text-[#82c8e5]">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-white mb-1">No platforms match your filters</h3>
+              <p className="text-xs text-[#94a3b8] max-w-md mx-auto mb-5">
+                We could not find any platforms matching your selected criteria. Try adjusting your search term, clearing category pills, or selecting a different telemetry tier.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0047ab] hover:bg-[#0055cc] text-white text-xs font-semibold shadow-lg shadow-[#0047ab]/30 transition cursor-pointer"
+              >
+                Reset All Filters
+              </button>
+            </div>
+          ) : (
+            /* Platforms Grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {displayedPlatforms.map((platform) => {
+                const tier = platform.status.tier;
+                const telemetryTier = getPlatformTelemetryTier(platform);
+
+                const badgeStyles = {
+                  operational: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300',
+                  degraded: 'bg-amber-500/10 border-amber-500/25 text-amber-300',
+                  advisory: 'bg-sky-500/10 border-sky-500/25 text-sky-300',
+                  outage: 'bg-red-500/15 border-red-500/35 text-red-300',
+                }[tier];
+
+                const dotColor = {
+                  operational: 'bg-emerald-400',
+                  degraded: 'bg-amber-400',
+                  advisory: 'bg-sky-400',
+                  outage: 'bg-red-400',
+                }[tier];
+
+                const telemetryBadge = {
+                  1: {
+                    label: 'Tier 1 · Statuspage',
+                    style: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/25',
+                  },
+                  2: {
+                    label: 'Tier 2 · CrUX Telemetry',
+                    style: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/25',
+                  },
+                  3: {
+                    label: 'Tier 3 · Edge Baseline',
+                    style: 'bg-slate-500/10 text-slate-300 border-slate-500/25',
+                  },
+                }[telemetryTier];
+
+                const categoryLabel = CATEGORY_LABEL_MAP[platform.category] || platform.category;
+
+                return (
+                  <div
+                    key={platform.id}
+                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between gap-3 min-h-[140px]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <Link
+                        href={`/sites/${platform.id}`}
+                        className="flex items-center gap-3 group min-w-0"
+                      >
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor:
+                              platform.color === '#ffffff' ? '#18181b' : `${platform.color}22`,
+                            border: `1px solid ${platform.color}44`,
+                          }}
+                        >
+                          <FaviconImage
+                            url={`https://${platform.domain}`}
+                            logo={platform.logo}
+                            color={platform.color}
+                            size={24}
+                            className="w-6 h-6 rounded object-contain"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-sm text-white group-hover:text-[#82c8e5] transition-colors truncate">
+                            {platform.name}
+                          </div>
+                          <div className="text-[11px] text-[#6d8196] truncate">
+                            {platform.domain} · #{platform.rank} Global
+                          </div>
+                        </div>
+                      </Link>
+
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border flex-shrink-0 ${badgeStyles}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${dotColor} animate-pulse`} />
+                        <span>{platform.status.label}</span>
+                      </span>
+                    </div>
+
+                    {/* Metadata Badges: Telemetry Tier & Category */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium border ${telemetryBadge.style}`}
+                      >
+                        {telemetryBadge.label}
+                      </span>
+                      <span className="text-[10px] text-[#6d8196] font-medium bg-white/[0.03] px-2 py-0.5 rounded-md border border-white/[0.05]">
+                        {categoryLabel}
+                      </span>
+                    </div>
+
+                    {/* Footer: Detail string & action links */}
+                    <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.05] text-[11px]">
+                      <span className="text-[#94a3b8] truncate pr-2" title={platform.status.detail}>
+                        {platform.status.detail}
+                      </span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {platform.status.statusUrl && (
+                          <a
+                            href={platform.status.statusUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#6d8196] hover:text-white transition-colors"
+                            title={`Official ${platform.name} Status Page`}
+                          >
+                            Status ↗
+                          </a>
+                        )}
+                        <Link
+                          href={`/sites/${platform.id}`}
+                          className="text-[#82c8e5] hover:underline font-semibold"
+                        >
+                          Metrics →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={validPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              startIndex={startIndex}
+              endIndex={endIndex}
+            />
+          )}
         </section>
 
         {/* Section 2: Cloudflare Radar Global Network Disruptions & ASN Outage Log */}
