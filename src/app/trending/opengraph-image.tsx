@@ -21,6 +21,7 @@ export default async function Image() {
 
   const topRisers = (primary?.risers || []).slice(0, 3);
   const topFallers = (primary?.fallers || []).slice(0, 3);
+  const timeframeBadge = `${primary?.timeframe?.toUpperCase() || '7D'} VELOCITY LEADERBOARD`;
 
   return new ImageResponse(
     (
@@ -42,6 +43,7 @@ export default async function Image() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div
               style={{
+                display: 'flex',
                 fontSize: '14px',
                 fontWeight: 800,
                 color: '#82c8e5',
@@ -51,8 +53,8 @@ export default async function Image() {
             >
               PULSE TRAFFIC INDEX · LIVE RANK MOVERS
             </div>
-            <div style={{ fontSize: '42px', fontWeight: 900, letterSpacing: '-1px' }}>
-              Trending Websites ({CURRENT_YEAR})
+            <div style={{ display: 'flex', fontSize: '42px', fontWeight: 900, letterSpacing: '-1px' }}>
+              {`Trending Websites (${CURRENT_YEAR})`}
             </div>
           </div>
 
@@ -69,7 +71,7 @@ export default async function Image() {
               fontWeight: 700,
             }}
           >
-            {primary?.timeframe?.toUpperCase() || '7D'} VELOCITY LEADERBOARD
+            {timeframeBadge}
           </div>
         </div>
 
@@ -89,6 +91,7 @@ export default async function Image() {
           >
             <div
               style={{
+                display: 'flex',
                 fontSize: '14px',
                 fontWeight: 800,
                 color: '#34d399',
@@ -128,25 +131,28 @@ export default async function Image() {
                       {site.logo}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '20px', fontWeight: 800 }}>{site.name}</span>
-                      <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                        Rank #{site.currentRank} · {site.baseline}/mo
+                      <span style={{ display: 'flex', fontSize: '20px', fontWeight: 800 }}>
+                        {site.name}
+                      </span>
+                      <span style={{ display: 'flex', fontSize: '13px', color: '#94a3b8' }}>
+                        {`Rank #${site.currentRank} · ${site.baseline}/mo`}
                       </span>
                     </div>
                   </div>
                   <div
                     style={{
+                      display: 'flex',
                       fontSize: '22px',
                       fontWeight: 900,
                       color: '#34d399',
                     }}
                   >
-                    +{site.delta}
+                    {`+${site.delta}`}
                   </div>
                 </div>
               ))
             ) : (
-              <div style={{ fontSize: '16px', color: '#94a3b8' }}>
+              <div style={{ display: 'flex', fontSize: '16px', color: '#94a3b8' }}>
                 Tracking live rank movements across 200 global domains
               </div>
             )}
@@ -166,6 +172,7 @@ export default async function Image() {
           >
             <div
               style={{
+                display: 'flex',
                 fontSize: '14px',
                 fontWeight: 800,
                 color: '#f87171',
@@ -205,25 +212,28 @@ export default async function Image() {
                       {site.logo}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '20px', fontWeight: 800 }}>{site.name}</span>
-                      <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                        Rank #{site.currentRank} · {site.baseline}/mo
+                      <span style={{ display: 'flex', fontSize: '20px', fontWeight: 800 }}>
+                        {site.name}
+                      </span>
+                      <span style={{ display: 'flex', fontSize: '13px', color: '#94a3b8' }}>
+                        {`Rank #${site.currentRank} · ${site.baseline}/mo`}
                       </span>
                     </div>
                   </div>
                   <div
                     style={{
+                      display: 'flex',
                       fontSize: '22px',
                       fontWeight: 900,
                       color: '#f87171',
                     }}
                   >
-                    {site.delta}
+                    {`${site.delta}`}
                   </div>
                 </div>
               ))
             ) : (
-              <div style={{ fontSize: '16px', color: '#94a3b8' }}>
+              <div style={{ display: 'flex', fontSize: '16px', color: '#94a3b8' }}>
                 Real-time rank trajectory monitoring
               </div>
             )}

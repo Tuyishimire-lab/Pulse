@@ -37,6 +37,7 @@ export default async function Image() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div
               style={{
+                display: 'flex',
                 fontSize: '14px',
                 fontWeight: 800,
                 color: '#82c8e5',
@@ -46,8 +47,8 @@ export default async function Image() {
             >
               CLOUDFLARE RADAR · 115+ COUNTRIES TELEMETRY
             </div>
-            <div style={{ fontSize: '44px', fontWeight: 900, letterSpacing: '-1px' }}>
-              Global Web Traffic Map ({CURRENT_YEAR})
+            <div style={{ display: 'flex', fontSize: '44px', fontWeight: 900, letterSpacing: '-1px' }}>
+              {`Global Web Traffic Map (${CURRENT_YEAR})`}
             </div>
           </div>
 
@@ -83,17 +84,34 @@ export default async function Image() {
                 padding: '24px',
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#82c8e5', letterSpacing: '1px' }}>
-                {h.penetration} PENETRATION
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#82c8e5',
+                  letterSpacing: '1px',
+                }}
+              >
+                {`${h.penetration} PENETRATION`}
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 900, marginTop: '8px' }}>
+              <div style={{ display: 'flex', fontSize: '24px', fontWeight: 900, marginTop: '8px' }}>
                 {h.region}
               </div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#34d399', marginTop: '6px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: '#34d399',
+                  marginTop: '6px',
+                }}
+              >
                 {h.users}
               </div>
               <div
                 style={{
+                  display: 'flex',
                   fontSize: '13px',
                   color: '#94a3b8',
                   marginTop: '14px',
@@ -101,7 +119,7 @@ export default async function Image() {
                   borderTop: '1px solid rgba(255,255,255,0.08)',
                 }}
               >
-                Local Leader: {h.leader}
+                {`Local Leader: ${h.leader}`}
               </div>
             </div>
           ))}
@@ -119,7 +137,9 @@ export default async function Image() {
           }}
         >
           <span>WWW.PULSTRAFFIC.COM/MAP</span>
-          <span style={{ color: '#82c8e5', fontWeight: 800 }}>INTERACTIVE 3D GLOBE &amp; REGIONAL LEADERS</span>
+          <span style={{ color: '#82c8e5', fontWeight: 800 }}>
+            INTERACTIVE 3D GLOBE &amp; REGIONAL LEADERS
+          </span>
         </div>
       </div>
     ),
