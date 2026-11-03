@@ -75,6 +75,16 @@ jobs:
         run: |
           python scripts/pulse_engine/enrichment.py
 
+      - name: Trigger Daily Cron (country rankings + sync log)
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -n "$CRON_SECRET" ]; then
+            curl -fsS --max-time 90 -H "Authorization: Bearer $CRON_SECRET" https://www.pulstraffic.com/api/cron/daily-job || echo "Daily cron trigger returned non-200"
+          else
+            echo "CRON_SECRET not configured in GitHub secrets; skipping remote trigger (Vercel cron runs independently)"
+          fi
+
   # ── JOB 2: Update Baselines (monthly — 1st of each month) ───────────────────
   update-baselines:
     name: Update Monthly Baselines

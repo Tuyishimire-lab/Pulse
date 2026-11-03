@@ -200,6 +200,16 @@ def run_pulse_engine(run_validation_report: bool = True):
         except Exception as e:
             print(f"  [Warning] Ground-truth validation error: {e}")
 
+    try:
+        supabase.table("sync_log").insert({
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "sites_count": updates_count,
+            "status": "success",
+            "error_message": None,
+        }).execute()
+    except Exception as e:
+        print(f"  [Warning] Could not write sync_log: {e}")
+
     print("=" * 60)
     print("Pulse Engine v3 completed.")
     print("=" * 60)

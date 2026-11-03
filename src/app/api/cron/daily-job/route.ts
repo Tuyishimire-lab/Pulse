@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { parseDomain } from '../../../../utils/domain';
 import { generateAIStories, SiteSnapshot, CategoryTotal } from '../../../../utils/groqAnalysis';
 import { ALL_COUNTRIES, CountryData } from '../../../top-sites/data/countries';
-import { getRegionalProfile } from '../../../top-sites/data/regionalProfiles';
-import { matchRadarDomainToSiteId } from '../../../../lib/getCountrySites';
+import { ensureTwentyCountrySites, matchRadarDomainToSiteId } from '../../../../lib/getCountrySites';
 import { submitToIndexNow } from '../../../../lib/indexnow';
+import { cronAuthError } from '../../../../lib/auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
@@ -25,8 +25,6 @@ interface CronSiteRow {
   keywords?: string[] | null;
   rank_history?: { rank: number; date: string }[];
 }
-
-
 
 interface HistoryInsertionRow {
   site_id: string;
@@ -128,10 +126,6 @@ async function fetchGoogleSuggestKeywords(url: string): Promise<string[] | null>
   }
 }
 
-
-
-import { cronAuthError } from '../../../../lib/auth';
-
 export async function GET(request: Request) {
   const authError = cronAuthError(request);
   if (authError) return authError;
@@ -143,26 +137,15 @@ export async function GET(request: Request) {
     );
   }
 
-  const oprApiKey = process.env.OPENPAGERANK_API_KEY;
-  if (!oprApiKey) {
-    return NextResponse.json(
-      { success: false, message: 'Open PageRank API Key missing in environment' },
-      { status: 500 }
-    );
-  }
-
   try {
-    // 2. Fetch all current sites from Supabase
+    // 1. Fetch all current sites from Supabase
     const { data: rawSites, error: fetchError } = await supabase
       .from('sites')
       .select('*')
       .order('rank', { ascending: true });
 
     if (fetchError || !rawSites || rawSites.length === 0) {
-      return NextResponse.json(
-        { success: false, error: fetchError?.message || 'No sites found' },
-        { status: 500 }
-      );
+      throw new Error(fetchError?.message || 'No sites found in database');
     }
     const sites = rawSites as CronSiteRow[];
 
@@ -172,48 +155,28 @@ export async function GET(request: Request) {
     // (DNS query volume heavily inflates OS telemetry like apple.com/microsoft.com
     // while undercounting CDN/app-first video streams like youtube.com/tiktok.com).
 
-    // ── Country-specific rankings refresh (runs daily, after global sync) ──────
+    // ── 2. Country-specific rankings refresh ───────────────────────────────────
     // For each country: call Cloudflare Radar with location=cfCode, match domains
-    // to our sites database, upsert to country_rankings table.
+    // to our sites database, and bulk-upsert to country_rankings table.
     // getCountrySites.ts reads this table and falls back to live Radar if stale.
     const cfRadarToken = process.env.CLOUDFLARE_API_TOKEN;
+    let countriesRefreshed = 0;
+
     if (cfRadarToken) {
       try {
         console.log('Unified Cron: Starting country-specific rankings refresh...');
 
-        // Build domain → siteId lookup from current sites, with standard domain aliases
-        const domainToSiteId = new Map<string, string>();
-        sites.forEach((site) => {
-          const host = site.url
-            .replace(/https?:\/\/(www\.)?/, '')
-            .split('/')[0]
-            .toLowerCase();
-          domainToSiteId.set(host, site.id);
-        });
-
-        const RADAR_DOMAIN_ALIASES: Record<string, string> = {
-          'twitter.com': 'x',
-          't.co': 'x',
-          'openai.com': 'chatgpt',
-          'fb.com': 'facebook',
-          'm.facebook.com': 'facebook',
-          'youtu.be': 'youtube',
-          'en.wikipedia.org': 'wikipedia',
-          'characterai.com': 'characterai',
-          'notion.site': 'notion',
-          'us.temu.com': 'temu',
-        };
-        for (const [aliasDomain, siteId] of Object.entries(RADAR_DOMAIN_ALIASES)) {
-          if (!domainToSiteId.has(aliasDomain)) {
-            domainToSiteId.set(aliasDomain, siteId);
-          }
-        }
-
-        const BATCH_SIZE = 5;
-        const BATCH_DELAY_MS = 300; // stay within Cloudflare rate limits
-        let countriesProcessed = 0;
+        const BATCH_SIZE = 15;
+        const BATCH_DELAY_MS = 100;
         let countriesWithRadarData = 0;
         let countriesWithFallback = 0;
+        const updatedAtIso = new Date().toISOString();
+        const countryRows: {
+          cf_code: string;
+          site_ids: string[];
+          source: string;
+          updated_at: string;
+        }[] = [];
 
         for (let i = 0; i < ALL_COUNTRIES.length; i += BATCH_SIZE) {
           const batch = ALL_COUNTRIES.slice(i, i + BATCH_SIZE);
@@ -224,205 +187,140 @@ export async function GET(request: Request) {
                 `https://api.cloudflare.com/client/v4/radar/ranking/top?limit=100&location=${country.cfCode}&format=json`,
                 {
                   headers: { 'Authorization': `Bearer ${cfRadarToken}`, 'Accept': 'application/json' },
-                  signal: AbortSignal.timeout(8000),
+                  signal: AbortSignal.timeout(6000),
                 }
               );
 
-              let siteIds: string[] = [];
-              let source = 'radar';
-
+              const radarMatches: string[] = [];
               if (cfRes.ok) {
                 const cfData = await cfRes.json();
                 if (cfData.success && cfData.result?.top_0) {
                   for (const item of cfData.result.top_0 as { domain: string }[]) {
-                    const domain = item.domain.toLowerCase().replace(/^www\./, '');
-                    const id = domainToSiteId.get(domain) ?? matchRadarDomainToSiteId(domain, sites as never);
-                    if (id && !siteIds.includes(id)) siteIds.push(id);
-                    if (siteIds.length >= 20) break;
+                    const id = matchRadarDomainToSiteId(item.domain, sites as never);
+                    if (id && !radarMatches.includes(id)) radarMatches.push(id);
+                    if (radarMatches.length >= 20) break;
                   }
                 }
               }
 
-              // Ensure a full 20-site list by filling any remaining slots from the regional profile
-              if (siteIds.length < 20) {
-                const wasBelowTen = siteIds.length < 10;
-                const regionalIds = getRegionalProfile(country.cfCode);
-                const combined = [...siteIds];
-                for (const id of regionalIds) {
-                  if (!combined.includes(id)) combined.push(id);
-                  if (combined.length >= 20) break;
-                }
-                siteIds = combined;
-                if (wasBelowTen) {
-                  source = 'regional-profile';
-                  countriesWithFallback++;
-                } else {
-                  countriesWithRadarData++;
-                }
+              // If Radar has < 5 matches (e.g. CN behind Great Firewall) and country has pinnedSiteIds, preserve pinned list
+              let seedIds = radarMatches;
+              let source = 'radar';
+              if (radarMatches.length < 5 && Array.isArray(country.pinnedSiteIds) && country.pinnedSiteIds.length >= 10) {
+                seedIds = country.pinnedSiteIds;
+                source = 'pinned';
+                countriesWithFallback++;
+              } else if (radarMatches.length < 10) {
+                source = 'regional-profile';
+                countriesWithFallback++;
               } else {
                 countriesWithRadarData++;
               }
 
-              // Upsert to Supabase
-              await supabase.from('country_rankings').upsert({
+              const fullIds = ensureTwentyCountrySites(seedIds, country.cfCode, sites as never);
+              countryRows.push({
                 cf_code: country.cfCode.toUpperCase(),
-                site_ids: siteIds.slice(0, 20),
+                site_ids: fullIds.slice(0, 20),
                 source,
-                updated_at: new Date().toISOString(),
-              }, { onConflict: 'cf_code' });
-
-              countriesProcessed++;
+                updated_at: updatedAtIso,
+              });
             } catch (countryErr) {
               console.warn(`Cron: Country rankings failed for ${country.cfCode}:`, countryErr);
             }
           }));
 
-          // Rate limit pause between batches
           if (i + BATCH_SIZE < ALL_COUNTRIES.length) {
             await new Promise((r) => setTimeout(r, BATCH_DELAY_MS));
           }
         }
 
-        console.log(`Unified Cron: Country rankings refreshed - ${countriesProcessed} countries, ${countriesWithRadarData} with Radar data, ${countriesWithFallback} with regional fallback.`);
+        if (countryRows.length > 0) {
+          const { error: upsertErr } = await supabase
+            .from('country_rankings')
+            .upsert(countryRows, { onConflict: 'cf_code' });
+          if (upsertErr) {
+            console.warn('Unified Cron: Bulk country_rankings upsert warning:', upsertErr);
+          } else {
+            countriesRefreshed = countryRows.length;
+          }
+        }
+
+        console.log(`Unified Cron: Country rankings refreshed - ${countryRows.length} countries, ${countriesWithRadarData} with Radar data, ${countriesWithFallback} with regional/pinned fallback.`);
       } catch (countryRankErr) {
         console.warn('Unified Cron: Country rankings refresh failed:', countryRankErr);
       }
     }
 
-    // 3. Query Open PageRank API for all domains in batches of 100 (covering all cataloged domains)
-    const domainsList = sites.map((s) => parseDomain(s.url));
-    const rankMap: Record<string, { pageRank: number; globalRank: number }> = {};
-    const OPR_CHUNK_SIZE = 100;
+    // ── 3. Incremental Keyword & Radar Category Enrichment ────────────────────
+    // Only enrich up to 20 sites per cron run that do not yet have keywords,
+    // keeping each serverless invocation well under Vercel's execution timeout.
+    const sitesNeedingKeywords = sites
+      .filter((s) => !Array.isArray(s.keywords) || s.keywords.length === 0)
+      .slice(0, 20);
 
-    for (let i = 0; i < domainsList.length; i += OPR_CHUNK_SIZE) {
-      const chunk = domainsList.slice(i, i + OPR_CHUNK_SIZE);
-      try {
-        const oprRes = await fetch('https://openpagerank.keywordseverywhere.com/v1/domains/bulk', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${oprApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ domains: chunk }),
-          signal: AbortSignal.timeout(10000),
-        });
-
-        if (oprRes.ok) {
-          const oprData = await oprRes.json();
-          if (oprData && Array.isArray(oprData.results)) {
-            oprData.results.forEach((item: { domain: string; open_page_rank?: number; rank?: number }) => {
-              rankMap[item.domain] = {
-                pageRank: item.open_page_rank ?? 0,
-                globalRank: item.rank ?? 9999999,
-              };
-            });
-          }
-        }
-      } catch (oprErr) {
-        console.warn(`Unified Cron: Open PageRank chunk failed (${i}..${i + chunk.length}):`, oprErr);
-      }
-    }
-
-    // 3b. Cloudflare Radar: Domain-Level Telemetry & Categorization
-    // Polls Cloudflare Radar for popularity tiers and authoritative category classifications
     const radarCategoryMap: Record<string, string[]> = {};
-    if (cfRadarToken) {
-      try {
-        console.log('Unified Cron: Polling Cloudflare Radar domain-level telemetry...');
-        const RADAR_BATCH_SIZE = 10;
-        const RADAR_BATCH_DELAY_MS = 200;
+    const keKeywordsMap: Record<string, string[] | null> = {};
+    const finalKeywordsMap: Record<string, string[]> = {};
 
-        for (let i = 0; i < sites.length; i += RADAR_BATCH_SIZE) {
-          const batch = sites.slice(i, i + RADAR_BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (site) => {
-              try {
-                const domain = parseDomain(site.url);
-                const radarRes = await fetch(
-                  `https://api.cloudflare.com/client/v4/radar/ranking/domain/${encodeURIComponent(domain)}`,
-                  {
-                    headers: {
-                      'Authorization': `Bearer ${cfRadarToken}`,
-                      'Accept': 'application/json',
-                    },
-                    signal: AbortSignal.timeout(6000),
-                  }
-                );
-                if (radarRes.ok) {
-                  const radarData = await radarRes.json();
-                  const categories = radarData.result?.details_0?.categories;
-                  if (Array.isArray(categories) && categories.length > 0) {
-                    const tagNames = categories
-                      .map((c: { name?: string }) => c.name)
-                      .filter(Boolean) as string[];
-                    if (tagNames.length > 0) {
-                      radarCategoryMap[site.id] = tagNames;
-                    }
+    if (sitesNeedingKeywords.length > 0) {
+      await Promise.all(
+        sitesNeedingKeywords.map(async (site) => {
+          try {
+            if (cfRadarToken) {
+              const domain = parseDomain(site.url);
+              const radarRes = await fetch(
+                `https://api.cloudflare.com/client/v4/radar/ranking/domain/${encodeURIComponent(domain)}`,
+                {
+                  headers: {
+                    'Authorization': `Bearer ${cfRadarToken}`,
+                    'Accept': 'application/json',
+                  },
+                  signal: AbortSignal.timeout(5000),
+                }
+              );
+              if (radarRes.ok) {
+                const radarData = await radarRes.json();
+                const categories = radarData.result?.details_0?.categories;
+                if (Array.isArray(categories) && categories.length > 0) {
+                  const tagNames = categories
+                    .map((c: { name?: string }) => c.name)
+                    .filter(Boolean) as string[];
+                  if (tagNames.length > 0) {
+                    radarCategoryMap[site.id] = tagNames;
                   }
                 }
-              } catch {
-                // Non-critical: domain-level telemetry fails gracefully
               }
-            })
-          );
+            }
 
-          if (i + RADAR_BATCH_SIZE < sites.length) {
-            await new Promise((r) => setTimeout(r, RADAR_BATCH_DELAY_MS));
-          }
-        }
-        console.log(`Unified Cron: Cloudflare Radar categorized ${Object.keys(radarCategoryMap).length} domains.`);
-      } catch (radarErr) {
-        console.warn('Unified Cron: Radar domain polling warning:', radarErr);
-      }
-    }
-
-    // 4. Enrich keywords (Keywords Everywhere + Google Suggest + Cloudflare Radar category tags)
-    const keKeywordsMap: Record<string, string[] | null> = {};
-    const KEYWORD_BATCH_SIZE = 20;
-
-    for (let i = 0; i < sites.length; i += KEYWORD_BATCH_SIZE) {
-      const batch = sites.slice(i, i + KEYWORD_BATCH_SIZE);
-      await Promise.all(
-        batch.map(async (site) => {
-          try {
             let keywords = await fetchKeywordsEverywhereKeywords(site.url);
-            // Fallback to Google Suggest (free) if KE fails
             if (!keywords || keywords.length === 0) {
               keywords = await fetchGoogleSuggestKeywords(site.url);
             }
             keKeywordsMap[site.id] = keywords;
+
+            const combined = Array.from(
+              new Set([...(keywords || []), ...(radarCategoryMap[site.id] || [])])
+            ).slice(0, 6);
+            if (combined.length > 0) {
+              finalKeywordsMap[site.id] = combined;
+            }
           } catch (err) {
             console.warn(`Keyword enrichment failed for ${site.id}:`, err);
           }
         })
       );
+
+      const keywordUpdates = sitesNeedingKeywords
+        .filter((s) => finalKeywordsMap[s.id] && finalKeywordsMap[s.id].length > 0)
+        .map((s) => supabase.from('sites').update({ keywords: finalKeywordsMap[s.id] }).eq('id', s.id));
+
+      if (keywordUpdates.length > 0) {
+        await Promise.all(keywordUpdates);
+        console.log(`Unified Cron: Enriched keywords for ${keywordUpdates.length} sites.`);
+      }
     }
 
-    // Combine search keywords with authoritative Cloudflare Radar category tags
-    const finalKeywordsMap: Record<string, string[]> = {};
-    sites.forEach((site) => {
-      const searchKeywords = keKeywordsMap[site.id] || [];
-      const radarCategories = radarCategoryMap[site.id] || [];
-      const combined = Array.from(new Set([...searchKeywords, ...radarCategories])).slice(0, 6);
-      if (combined.length > 0) {
-        finalKeywordsMap[site.id] = combined;
-      }
-    });
-
-    // 5. Update keywords with merged search and Radar telemetry
-    const keywordUpdates = sites
-      .filter((s) => finalKeywordsMap[s.id] && finalKeywordsMap[s.id].length > 0)
-      .map((s) => supabase.from('sites').update({ keywords: finalKeywordsMap[s.id] }).eq('id', s.id));
-
-    if (keywordUpdates.length > 0) {
-      for (let i = 0; i < keywordUpdates.length; i += 20) {
-        await Promise.all(keywordUpdates.slice(i, i + 20));
-      }
-      console.log(`Unified Cron: Enriched keywords with Radar telemetry for ${keywordUpdates.length} sites.`);
-    }
-
-    // 7. Calculate & bulk-insert 6 hourly points (matching the 6-hour cron cadence)
-    // Each run covers the 6 hours since the last execution.
+    // ── 4. Calculate & bulk-insert 6 hourly circadian points ──────────────────
     const HISTORY_HOURS = 6;
     const historyInsertions: HistoryInsertionRow[] = [];
     const now = new Date();
@@ -430,9 +328,8 @@ export async function GET(request: Request) {
     for (let h = 0; h < HISTORY_HOURS; h++) {
       const timestamp = new Date(now.getTime() - h * 60 * 60 * 1000);
       const hourValue = timestamp.getHours();
-      
+
       sites.forEach((site) => {
-        // Calculate site-specific phase-shifted wave
         const phaseOffset = ((site.rank || 10) * 7) % 24;
         const shiftedHour = (hourValue + phaseOffset) % 24;
         const baseCircadian = Math.sin((shiftedHour - 9) / 24 * 2 * Math.PI) * 28;
@@ -447,7 +344,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // Bulk insert history nodes (in chunks of 400 rows to avoid request limits)
     const insertChunkSize = 400;
     for (let i = 0; i < historyInsertions.length; i += insertChunkSize) {
       const chunk = historyInsertions.slice(i, i + insertChunkSize);
@@ -460,11 +356,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // 7b. Persist rank_history for sparkline tracking (keep last 7 entries per site)
+    // ── 5. Persist rank_history for sparkline tracking (keep last 7 entries) ──
     const rankHistoryUpdates = sites.map((site) => {
       const existingHistory: { rank: number; date: string }[] = Array.isArray(site.rank_history) ? site.rank_history : [];
       const todayStr = now.toISOString().split('T')[0];
-      // Skip if we already have an entry for today
       if (existingHistory.some((h) => h.date === todayStr)) return null;
       const updated = [...existingHistory.slice(-6), { rank: site.rank, date: todayStr }];
       return supabase.from('sites').update({ rank_history: updated }).eq('id', site.id);
@@ -477,90 +372,49 @@ export async function GET(request: Request) {
       console.log(`Unified Cron: Updated rank_history for ${rankHistoryUpdates.length} sites.`);
     }
 
-    // 7c-pre. Write site_history snapshot - one row per site per run.
-    // This is the PRIMARY data source for the Trending page (Strategy 1).
-    // Each run stamps a consistent recorded_at so the trending page can diff
-    // the two most recent distinct timestamps to get real rank deltas.
-    const siteHistoryTimestamp = now.toISOString();
-    const siteHistoryRows = sites.map((site) => ({
-      site_id: site.id,
-      rank: site.rank,
-      rate: site.rate,
-      recorded_at: siteHistoryTimestamp,
-    }));
-
-    const siteHistoryChunkSize = 200;
-    for (let i = 0; i < siteHistoryRows.length; i += siteHistoryChunkSize) {
-      const chunk = siteHistoryRows.slice(i, i + siteHistoryChunkSize);
-      const { error: shErr } = await supabase.from('site_history').insert(chunk);
-      if (shErr) {
-        console.error('Unified Cron: Failed to insert site_history chunk:', shErr);
-      }
-    }
-    console.log(`Unified Cron: Wrote ${siteHistoryRows.length} rows to site_history at ${siteHistoryTimestamp}.`);
-
-    // Prune site_history - keep only the last 8 days (32 snapshots at 6h cadence)
-    // to prevent unbounded table growth.
+    // ── 6. Fallback site_history snapshot (only if engine hasn't written one in >20h) ──
     try {
-      const pruneDate = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+      const { data: latestSh } = await supabase
+        .from('site_history')
+        .select('recorded_at')
+        .order('recorded_at', { ascending: false })
+        .limit(1);
+
+      const latestShAgeMs = latestSh?.[0]?.recorded_at
+        ? now.getTime() - new Date(latestSh[0].recorded_at).getTime()
+        : Infinity;
+
+      if (latestShAgeMs > 20 * 60 * 60 * 1000) {
+        const siteHistoryTimestamp = now.toISOString();
+        const siteHistoryRows = sites.map((site) => ({
+          site_id: site.id,
+          rank: site.rank,
+          rate: site.rate,
+          recorded_at: siteHistoryTimestamp,
+        }));
+
+        const siteHistoryChunkSize = 200;
+        for (let i = 0; i < siteHistoryRows.length; i += siteHistoryChunkSize) {
+          const chunk = siteHistoryRows.slice(i, i + siteHistoryChunkSize);
+          const { error: shErr } = await supabase.from('site_history').insert(chunk);
+          if (shErr) {
+            console.error('Unified Cron: Failed to insert site_history chunk:', shErr);
+          }
+        }
+        console.log(`Unified Cron: Wrote fallback ${siteHistoryRows.length} rows to site_history at ${siteHistoryTimestamp}.`);
+      }
+
+      // Prune site_history older than 35 days (preserving the 30-day /trending window)
+      const pruneDate = new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
       await supabase
         .from('site_history')
         .delete()
         .lt('recorded_at', pruneDate.toISOString());
     } catch { /* non-critical */ }
 
-    // 7d. Compute and write volatility = |rank_delta vs previous snapshot|
-    // This powers Strategy 3 on the Trending page for the first-run case
-    // when only one site_history snapshot exists.
-    try {
-      const { data: prevSnapshot } = await supabase
-        .from('site_history')
-        .select('site_id, rank')
-        .order('recorded_at', { ascending: false })
-        .limit(sites.length * 2); // fetch last 2 snapshots worth of rows
-
-      if (prevSnapshot && prevSnapshot.length > 0) {
-        // Build a map of previous ranks (skip the current snapshot rows)
-        // The current rows were just inserted; previous rows follow immediately.
-        const prevRankMap = new Map<string, number>();
-
-        // Group by site_id: take the SECOND occurrence (i.e. previous snapshot)
-        const seenIds = new Set<string>();
-        for (const row of (prevSnapshot || []) as { site_id: string; rank: number }[]) {
-          if (!seenIds.has(row.site_id)) {
-            seenIds.add(row.site_id); // first occurrence = current (just inserted)
-          } else if (!prevRankMap.has(row.site_id)) {
-            prevRankMap.set(row.site_id, row.rank); // second occurrence = previous
-          }
-        }
-
-        if (prevRankMap.size > 0) {
-          const volatilityUpdates = sites
-            .map((site) => {
-              const prevRank = prevRankMap.get(site.id);
-              if (prevRank === undefined) return null;
-              const volatility = Math.abs(prevRank - site.rank); // always positive
-              return supabase
-                .from('sites')
-                .update({ volatility })
-                .eq('id', site.id);
-            })
-            .filter(Boolean);
-
-          for (let i = 0; i < volatilityUpdates.length; i += 20) {
-            await Promise.all(volatilityUpdates.slice(i, i + 20));
-          }
-          console.log(`Unified Cron: Updated volatility for ${volatilityUpdates.length} sites.`);
-        }
-      }
-    } catch (volErr) {
-      console.warn('Unified Cron: Volatility update failed:', volErr);
-    }
-
     const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon
     if (dayOfWeek === 1) {
       try {
-        // Compute ISO week slug
         const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
         const dayNum = d.getUTCDay() || 7;
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -568,7 +422,6 @@ export async function GET(request: Request) {
         const weekNum = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
         const weekSlug = `${d.getUTCFullYear()}-w${String(weekNum).padStart(2, '0')}`;
 
-        // Check if snapshot already exists for this week
         const { data: existingSnapshot } = await supabase
           .from('weekly_snapshots')
           .select('id')
@@ -576,7 +429,6 @@ export async function GET(request: Request) {
           .single();
 
         if (!existingSnapshot) {
-          // Build site summaries for the snapshot
           const sitesSnapshot = sites.map((site) => ({
             id: site.id,
             name: site.name,
@@ -590,7 +442,6 @@ export async function GET(request: Request) {
             keywords: finalKeywordsMap[site.id] ?? keKeywordsMap[site.id] ?? site.keywords ?? null,
           }));
 
-          // Pre-compute category totals
           const categoryTotals: Record<string, { count: number; totalRate: number }> = {};
           sitesSnapshot.forEach((s) => {
             if (!categoryTotals[s.category]) categoryTotals[s.category] = { count: 0, totalRate: 0 };
@@ -600,7 +451,6 @@ export async function GET(request: Request) {
 
           const totalRate = sitesSnapshot.reduce((sum: number, s) => sum + s.rate, 0);
 
-          // Count 7-day cumulative outages (Cloudflare Radar Annotations API or /api/outages)
           let outageCount = 0;
           if (cfRadarToken) {
             try {
@@ -622,7 +472,6 @@ export async function GET(request: Request) {
             }
           }
 
-          // Fallback to /api/outages or marquee if radar call was not configured or returned zero
           if (outageCount === 0) {
             try {
               const baseUrl = process.env.VERCEL_URL
@@ -651,7 +500,6 @@ export async function GET(request: Request) {
           mondayDate.setUTCDate(diff);
           mondayDate.setUTCHours(0, 0, 0, 0);
 
-          // Fetch previous week's snapshot for AI analysis comparison
           const prevMondayDate = new Date(mondayDate);
           prevMondayDate.setDate(prevMondayDate.getDate() - 7);
           const prevD = new Date(Date.UTC(prevMondayDate.getFullYear(), prevMondayDate.getMonth(), prevMondayDate.getDate()));
@@ -679,7 +527,6 @@ export async function GET(request: Request) {
             } | null;
           } catch { /* no previous snapshot */ }
 
-          // Generate AI-powered editorial stories via Groq
           let aiStories = null;
           try {
             aiStories = await generateAIStories({
@@ -722,7 +569,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // 8. Database hygiene cleanup: delete records older than 7 days
+    // ── 7. Database hygiene cleanup: delete records older than 7 days ─────────
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 7);
 
@@ -735,9 +582,7 @@ export async function GET(request: Request) {
       console.error('Unified Cron: Failed to clean up database history:', deleteError);
     }
 
-    // ── Write sync_log (used by /api/health) ────────────────────────────────
-    // This is the ONLY authoritative last-sync timestamp. Written last so the
-    // timestamp reflects when ALL data was successfully committed.
+    // ── 8. Write sync_log (used by /api/health) ───────────────────────────────
     try {
       await supabase.from('sync_log').insert({
         completed_at:  new Date().toISOString(),
@@ -758,11 +603,10 @@ export async function GET(request: Request) {
           .in('id', (logRows as { id: string | number }[]).map((r) => r.id));
       }
     } catch (logErr) {
-      // Non-fatal: don't fail the cron just because logging failed
       console.error('Unified Cron: Failed to write sync_log:', logErr);
     }
 
-    // ── Notify Search Engines via IndexNow ───────────────────────────────────
+    // ── 9. Notify Search Engines via IndexNow ─────────────────────────────────
     try {
       const pingUrls = [
         'https://www.pulstraffic.com',
@@ -777,8 +621,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Pro cron completed: enriched ${sites.length} sites, ${historyInsertions.length} history points (${HISTORY_HOURS}h cadence)`,
+      message: `Cron completed: ${sites.length} sites, ${countriesRefreshed} countries refreshed, ${historyInsertions.length} history points (${HISTORY_HOURS}h cadence)`,
       enrichedCount: sites.length,
+      countriesRefreshed,
       historyNodesAddedCount: historyInsertions.length,
       historyNodesDeletedCount: deletedCount || 0
     });
@@ -786,7 +631,6 @@ export async function GET(request: Request) {
   } catch (error: unknown) {
     console.error('Unified Cron Ingestion Exception:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    // Log the failure so /api/health can surface it
     try {
       if (isSupabaseConfigured) {
         await supabase.from('sync_log').insert({
