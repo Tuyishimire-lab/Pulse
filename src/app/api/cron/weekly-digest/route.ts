@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateWeeklyReport } from '../../../report/data/reportGenerator';
 import { getCurrentWeekSlug } from '../../../../lib/weekSlug';
-import { sendWeeklyDigestEmail, renderWeeklyDigestHtml } from '../../../../lib/emailDigest';
+import {
+  sendWeeklyDigestBatch,
+  renderWeeklyDigestHtml,
+} from '../../../../lib/emailDigest';
+import { cronAuthError } from '../../../../lib/auth';
+
+export const maxDuration = 120;
+export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey =
@@ -17,11 +24,9 @@ const supabase = createClient(
   supabaseKey || 'placeholder'
 );
 
-import { cronAuthError } from '../../../../lib/auth';
-
 async function handleWeeklyDigest(request: Request) {
   const url = new URL(request.url);
-  
+
   const authError = cronAuthError(request);
   if (authError) return authError;
 
@@ -56,27 +61,75 @@ async function handleWeeklyDigest(request: Request) {
       });
     }
 
-    // 3. Retrieve subscribers
+    // 3. Dispatch Idempotency Lock Check
+    const force = url.searchParams.get('force') === 'true';
+    if (!testRecipient) {
+      try {
+        const { data: snapshotData } = await supabase
+          .from('weekly_snapshots')
+          .select('digest_dispatched_at, digest_recipient_count')
+          .eq('week_slug', report.slug)
+          .single();
+
+        if (snapshotData?.digest_dispatched_at && !force) {
+          return NextResponse.json({
+            success: true,
+            message: 'Weekly digest already dispatched for this report snapshot',
+            week: report.slug,
+            dispatchedAt: snapshotData.digest_dispatched_at,
+            recipientCount: snapshotData.digest_recipient_count,
+            skipped: true,
+          });
+        }
+      } catch (lockCheckErr) {
+        console.warn('[WeeklyDigest Cron] Snapshot lock check exception:', lockCheckErr);
+      }
+    }
+
+    // 4. Retrieve subscribers via PostgREST Cursor Pagination (eliminates 1,000-row limit)
     let recipientEmails: string[] = [];
 
     if (testRecipient) {
-      recipientEmails = [testRecipient];
+      recipientEmails = [testRecipient.trim()];
     } else {
-      const { data: subs, error: subError } = await supabase
-        .from('newsletter_subscribers')
-        .select('email')
-        .eq('status', 'active');
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      let hasMore = true;
 
-      if (subError) {
-        console.error('[WeeklyDigest Cron] Failed to fetch subscribers:', subError);
-        return NextResponse.json(
-          { success: false, error: 'Failed to query newsletter subscribers' },
-          { status: 500 }
-        );
+      while (hasMore) {
+        const to = from + PAGE_SIZE - 1;
+        const { data: subs, error: subError } = await supabase
+          .from('newsletter_subscribers')
+          .select('email')
+          .eq('status', 'active')
+          .order('created_at', { ascending: true })
+          .range(from, to);
+
+        if (subError) {
+          console.error('[WeeklyDigest Cron] Failed to fetch subscribers:', subError);
+          return NextResponse.json(
+            { success: false, error: 'Failed to query newsletter subscribers' },
+            { status: 500 }
+          );
+        }
+
+        if (!subs || subs.length === 0) {
+          hasMore = false;
+        } else {
+          for (const s of subs) {
+            if (s.email) recipientEmails.push(s.email.trim());
+          }
+          if (subs.length < PAGE_SIZE) {
+            hasMore = false;
+          } else {
+            from += PAGE_SIZE;
+          }
+        }
       }
-
-      recipientEmails = (subs || []).map((s: { email: string }) => s.email).filter(Boolean);
     }
+
+    // Deduplicate recipient emails
+    recipientEmails = Array.from(new Set(recipientEmails));
 
     if (recipientEmails.length === 0) {
       return NextResponse.json({
@@ -88,40 +141,39 @@ async function handleWeeklyDigest(request: Request) {
       });
     }
 
-    // 4. Batch dispatch emails
+    // 5. Batch dispatch emails via Resend Batch API (100-recipient chunks with 550ms pacing)
     const fromOverride = url.searchParams.get('from') || undefined;
-    const results: { email: string; success: boolean; dryRun?: boolean; error?: string }[] = [];
-    const concurrency = 5;
+    const batchResult = await sendWeeklyDigestBatch(
+      recipientEmails,
+      report,
+      undefined,
+      fromOverride
+    );
 
-    for (let i = 0; i < recipientEmails.length; i += concurrency) {
-      const chunk = recipientEmails.slice(i, i + concurrency);
-      const chunkResults = await Promise.all(
-        chunk.map(async (email) => {
-          const res = await sendWeeklyDigestEmail(email, report, undefined, fromOverride);
-          return {
-            email,
-            success: res.success,
-            dryRun: res.dryRun,
-            error: res.error,
-          };
-        })
-      );
-      results.push(...chunkResults);
+    // 6. Record Dispatch Idempotency Lock
+    if (!testRecipient && batchResult.dispatched > 0) {
+      try {
+        await supabase
+          .from('weekly_snapshots')
+          .update({
+            digest_dispatched_at: new Date().toISOString(),
+            digest_recipient_count: batchResult.dispatched,
+          })
+          .eq('week_slug', report.slug);
+      } catch (lockUpdateErr) {
+        console.warn('[WeeklyDigest Cron] Failed to update digest lock:', lockUpdateErr);
+      }
     }
-
-    const successfulCount = results.filter((r) => r.success).length;
-    const errorCount = results.filter((r) => !r.success).length;
-    const isDryRun = results.some((r) => r.dryRun);
 
     return NextResponse.json({
       success: true,
       week: report.slug,
       headline: report.headline,
       subscribersCount: recipientEmails.length,
-      dispatched: successfulCount,
-      failed: errorCount,
-      isDryRun,
-      results: results.slice(0, 50),
+      dispatched: batchResult.dispatched,
+      failed: batchResult.failed,
+      isDryRun: batchResult.isDryRun,
+      errors: batchResult.errors?.slice(0, 50),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown exception';

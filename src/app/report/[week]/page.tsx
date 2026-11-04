@@ -4,9 +4,10 @@ import {
   generateWeeklyReport,
   getReportSlugs,
   parseReportSlug,
+  normalizeReportSlug,
 } from '../data/reportGenerator';
 import ReportPageClient from './ReportPageClient';
-import { SITE_COUNT } from '../../data/sites';
+import { SITE_COUNT } from '../../data/siteCount';
 
 const BASE_URL = 'https://www.pulstraffic.com';
 
@@ -20,7 +21,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { week: slug } = await params;
+  const { week: rawSlug } = await params;
+  const slug = normalizeReportSlug(rawSlug);
   const date = parseReportSlug(slug);
   if (!date) return { title: 'Report Not Found | Pulse' };
 
@@ -32,7 +34,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      types: {
+        'application/rss+xml': 'https://pulstraffic.com/report/feed.xml',
+      },
+    },
     openGraph: {
       title,
       description,
@@ -56,7 +63,8 @@ export const dynamicParams = true;
 export const revalidate = 3600; // ISR: re-check hourly to pick up new snapshots
 
 export default async function ReportPage({ params }: PageProps) {
-  const { week: slug } = await params;
+  const { week: rawSlug } = await params;
+  const slug = normalizeReportSlug(rawSlug);
   const date = parseReportSlug(slug);
   if (!date) notFound();
 

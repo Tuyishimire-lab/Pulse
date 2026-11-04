@@ -19,8 +19,8 @@
 
 import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { SITES, SITE_META, SiteConfig } from '../app/data/sites';
-import { SiteDbRow } from '../types/radar';
+import { SITES, SITE_META, type SiteConfig } from '../app/data/sites';
+import type { SiteDbRow } from '../types/radar';
 import { parseTrafficMetric } from './metrics';
 
 // ── Supabase client (server-safe, no cookie auth needed here) ────────────────

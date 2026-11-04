@@ -463,8 +463,9 @@ export async function sendWeeklyDigestEmail(
   fromOverride?: string
 ): Promise<EmailDispatchResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const html = renderWeeklyDigestHtml(report, recipientEmail, appUrl);
-  const text = renderWeeklyDigestText(report, recipientEmail, appUrl);
+  const resolvedAppUrl = appUrl || getAppBaseUrl();
+  const html = renderWeeklyDigestHtml(report, recipientEmail, resolvedAppUrl);
+  const text = renderWeeklyDigestText(report, recipientEmail, resolvedAppUrl);
   const subject = `Pulse Weekly Digest: ${report.headline}`;
 
   if (!apiKey) {
@@ -496,12 +497,23 @@ export async function sendWeeklyDigestEmail(
           subject,
           html,
           text,
+          headers: {
+            'List-Unsubscribe': `<${resolvedAppUrl}/api/newsletter/subscribe?email=${encodeURIComponent(recipientEmail)}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 429 && attempt < maxAttempts) {
+          const baseDelay = 1000 * Math.pow(2, attempt - 1);
+          const jitter = Math.random() * 500;
+          console.warn(`[EmailDigest RateLimit] HTTP 429 on ${recipientEmail}. Retrying in ${Math.round(baseDelay + jitter)}ms (attempt ${attempt}/${maxAttempts})...`);
+          await new Promise((r) => setTimeout(r, baseDelay + jitter));
+          continue;
+        }
         console.error(`[EmailDigest Error] Failed to send email to ${recipientEmail} (attempt ${attempt}):`, data);
         return {
           success: false,
@@ -526,5 +538,192 @@ export async function sendWeeklyDigestEmail(
   return {
     success: false,
     error: lastError,
+  };
+}
+
+export interface BatchDispatchResult {
+  totalSubscribers: number;
+  dispatched: number;
+  failed: number;
+  isDryRun: boolean;
+  errors?: { email: string; error: string }[];
+}
+
+/**
+ * Dispatches weekly digest emails in 100-recipient batches via Resend Batch API
+ * (POST https://api.resend.com/emails/batch).
+ *
+ * Enforces:
+ * 1. 100-recipient batch chunking
+ * 2. 550ms pacing between successive batches (<= 1.81 req/sec beneath Resend's 2.0 req/sec limit)
+ * 3. Jittered exponential backoff for 429/5xx transient errors (up to 3 retries)
+ * 4. 422 Unprocessable Entity fallback: batch unpacking into single-message sends
+ *    to drop invalid emails and preserve delivery for valid subscribers
+ * 5. RFC 8058 one-click List-Unsubscribe headers
+ */
+export async function sendWeeklyDigestBatch(
+  recipientEmails: string[],
+  report: WeeklyReport,
+  appUrl?: string,
+  fromOverride?: string
+): Promise<BatchDispatchResult> {
+  const resolvedAppUrl = appUrl || getAppBaseUrl();
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = fromOverride || process.env.EMAIL_FROM || 'Pulse Intelligence <digest@pulstraffic.com>';
+  const subject = `Pulse Weekly Digest: ${report.headline}`;
+
+  if (!recipientEmails || recipientEmails.length === 0) {
+    return {
+      totalSubscribers: 0,
+      dispatched: 0,
+      failed: 0,
+      isDryRun: !apiKey,
+      errors: [],
+    };
+  }
+
+  // Dry-run simulation when RESEND_API_KEY is not configured
+  if (!apiKey) {
+    console.log(`[EmailDigest Dry-Run] Batch dispatch simulated for ${recipientEmails.length} recipients. Subject: "${subject}"`);
+    return {
+      totalSubscribers: recipientEmails.length,
+      dispatched: recipientEmails.length,
+      failed: 0,
+      isDryRun: true,
+      errors: [],
+    };
+  }
+
+  const BATCH_SIZE = 100;
+  let dispatched = 0;
+  let failed = 0;
+  const errors: { email: string; error: string }[] = [];
+
+  for (let i = 0; i < recipientEmails.length; i += BATCH_SIZE) {
+    const batch = recipientEmails.slice(i, i + BATCH_SIZE);
+    const batchPayload = batch.map((email) => ({
+      from: fromEmail,
+      to: email,
+      subject,
+      html: renderWeeklyDigestHtml(report, email, resolvedAppUrl),
+      text: renderWeeklyDigestText(report, email, resolvedAppUrl),
+      headers: {
+        'List-Unsubscribe': `<${resolvedAppUrl}/api/newsletter/subscribe?email=${encodeURIComponent(email)}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    }));
+
+    let batchHandled = false;
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts && !batchHandled; attempt++) {
+      try {
+        const response = await fetch('https://api.resend.com/emails/batch', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(batchPayload),
+        });
+
+        // 422 Unprocessable Entity or 400 Bad Request fallback:
+        // Batch contains one or more invalid/malformed email addresses.
+        // Unpack chunk into single-message sends to drop the bad addresses and deliver the rest!
+        if (response.status === 422 || response.status === 400) {
+          console.warn(`[EmailDigest Batch] HTTP ${response.status} detected on batch ${Math.floor(i / BATCH_SIZE) + 1}. Unpacking chunk into single-message sends.`);
+          for (let bIdx = 0; bIdx < batch.length; bIdx++) {
+            const email = batch[bIdx];
+            try {
+              const singleRes = await sendWeeklyDigestEmail(email, report, resolvedAppUrl, fromOverride);
+              if (singleRes.success) {
+                dispatched++;
+              } else {
+                failed++;
+                errors.push({ email, error: singleRes.error || 'Single dispatch rejected' });
+              }
+            } catch (singleErr) {
+              failed++;
+              errors.push({
+                email,
+                error: singleErr instanceof Error ? singleErr.message : 'Unknown exception',
+              });
+            }
+
+            // Enforce 550ms pacing delay between single dispatches to prevent saturating Resend's 2.0 req/s rate limit
+            if (bIdx < batch.length - 1) {
+              await new Promise((r) => setTimeout(r, 550));
+            }
+          }
+          batchHandled = true;
+          break;
+        }
+
+        // 429 Rate Limit or 5xx Server Error: Jittered exponential backoff
+        if (response.status === 429 || response.status >= 500) {
+          const errData = await response.json().catch(() => ({}));
+          console.warn(`[EmailDigest Batch] HTTP ${response.status} on attempt ${attempt}:`, errData);
+          if (attempt < maxAttempts) {
+            const baseDelay = 1000 * Math.pow(2, attempt - 1);
+            const jitter = Math.random() * 500;
+            await new Promise((r) => setTimeout(r, baseDelay + jitter));
+            continue;
+          } else {
+            failed += batch.length;
+            errors.push({
+              email: `batch-${Math.floor(i / BATCH_SIZE)}`,
+              error: `Batch failed after ${maxAttempts} attempts with HTTP ${response.status}`,
+            });
+            batchHandled = true;
+            break;
+          }
+        }
+
+        if (!response.ok) {
+          const errData = (await response.json().catch(() => ({}))) as { message?: string };
+          console.error(`[EmailDigest Batch Error] HTTP ${response.status}:`, errData);
+          failed += batch.length;
+          errors.push({
+            email: `batch-${Math.floor(i / BATCH_SIZE)}`,
+            error: errData.message || `HTTP ${response.status}`,
+          });
+          batchHandled = true;
+          break;
+        }
+
+        // Successful batch send (200 / 201)
+        const resData = (await response.json()) as { data?: unknown[] };
+        const dataArr = resData?.data;
+        dispatched += Array.isArray(dataArr) ? dataArr.length : batch.length;
+        batchHandled = true;
+      } catch (networkErr) {
+        console.warn(`[EmailDigest Batch Network Error] Attempt ${attempt} exception:`, networkErr);
+        if (attempt < maxAttempts) {
+          const baseDelay = 1000 * Math.pow(2, attempt - 1);
+          const jitter = Math.random() * 500;
+          await new Promise((r) => setTimeout(r, baseDelay + jitter));
+        } else {
+          failed += batch.length;
+          errors.push({
+            email: `batch-${Math.floor(i / BATCH_SIZE)}`,
+            error: networkErr instanceof Error ? networkErr.message : 'Network failure',
+          });
+          batchHandled = true;
+        }
+      }
+    }
+
+    // 550ms pacing between batches (enforcing <= 1.81 req/sec beneath Resend's 2.0 req/sec limit)
+    if (i + BATCH_SIZE < recipientEmails.length) {
+      await new Promise((r) => setTimeout(r, 550));
+    }
+  }
+
+  return {
+    totalSubscribers: recipientEmails.length,
+    dispatched,
+    failed,
+    isDryRun: false,
+    errors,
   };
 }

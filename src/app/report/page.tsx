@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import NavHeader from '../components/NavHeader';
 import { getReportSummaries, ReportArchiveItem } from './data/reportGenerator';
-import { SITE_COUNT } from '../data/sites';
+import { SITE_COUNT } from '../data/siteCount';
 
 export const revalidate = 3600; // ISR hourly to pick up new snapshots
 
@@ -11,7 +11,12 @@ const BASE_URL = 'https://www.pulstraffic.com';
 export const metadata: Metadata = {
   title: 'Weekly Internet Reports Archive | Pulse',
   description: `Browse weekly intelligence reports on global web traffic trends, outage summaries, AI vs. traditional search convergence, and the top ${SITE_COUNT} websites.`,
-  alternates: { canonical: `${BASE_URL}/report` },
+  alternates: {
+    canonical: `${BASE_URL}/report`,
+    types: {
+      'application/rss+xml': 'https://pulstraffic.com/report/feed.xml',
+    },
+  },
   openGraph: {
     title: 'Weekly Internet Reports Archive | Pulse',
     description: `Chronological archive of global web traffic reports, outage analyses, and AI platform growth statistics across ${SITE_COUNT} tracked sites.`,

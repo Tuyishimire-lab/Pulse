@@ -2220,4 +2220,154 @@ body {
   border-radius: 0 1rem 1rem 0;
 }
 
+/* ==========================================================================
+   Executive Vector Print Stylesheet (Milestone 2 / Phase 2)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm 16mm 12mm;
+  }
+
+  * { color: #0f172a !important }
+
+  *, *::before, *::after {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body, #__next, .min-h-screen, main, div[class*="min-h-screen"], div[class*="bg-[#02020a]"], div[class*="bg-[#070b14]"], div[class*="bg-[#0c1220]"], .mesh-gradient {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    font-size: 9.5pt !important;
+    line-height: 1.4 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .text-white, [class*="text-white"], .text-slate-100, .text-slate-200, .text-zinc-100, .text-zinc-200, .text-gray-100, .text-gray-200 {
+    color: #0f172a !important;
+  }
+
+  .text-slate-300, .text-slate-400, .text-zinc-400, [class*="text-[#8ea1b4]"], [class*="text-[#94a3b8]"], [class*="text-[#6d8196]"] {
+    color: #475569 !important;
+  }
+
+  header, nav, footer, button, input, form, .no-print, [role="navigation"], [role="tablist"], [data-print="exclude"], a[href*="twitter.com"], a[href*="x.com"], .timer-card, .pulse-dot {
+    display: none !important;
+  }
+
+  /* Executive Print: Unsuppress and style semantic article & report hero headers */
+  header.hero-header,
+  .hero-header,
+  [data-print="header"],
+  main > header,
+  article > header {
+    display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 14pt !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .hero-header h1 {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+  }
+
+
+  .grid, [class*="grid-cols-"], [class*="lg:col-span-"] {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .sticky, [class*="sticky"] {
+    position: static !important;
+  }
+
+  section, article, .rounded-2xl, .rounded-xl {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8pt !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 12pt !important;
+    padding: 10pt 12pt !important;
+  }
+
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  svg line[stroke*="rgba(255,255,255"], svg line[stroke*="white"] {
+    stroke: #e2e8f0 !important;
+    stroke-width: 1px !important;
+    stroke-dasharray: 2 2 !important;
+  }
+
+  svg text {
+    fill: #334155 !important;
+    font-weight: 600 !important;
+  }
+
+  svg path[stroke="#82c8e5"], svg polyline[stroke="#82c8e5"] {
+    stroke: #0284c7 !important;
+    stroke-width: 2.25px !important;
+  }
+
+  svg stop[stop-color="#82c8e5"] {
+    stop-color: #0284c7 !important;
+  }
+
+  svg path[stroke="#10b981"] {
+    stroke: #059669 !important;
+    stroke-width: 2px !important;
+  }
+
+  svg circle[stroke="#82c8e5"] {
+    stroke: #0284c7 !important;
+    fill: #ffffff !important;
+  }
+
+  body::before {
+    content: "PULSE INTERNET TRAFFIC INTELLIGENCE  |  WEEKLY EXECUTIVE REPORT  |  pulstraffic.com";
+    display: block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #64748b !important;
+    border-bottom: 1.5px solid #0f172a;
+    padding-bottom: 3pt;
+    margin-bottom: 12pt;
+    text-transform: uppercase;
+  }
+
+  body::after {
+    content: "Confidentiality Notice: Pulse Traffic Index (PTI) data is synthesized from global recursive DNS resolution patterns and Cloudflare Radar routing telemetry.";
+    display: block;
+    font-size: 7pt;
+    color: #94a3b8 !important;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 4pt;
+    margin-top: 14pt;
+    text-align: center;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: #0f172a !important;
+  }
+}
+
+
 

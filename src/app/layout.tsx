@@ -4,7 +4,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import Footer from "./components/Footer";
 import { CURRENT_YEAR } from "../lib/currentYear";
-import { SITE_COUNT } from "./data/sites";
+import { SITE_COUNT } from "./data/siteCount";
 import "./globals.css";
 
 const outfit = Outfit({

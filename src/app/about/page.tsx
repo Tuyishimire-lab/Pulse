@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { SITE_COUNT } from '../data/sites';
+import { SITE_COUNT } from '../data/siteCount';
 
 export const metadata: Metadata = {
   title: 'About Pulse - Transparent Web Traffic Index | Pulse',

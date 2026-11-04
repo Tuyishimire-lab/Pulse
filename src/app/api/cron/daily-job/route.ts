@@ -6,6 +6,11 @@ import { ALL_COUNTRIES, CountryData } from '../../../top-sites/data/countries';
 import { ensureTwentyCountrySites, matchRadarDomainToSiteId } from '../../../../lib/getCountrySites';
 import { submitToIndexNow } from '../../../../lib/indexnow';
 import { cronAuthError } from '../../../../lib/auth';
+import {
+  calculateIntraweekMetrics,
+  calculateDomainMetrics,
+  synthesizeCircadianSamplePoints,
+} from '../../../report/data/reportGenerator';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
@@ -424,7 +429,7 @@ export async function GET(request: Request) {
 
         const { data: existingSnapshot } = await supabase
           .from('weekly_snapshots')
-          .select('id')
+          .select('week_slug')
           .eq('week_slug', weekSlug)
           .single();
 
@@ -500,6 +505,48 @@ export async function GET(request: Request) {
           mondayDate.setUTCDate(diff);
           mondayDate.setUTCHours(0, 0, 0, 0);
 
+          // Compute 7-day intra-week sample volatility metrics from site_history
+          const sevenDaysAgo = new Date(mondayDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          let macroSamplePoints: { timestamp: string; rate: number }[] = [];
+          let historyRows: { site_id: string; rate: number; recorded_at: string }[] = [];
+
+          try {
+            const { data: histData } = await supabase
+              .from('site_history')
+              .select('site_id, rate, recorded_at')
+              .gte('recorded_at', sevenDaysAgo)
+              .lte('recorded_at', now.toISOString())
+              .order('recorded_at', { ascending: true });
+
+            if (histData && histData.length > 0) {
+              historyRows = histData as { site_id: string; rate: number; recorded_at: string }[];
+              const timestampGroups = new Map<string, number>();
+              for (const row of historyRows) {
+                const currentSum = timestampGroups.get(row.recorded_at) || 0;
+                timestampGroups.set(row.recorded_at, currentSum + (row.rate || 0));
+              }
+
+              macroSamplePoints = Array.from(timestampGroups.entries()).map(([timestamp, rate]) => ({
+                timestamp,
+                rate,
+              }));
+            }
+          } catch (histErr) {
+            console.warn('Unified Cron: site_history telemetry query failed:', histErr);
+          }
+
+          if (macroSamplePoints.length < 2) {
+            macroSamplePoints = synthesizeCircadianSamplePoints(totalRate, now);
+          }
+
+          const macroMetrics = calculateIntraweekMetrics(macroSamplePoints);
+          const domainMetrics = calculateDomainMetrics(historyRows, sitesSnapshot);
+          const intraweekMetrics = {
+            ...macroMetrics,
+            sites: domainMetrics,
+            ...domainMetrics,
+          };
+
           const prevMondayDate = new Date(mondayDate);
           prevMondayDate.setDate(prevMondayDate.getDate() - 7);
           const prevD = new Date(Date.UTC(prevMondayDate.getFullYear(), prevMondayDate.getMonth(), prevMondayDate.getDate()));
@@ -556,12 +603,13 @@ export async function GET(request: Request) {
               total_rate: totalRate,
               outage_count: outageCount,
               ai_stories: aiStories,
+              intraweek_metrics: intraweekMetrics,
             });
 
           if (snapError) {
             console.error('Unified Cron: Failed to create weekly snapshot:', snapError);
           } else {
-            console.log(`Unified Cron: Created weekly snapshot for ${weekSlug} (${sitesSnapshot.length} sites, ${totalRate} total rate${aiStories ? ', AI stories included' : ''}).`);
+            console.log(`Unified Cron: Created weekly snapshot for ${weekSlug} (${sitesSnapshot.length} sites, ${totalRate} total rate, intraweek metrics pre-computed${aiStories ? ', AI stories included' : ''}).`);
           }
         }
       } catch (snapErr) {

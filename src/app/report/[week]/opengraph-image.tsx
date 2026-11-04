@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { generateWeeklyReport, parseReportSlug } from '../data/reportGenerator';
-import { SITE_COUNT } from '../../data/sites';
+import { SITE_COUNT } from '../../data/siteCount';
 
 
 export const alt = 'Pulse Weekly Internet Traffic Intelligence Report';
@@ -130,8 +130,8 @@ export default async function Image({ params }: Props) {
             >
               {headline}
             </h1>
-            <p style={{ fontSize: '18px', color: '#94a3b8', margin: 0 }}>
-              Global outage analysis, rank volatility, and traffic trends across top {SITE_COUNT} domains
+            <p style={{ fontSize: '18px', color: '#94a3b8', margin: 0, display: 'flex' }}>
+              {`Global outage analysis, rank volatility, and traffic trends across top ${SITE_COUNT} domains`}
             </p>
           </div>
 
@@ -152,8 +152,8 @@ export default async function Image({ params }: Props) {
               <span style={{ fontSize: '12px', color: '#6d8196', textTransform: 'uppercase' }}>
                 Internet Health Score
               </span>
-              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#34d399' }}>
-                {healthScore}/100
+              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#34d399', display: 'flex' }}>
+                {`${healthScore}/100`}
               </span>
             </div>
 
@@ -172,7 +172,7 @@ export default async function Image({ params }: Props) {
               <span style={{ fontSize: '12px', color: '#6d8196', textTransform: 'uppercase' }}>
                 Key Rank Movers
               </span>
-              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#82c8e5' }}>
+              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#82c8e5', display: 'flex' }}>
                 {moverNames.join(' · ')}
               </span>
             </div>
@@ -191,8 +191,8 @@ export default async function Image({ params }: Props) {
             <span style={{ fontSize: '14px', color: '#6d8196' }}>
               Pulse Traffic Index™ Multi-Signal Telemetry
             </span>
-            <span style={{ fontSize: '14px', color: '#82c8e5', fontWeight: 'bold' }}>
-              www.pulstraffic.com/report/{slug}
+            <span style={{ fontSize: '14px', color: '#82c8e5', fontWeight: 'bold', display: 'flex' }}>
+              {`www.pulstraffic.com/report/${slug}`}
             </span>
           </div>
         </div>

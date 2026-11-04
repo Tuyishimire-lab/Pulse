@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { SiteConfig, CATEGORIES, SITE_COUNT } from '../data/sites';
+import { SiteConfig, CATEGORIES } from '../data/sites';
+import { SITE_COUNT } from '../data/siteCount';
 import { COUNTRIES } from '../top-sites/data/countries';
 import { exportSitesToCsv, exportSitesToJson } from '../../utils/exportCsv';
 
