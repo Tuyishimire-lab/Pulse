@@ -62,7 +62,7 @@ function ReportActionsBar({ report }: { report: WeeklyReport }) {
     : `https://www.pulstraffic.com/report/${report.slug}`;
 
   const xText = encodeURIComponent(
-    `Week ${report.weekNumber}, ${report.year} Internet Pulse: ${report.totalTopSitesVisitsPerSec.toLocaleString()} req/s across 100 sites, health score ${report.internetHealthScore}/100. #WebTraffic #Pulse`
+    `Week ${report.weekNumber}, ${report.year} Internet Pulse: ${report.totalTopSitesVisitsPerSec.toLocaleString()} req/s across ${SITE_COUNT} sites, health score ${report.internetHealthScore}/100. #WebTraffic #Pulse`
   );
   const xUrl = `https://x.com/intent/tweet?text=${xText}&url=${encodeURIComponent(reportUrl)}`;
 
@@ -82,12 +82,12 @@ function ReportActionsBar({ report }: { report: WeeklyReport }) {
         <button
           onClick={() => exportWeeklyReportToCsv(report)}
           className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-[#82c8e5]/30 text-[#82c8e5] bg-[#82c8e5]/10 hover:bg-[#82c8e5]/20 hover:border-[#82c8e5]/50 transition-all cursor-pointer flex-1 justify-center"
-          title="Download complete 100-platform dataset in CSV format with OWASP formula injection protection"
+          title={`Download complete ${SITE_COUNT}-platform dataset in CSV format with OWASP formula injection protection`}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
-          CSV (100 Sites)
+          CSV ({SITE_COUNT} Sites)
         </button>
         <button
           onClick={() => exportWeeklyReportToJson(report)}

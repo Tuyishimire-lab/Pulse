@@ -287,7 +287,7 @@ export function TopMoversHub({
         return allItems
           .filter(
             (s) =>
-              s.rank >= 31 && s.rank <= 100 && s.velocityGrowthPct >= 15.0
+              s.rank >= 31 && s.rank <= totalCatalogSize && s.velocityGrowthPct >= 15.0
           )
           .sort((a, b) => b.velocityGrowthPct - a.velocityGrowthPct);
 
@@ -362,7 +362,7 @@ export function TopMoversHub({
             badgeCount = allItems.filter((s) => s.rank - s.prevRank >= 2).length;
           if (tab === 'Breakouts')
             badgeCount = allItems.filter(
-              (s) => s.rank >= 31 && s.rank <= 100 && s.velocityGrowthPct >= 15.0
+              (s) => s.rank >= 31 && s.rank <= totalCatalogSize && s.velocityGrowthPct >= 15.0
             ).length;
 
           return (
@@ -410,7 +410,7 @@ export function TopMoversHub({
           </div>
           <h3 className="text-sm font-bold text-white">No Breakouts Detected</h3>
           <p className="text-xs text-[#8ea1b4] max-w-md mx-auto">
-            No platform breakouts (&gt;= +15% growth) detected in ranks #31–#100 this week.
+            No platform breakouts (&gt;= +15% growth) detected in ranks #31–#{totalCatalogSize} this week.
           </p>
         </div>
       ) : filteredItems.length === 0 ? (

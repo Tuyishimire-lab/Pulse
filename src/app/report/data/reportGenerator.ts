@@ -1643,7 +1643,7 @@ export function computeBreakoutRadar(
 
   const breakouts: BreakoutPlatform[] = [];
   for (const site of current) {
-    if (site.rank >= 31 && site.rank <= 100) {
+    if (site.rank >= 31 && site.rank <= SITE_COUNT) {
       const prev = prevMap.get(site.id);
       if (prev && prev.rate > 0) {
         const velocityGrowthPct = ((site.rate - prev.rate) / prev.rate) * 100;
